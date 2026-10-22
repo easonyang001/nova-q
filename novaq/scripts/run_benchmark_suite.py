@@ -50,7 +50,7 @@ def main() -> None:
     args = parser.parse_args()
 
     root = Path(__file__).parent.parent
-    benchmarks = _select_benchmarks(root / "benchmarks", args.benchmarks, args.skip)
+    benchmarks = _select_benchmarks(root / "legacy" / "benchmarks", args.benchmarks, args.skip)
 
     if args.dry_run:
         for bench_dir in benchmarks:
@@ -170,12 +170,12 @@ def _build_command(root: Path, bench_dir: Path, seed: int, config_name: str) -> 
     sample_path = bench_dir / "sample_cases.txt"
     cmd = [
         sys.executable, "scripts/run_single.py",
-        f"benchmarks/{bench_dir.name}",
+        f"legacy/benchmarks/{bench_dir.name}",
         "--seed", str(seed),
         "--config", config_name,
     ]
     if sample_path.exists():
-        cmd.extend(["--input", f"benchmarks/{bench_dir.name}/sample_cases.txt"])
+        cmd.extend(["--input", f"legacy/benchmarks/{bench_dir.name}/sample_cases.txt"])
         return cmd, "sample_cases"
     cases_dir = bench_dir / "cases"
     if cases_dir.exists():

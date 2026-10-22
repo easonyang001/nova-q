@@ -1,0 +1,272 @@
+{
+ "case": "sg_hawker_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 342.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 629.4
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 290.8
+  },
+  "data": {
+   "ok": true,
+   "seconds": 2398.9
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 3.7
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "hawker_centres": {
+    "meaning": "Hawker centres within 2.5km of Toa Payoh MRT",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "teams": {
+    "meaning": "Hygiene inspection teams",
+    "source": "user"
+   }
+  },
+  "params": {
+   "name": {
+    "meaning": "Name of the hawker centre",
+    "index": [
+     "hawker_centres"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the hawker centre",
+    "index": [
+     "hawker_centres"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the hawker centre",
+    "index": [
+     "hawker_centres"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two hawker centres",
+    "index": [
+     "hawker_centres",
+     "hawker_centres"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "osm_amenity_food_court.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "merge_same_place",
+   "to_number",
+   "within_radius"
+  ],
+  "notes": "\n1. Handled the 'addr:housenumber' column using prep.to_number as required by the system detection.\n2. Removed duplicate entries based on 'osm_id' to ensure each OSM entity is unique.\n3. Filtered the 'osm_amenity_food_court' table to include only points within 2.5km of Toa Payoh MRT (1.3327, 103.8474) using prep.within_radius.\n4. Merged duplicate entries for the same place using prep.merge_same_place (max 150m) as explicitly required by the DATA SCOPE (\"one entity per real place: merge rows that describe the same place\"). \n   Note: This step reduces the number of rows compared to the system's 'expected' calculation snippet, but is a mandatory requirement of the problem specification.\n5. Dropped rows with missing coordinates (lat/lon) as they are critical for distance calculations.\n6. Filled missing names using the 'osm_id' to ensure every entity has a valid string identifier for the model.\n7. Generated a fixed list of 3 inspection teams as per the problem specification.\n8. Computed the pairwise distance matrix using prep.haversine_matrix.\n",
+  "prep_log": "**資料來源**\n\n- Singapore 的 amenity=food_court（OpenStreetMap），授權：待確認，取得 2026-10-22T18:26:30.525672+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 數字清理 addr:housenumber | 856 | 856 | 45 個值無法轉成數字 |\n| Convert addr:housenumber to number | 856 | 856 |  |\n| Drop duplicate osm_id | 856 | 856 |  |\n| 只保留距離 (1.3327, 103.8474) 2500 公尺內的資料 | 856 | 50 |  |\n| Filter by 2.5km radius from Toa Payoh MRT | 856 | 50 |  |\n| 合併同名且相距 150 m 內的同一地點 | 50 | 49 | 合併 1 筆 |\n| Merge same places | 50 | 49 |  |\n| Drop rows with missing coordinates | 49 | 49 |  |",
+  "flags": [],
+  "review_required": [
+   "hawker_centres: 缺少實際來源對應，不能確認為公開真實資料",
+   "teams: ['Fixed to 3 teams as per problem specification']",
+   "name: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: ['Calculated using Haversine formula']",
+   "獨立資料核對不一致：parameter 'lat' sums to 65.1786, but an independent computation from the raw tables expects 66.5001. Rows may be missing, duplicated, from the wrong period or include totals of a higher level",
+   "獨立資料核對不一致：parameter 'lon' sums to 5,088.71, but an independent computation from the raw tables expects 5,192.56. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+  ],
+  "sources": [
+   {
+    "title": "Singapore 的 amenity=food_court",
+    "url": "",
+    "resource_url": "",
+    "publisher": "OpenStreetMap",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-22T18:26:30.525672+00:00",
+    "sha256": "33da285efb08e1793d0030204261df64fe6996852b654ad58f918673287a494b",
+    "bytes": 177891
+   }
+  ],
+  "n_variables": 147,
+  "n_constraints": 55,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "hawker_centres": 50
+    },
+    "totals": {
+     "lat": 66.5000844,
+     "lon": 5192.559283199999
+    }
+   },
+   "issues": [
+    "parameter 'lat' sums to 65.1786, but an independent computation from the raw tables expects 66.5001. Rows may be missing, duplicated, from the wrong period or include totals of a higher level",
+    "parameter 'lon' sums to 5,088.71, but an independent computation from the raw tables expects 5,192.56. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "1db1c2693aae63d546f665e3",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 45,
+    "invalid": 45,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "1db1c2693aae63d546f665e3",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.11833913470986411,
+  "objective": 608689.5182564198,
+  "baseline_objective": 690389.6296407724
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "hawker_centres",
+    "mapping": "id / name match + coordinates within 60 m",
+    "entity_set_declared": true,
+    "instance_entities": 49,
+    "mapped": 7,
+    "duplicates": [],
+    "missing_real_entities": 5,
+    "missing_examples": [
+     "Toa Payoh Lorong 4 Blk 74 (Toa Payoh Vista Market)",
+     "Toa Payoh Lorong 4 Blk 93",
+     "Toa Payoh Lorong 5 Blk 75",
+     "Cambridge Road Blk 41A (Pek Kio Market and Food Centre)",
+     "Toa Payoh Lorong 8 Blk 210"
+    ],
+    "unmapped_ids": [
+     "2402545432",
+     "2402545437",
+     "2402557617",
+     "2402557623",
+     "2402563792",
+     "4737200250",
+     "4749425119",
+     "4834793621",
+     "5646689831",
+     "6340941025"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "hawker_centres",
+      "teams"
+     ]
+    ],
+    "structure": "49 decision entities but only 7 map to real ones: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 49,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 23129.972894580413
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 180409,
+  "solver_calls": 3
+ },
+ "seconds": 3665.4
+}

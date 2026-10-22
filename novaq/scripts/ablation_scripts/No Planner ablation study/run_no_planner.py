@@ -1,50 +1,37 @@
-"""No-Judge ablation runner — single, multiple, or all benchmarks.
+"""No-Planner ablation runner — single, multiple, or all benchmarks.
 
-This is a standalone reimplementation of the QUBO pipeline with both Judge
-gates removed. It does NOT import qubo_auto.pipeline.Pipeline; instead it
-calls the individual agents (Planner, Formulizer, Debugger, Coder) and the
-deterministic Test Runner directly. As a result there is no narration about
-"Judge — checking spec..." in the log; the Judge stages simply do not exist.
+Ablation A3: removes the Planner agent and both Judge gates. The raw
+natural-language problem statement is fed directly to the Formulizer.
+The Debugger receives the NL input, the test cases, and the Formulizer
+output — no StructuredSpec involved at any stage.
 
-Removed compared to the full pipeline:
-- Stage 1b: spec verification (Judge after Planner).
-- Stage 2b: QUBO verification (Judge after Formulizer).
-- The re-verification after a Test-Runner-triggered re-formulation.
+What is removed compared to the full pipeline:
+- Stage 1 : PlannerAgent (NL -> StructuredSpec).
+- Stage 1b: JudgeAgent spec check.
+- Stage 2b: JudgeAgent QUBO check.
 
-Retained:
-- Planner retry on exception (no Judge feedback).
-- Formulizer retry on exception (no Judge feedback).
-- Debugger / Coder / Test Runner exactly as in the main pipeline.
-- Test-Runner-driven retries: coding_error -> Coder, formulation_error ->
-  Formulizer (these are empirical, not Judge-based).
+What is retained:
+- Stage 2 : FormulizationAgent — receives raw NL directly.
+- Stage 2.5: DebuggerAgent — receives NL + formulation (no spec).
+- Stage 3 : CoderAgent + TestRunner — unchanged.
+- Test-Runner-driven re-formulation on formulation_error.
 
 Results land under:
-    scripts/ablation_scripts/No Judge ablation study/
-        ├── results/
-        │   ├── ablation_no_judge_<seed>.csv
-        │   ├── runs.jsonl
-        │   └── logs/<benchmark>_seed<seed>.log
-        └── transcripts/<run_id>/...
+    scripts/ablation_scripts/No Planner ablation study/
+        results/<name>_<seed>.csv
+        transcripts/<run_id>/...
 
 Usage:
-    # ALL benchmarks
-    python "scripts/ablation_scripts/No Judge ablation study/run_no_judge.py" --seed 42
-
-    # SINGLE benchmark
-    python "scripts/ablation_scripts/No Judge ablation study/run_no_judge.py" \
-        --seed 42 --benchmarks max_cut
-
-    # MULTIPLE benchmarks
-    python "scripts/ablation_scripts/No Judge ablation study/run_no_judge.py" \
-        --seed 42 --benchmarks max_cut,knapsack,subset_sum
-
-    # Preview without running
-    python "scripts/ablation_scripts/No Judge ablation study/run_no_judge.py" --dry-run
+    python "scripts/ablation_scripts/No Planner ablation study/run_no_planner.py" --seed 42
+    python "scripts/ablation_scripts/No Planner ablation study/run_no_planner.py" --seed 42 --benchmarks max_cut
+    python "scripts/ablation_scripts/No Planner ablation study/run_no_planner.py" --seed 42 --name no_planner_run
+    python "scripts/ablation_scripts/No Planner ablation study/run_no_planner.py" --dry-run
 """
 from __future__ import annotations
 
 import argparse
 import csv
+import json
 import sys
 import time
 import traceback
@@ -62,16 +49,20 @@ sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv
 load_dotenv(ROOT / ".env")
 
-# Agents and helpers — imported directly, the Judge module is NOT imported.
-from qubo_auto.agents.coder_agent import compile_build_qubo, generate_code  # noqa: E402
-from qubo_auto.agents.formulizer_agent import formulate  # noqa: E402
-from qubo_auto.agents.planner_agent import restructure  # noqa: E402
-from qubo_auto.agents.debugger_agent import build_test_cases  # noqa: E402
-from qubo_auto.llm_client import LLMClient, TokenBudgetExceeded  # noqa: E402
-from qubo_auto.pipeline import load_config  # noqa: E402  (only the YAML loader)
-from qubo_auto.schemas import QUBOFormulation, RunResult, StructuredSpec  # noqa: E402
-from qubo_auto.verification.test_cases import load_prompt, load_test_cases  # noqa: E402
-from qubo_auto.verification.test_runner import run_tests  # noqa: E402
+from qubo_auto.agents.coder_agent import compile_build_qubo, generate_code
+from qubo_auto.agents.debugger_agent import build_test_cases
+from qubo_auto.llm_client import LLMClient, TokenBudgetExceeded
+from qubo_auto.pipeline import load_config
+from qubo_auto.schemas import (
+    Objective, QUBOFormulation, RunResult, StructuredSpec, Variable,
+)
+from qubo_auto.verification.test_cases import load_prompt, load_test_cases
+from qubo_auto.verification.test_runner import run_tests
+
+# Reuse the formulizer prompt — substitute NL for {spec_json}
+_FORMULIZER_TEMPLATE = (
+    ROOT / "qubo_auto" / "prompts" / "formulizer_agent.txt"
+).read_text(encoding="utf-8")
 
 
 CSV_FIELDS = [
@@ -84,7 +75,7 @@ CSV_FIELDS = [
 ]
 
 
-# ───────────────────────── small helpers ────────────────────────────────────
+# ───────────────────────── helpers ──────────────────────────────────────────
 
 def _rel(path: Path, base: Path = ROOT) -> str:
     try:
@@ -99,8 +90,6 @@ def _log(msg: str) -> None:
 
 
 class _Tee:
-    """Duplicate writes to two file-like objects (stdout + log)."""
-
     def __init__(self, *streams):
         self._streams = streams
 
@@ -119,9 +108,64 @@ class _Tee:
                 pass
 
 
-# ───────────────────────── inline pipeline (no Judge) ───────────────────────
+# ───────────────────────── NL-aware Formulizer ──────────────────────────────
 
-def run_no_judge_pipeline(
+def _sanitize(data: dict) -> dict:
+    for pt in data.get("penalty_terms", []):
+        if isinstance(pt.get("penalty_weight"), str):
+            pt["penalty_weight"] = 1.0
+    return data
+
+
+def formulate_from_nl(
+    nl_problem: str,
+    client: LLMClient,
+    model: str,
+    temperature: float,
+    previous_issues: list[str] | None = None,
+) -> QUBOFormulation:
+    """Call Formulizer with raw NL directly — no StructuredSpec."""
+    nl_as_spec = json.dumps({
+        "problem_description": nl_problem,
+        "note": "No structured spec was produced. Infer variables, objective, "
+                "and constraints directly from the problem description above.",
+    }, indent=2)
+    prompt = _FORMULIZER_TEMPLATE.replace("{spec_json}", nl_as_spec)
+
+    if previous_issues:
+        issues_block = "\n".join(f"  - {i}" for i in previous_issues)
+        prompt += (
+            f"\n\n--- FEEDBACK FROM PREVIOUS ATTEMPT [TEST_RUNNER] ---\n"
+            f"Your last formulation was rejected. Issues found:\n"
+            f"{issues_block}\n"
+            "Fix ALL of them. Do not repeat the same mistakes."
+        )
+
+    raw = client.call(model=model, prompt=prompt, temperature=temperature,
+                      step_name="formulate_from_nl", json_mode=True)
+    data = _sanitize(json.loads(raw))
+    return QUBOFormulation.model_validate(data)
+
+
+def _synthetic_spec(nl_problem: str, formulation: QUBOFormulation) -> StructuredSpec:
+    """Minimal StructuredSpec built from NL + formulation for Debugger/Coder compatibility."""
+    vars_ = [
+        Variable(name=k, type="binary", index=i, description="")
+        for i, k in enumerate(formulation.variable_mapping)
+    ]
+    return StructuredSpec(
+        problem_name="(no planner)",
+        variables=vars_,
+        objective=Objective(direction="minimize", expression="see formulation"),
+        constraints=[],
+        domain_notes=nl_problem[:800],
+        instance_parameters=[],
+    )
+
+
+# ───────────────────────── inline pipeline (no Planner, no Judge) ────────────
+
+def run_no_planner_pipeline(
     nl_problem: str,
     benchmark_name: str,
     seed: int,
@@ -132,8 +176,6 @@ def run_no_judge_pipeline(
     benchmark_dir: Path | None = None,
     raw_test_input: str | None = None,
 ) -> RunResult:
-    """Re-implementation of qubo_auto.pipeline.Pipeline.run() with both Judge
-    gates removed. See module docstring for what is dropped vs. retained."""
     run_id = f"{benchmark_name}_{seed}_{uuid.uuid4().hex[:8]}"
     start = time.time()
     models = config["models"]
@@ -145,10 +187,9 @@ def run_no_judge_pipeline(
     use_cache = limits.get("use_cache", True)
     failure_modes: list[str] = []
 
-    _log(f"=== No-Judge Pipeline START | run_id={run_id} ===")
+    _log(f"=== No-Planner Pipeline START | run_id={run_id} ===")
     _log(f"Benchmark : {benchmark_name}  |  seed={seed}")
-    _log(f"Models    : planner_agent={models['planner_agent']}")
-    _log(f"            formulizer_agent={models['formulizer_agent']}")
+    _log(f"Models    : formulizer_agent={models['formulizer_agent']}")
     _log(f"            coder_agent={models['coder_agent']}")
     _log(f"Cache     : {'enabled' if use_cache else 'disabled'}")
 
@@ -179,43 +220,19 @@ def run_no_judge_pipeline(
         return result
 
     try:
-        # ────────────────────────────────────────────────────────────────────
-        # Stage 1: Planner  (NO Judge gate)
-        # ────────────────────────────────────────────────────────────────────
-        spec: StructuredSpec | None = None
-        spec_issues: list[str] = []
-        for attempt in range(retries["restructure"] + 1):
-            _log(f"[Stage 1] Planner — attempt {attempt + 1}/{retries['restructure'] + 1}")
-            try:
-                spec = restructure(
-                    nl_problem, client, models["planner_agent"], temps["planner_agent"],
-                    previous_issues=spec_issues or None,
-                )
-                _log(f"[Stage 1] Planner OK — {len(spec.variables)} vars, "
-                     f"{len(spec.constraints)} constraints")
-                break
-            except Exception as e:
-                _log(f"[Stage 1] Planner EXCEPTION: {e}")
-                spec_issues = [str(e)]
-                if attempt == retries["restructure"]:
-                    result.error_trace = traceback.format_exc()
-                    return _finalize()
-        if spec is None:
-            result.error_trace = "Planner produced no spec"
-            return _finalize()
-        result.n_iterations += 1
+        # ── Stage 1: SKIPPED (Planner + Judge spec check) ────────────────────
+        _log(f"[Stage 1] Planner SKIPPED — NL goes directly to Formulizer")
 
-        # ────────────────────────────────────────────────────────────────────
-        # Stage 2: Formulizer  (NO Judge gate)
-        # ────────────────────────────────────────────────────────────────────
+        # ── Stage 2: Formulizer receives raw NL (no Judge gate) ──────────────
         formulation: QUBOFormulation | None = None
         previous_issues: list[str] = []
         for attempt in range(retries["formulate"] + 1):
-            _log(f"[Stage 2] Formulizer — attempt {attempt + 1}/{retries['formulate'] + 1}")
+            _log(f"[Stage 2] Formulizer (from NL) — attempt {attempt + 1}/{retries['formulate'] + 1}")
             try:
-                formulation = formulate(
-                    spec, client, models["formulizer_agent"], temps["formulizer_agent"],
-                    previous_issues or None, feedback_source="test_runner",
+                formulation = formulate_from_nl(
+                    nl_problem, client,
+                    models["formulizer_agent"], temps["formulizer_agent"],
+                    previous_issues or None,
                 )
                 _log(f"[Stage 2] Formulation OK — n_vars={formulation.n_variables}, "
                      f"{len(formulation.objective_terms)} obj terms, "
@@ -227,24 +244,29 @@ def run_no_judge_pipeline(
                 if attempt == retries["formulate"]:
                     result.error_trace = traceback.format_exc()
                     return _finalize()
+
         if formulation is None:
             result.error_trace = "Formulizer produced no formulation"
             return _finalize()
+
+        # Stage 2b: SKIPPED (no Judge QUBO check)
+        _log(f"[Stage 2b] Judge SKIPPED")
         result.n_iterations += 1
 
-        # ────────────────────────────────────────────────────────────────────
-        # Stage 2.5: Debugger (build structured test cases from NL input)
-        # ────────────────────────────────────────────────────────────────────
+        # Build synthetic spec for Debugger/Coder compatibility
+        syn_spec = _synthetic_spec(nl_problem, formulation)
+
+        # ── Stage 2.5: Debugger — NL + test + formulation (no spec) ──────────
         if raw_test_input and benchmark_dir:
-            _log(f"[Stage 2.5] Building test cases from user input ...")
+            _log(f"[Stage 2.5] Building test cases (NL + formulation, no spec) ...")
             try:
                 transcript_cases_dir = transcript_root / run_id / "cases"
                 written = build_test_cases(
                     benchmark_dir=benchmark_dir,
                     raw_input=raw_test_input,
                     client=client,
-                    model=models.get("debugger_agent", models["planner_agent"]),
-                    spec=spec,
+                    model=models.get("debugger_agent", models["formulizer_agent"]),
+                    spec=syn_spec,
                     formulation=formulation,
                     temperature=temps.get("debugger_agent", 0.1),
                     cases_dir=transcript_cases_dir,
@@ -256,18 +278,17 @@ def run_no_judge_pipeline(
                 result.error_trace = traceback.format_exc()
                 return _finalize()
 
-        # ────────────────────────────────────────────────────────────────────
-        # Stage 3: Coder + Test Runner loop
-        # ────────────────────────────────────────────────────────────────────
+        # ── Stage 3: Coder + Test Runner (intact) ────────────────────────────
         sample_instance = test_cases[0].instance if test_cases else {}
         n_cases = len(test_cases)
-
         previous_error: str | None = None
+
         for attempt in range(retries["code"] + 1):
             _log(f"[Stage 3] Coder — attempt {attempt + 1}/{retries['code'] + 1}")
             try:
                 code = generate_code(
-                    spec, formulation, client, models["coder_agent"], temps["coder_agent"],
+                    syn_spec, formulation, client,
+                    models["coder_agent"], temps["coder_agent"],
                     previous_error, sample_instance=sample_instance,
                 )
                 build_qubo_fn = compile_build_qubo(code)
@@ -298,7 +319,7 @@ def run_no_judge_pipeline(
                     _log(f"[Stage 3b] Instance {r.instance_id} error: {r.error_message[:200]}")
 
             if pass_rate >= verif_cfg["pass_threshold"]:
-                _log(f"=== No-Judge Pipeline SUCCESS ===")
+                _log(f"=== No-Planner Pipeline SUCCESS ===")
                 result.status = "success"
                 result.failure_modes = failure_modes
                 return _finalize()
@@ -307,34 +328,34 @@ def run_no_judge_pipeline(
             errors = [r.error_message for r in test_results if r.error_message]
             previous_error = "\n".join(errors[:3])
 
-            # Test Runner-driven re-formulation on formulation_error.
-            # No re-verification by Judge here (that step is the ablation).
+            # Test Runner-driven re-formulation — no Judge re-verification
             if failure_class == "formulation_error" and attempt < retries["code"]:
-                _log(f"[Stage 3b] Structural error — looping back to Formulizer (no Judge) ...")
+                _log(f"[Stage 3b] Structural error — re-formulating from NL (no Judge) ...")
                 try:
-                    formulation = formulate(
-                        spec, client, models["formulizer_agent"],
-                        temps["formulizer_agent"], errors[:3],
-                        feedback_source="test_runner",
+                    formulation = formulate_from_nl(
+                        nl_problem, client,
+                        models["formulizer_agent"], temps["formulizer_agent"],
+                        errors[:3],
                     )
+                    syn_spec = _synthetic_spec(nl_problem, formulation)
                     _log(f"[Stage 3b] Re-formulation done")
                 except Exception as e:
                     _log(f"[Stage 3b] Re-formulation EXCEPTION: {e}")
 
             result.n_iterations += 1
 
-        _log(f"=== No-Judge Pipeline FAILED — code exhausted all retries ===")
+        _log(f"=== No-Planner Pipeline FAILED — code exhausted all retries ===")
         result.error_trace = f"Code failed after max retries. Last failure: {failure_class}"
         result.failure_modes = failure_modes
         return _finalize()
 
     except TokenBudgetExceeded as e:
-        _log(f"=== No-Judge Pipeline ABORTED — token budget exceeded: {e} ===")
+        _log(f"=== No-Planner Pipeline ABORTED — token budget exceeded: {e} ===")
         result.error_trace = str(e)
         result.failure_modes = failure_modes + ["token_budget_exceeded"]
         return _finalize()
     except Exception:
-        _log(f"=== No-Judge Pipeline EXCEPTION ===")
+        _log(f"=== No-Planner Pipeline EXCEPTION ===")
         result.error_trace = traceback.format_exc()
         result.failure_modes = failure_modes
         return _finalize()
@@ -343,12 +364,12 @@ def run_no_judge_pipeline(
 # ───────────────────────── suite driver ─────────────────────────────────────
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="No-Judge ablation runner")
+    parser = argparse.ArgumentParser(description="No-Planner ablation runner")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--benchmarks", default=None,
                         help="Comma-separated folder name(s). Omit to run all.")
     parser.add_argument("--config", default="config.yaml")
-    parser.add_argument("--name", default="ablation_no_judge",
+    parser.add_argument("--name", default="ablation_no_planner",
                         help="CSV base name. Output: results/<name>_<seed>.csv")
     parser.add_argument("--output", default=None,
                         help="Explicit CSV output path (overrides --name).")
@@ -358,7 +379,7 @@ def main() -> None:
     args = parser.parse_args()
 
     config = load_config(ROOT / args.config)
-    benchmarks = _select_benchmarks(ROOT / "benchmarks", args.benchmarks, args.skip)
+    benchmarks = _select_benchmarks(ROOT / "legacy" / "benchmarks", args.benchmarks, args.skip)
 
     if args.dry_run:
         print("Would run:")
@@ -378,12 +399,11 @@ def main() -> None:
     runs_jsonl = RESULTS_DIR / "runs.jsonl"
     write_header = not csv_path.exists() or csv_path.stat().st_size == 0
 
-    print(f"[No-Judge] Ablation run")
-    print(f"  Benchmarks : {len(benchmarks)}  ({', '.join(b.name for b in benchmarks)})")
+    print(f"[No-Planner] Ablation run")
+    print(f"  Benchmarks : {len(benchmarks)}")
     print(f"  Seed       : {args.seed}")
+    print(f"  Config     : {args.config}")
     print(f"  CSV out    : {_rel(csv_path)}")
-    print(f"  Runs JSONL : {_rel(runs_jsonl)}")
-    print(f"  Transcripts: {_rel(TRANSCRIPTS_DIR)}")
     print()
 
     with csv_path.open("a", newline="", encoding="utf-8") as f_csv:
@@ -436,7 +456,7 @@ def _run_one(benchmark_dir: Path, seed: int, config: dict, runs_jsonl: Path) -> 
     sys.stdout = _Tee(old_stdout, log_file)
 
     try:
-        result = run_no_judge_pipeline(
+        result = run_no_planner_pipeline(
             nl_problem=nl_problem,
             benchmark_name=bench,
             seed=seed,
@@ -447,7 +467,7 @@ def _run_one(benchmark_dir: Path, seed: int, config: dict, runs_jsonl: Path) -> 
             benchmark_dir=benchmark_dir,
             raw_test_input=raw_test_input,
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(f"[error] {exc}")
         sys.stdout = old_stdout
         log_file.close()
@@ -468,7 +488,7 @@ def _run_one(benchmark_dir: Path, seed: int, config: dict, runs_jsonl: Path) -> 
         "wall_time_s": f"{result.wall_time_s:.1f}",
         "tokens_used": int(result.tokens_used or 0),
         "total_llm_cost": f"{float(getattr(result, 'cost_used', 0.0)):.4f}",
-        "planner_retries": max(0, log_metrics["planner_attempts"] - 1),
+        "planner_retries": 0,
         "formulizer_retries": max(0, log_metrics["formulizer_attempts"] - 1),
         "coder_retries": max(0, log_metrics["coder_attempts"] - 1),
         "debugger_retries": max(0, log_metrics["debugger_attempts"] - 1),
@@ -492,9 +512,9 @@ def _collect_log_metrics(log_path: Path) -> dict:
     import re
     text = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
     return {
-        "planner_attempts": len(re.findall(r"\[Stage 1\] Planner .*attempt", text)),
-        "formulizer_attempts": len(re.findall(r"\[Stage 2\] Formulizer .*attempt", text)),
-        "coder_attempts": len(re.findall(r"\[Stage 3\] Coder .*attempt", text)),
+        "planner_attempts": 0,
+        "formulizer_attempts": len(re.findall(r"\[Stage 2\] Formulizer.*attempt", text)),
+        "coder_attempts": len(re.findall(r"\[Stage 3\] Coder.*attempt", text)),
         "debugger_attempts": text.count("[Stage 2.5] Building test cases"),
     }
 

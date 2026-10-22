@@ -13,7 +13,7 @@
 
 Chia-Chen Yang · National Pingtung University, Taiwan
 
-[Agent guide (繁體中文)](QuantumQUBO%20Agent/docs/agents_overview_zh.md)
+[Agent guide (繁體中文)](novaq/docs/agents_overview_zh.md)
 
 </div>
 
@@ -50,7 +50,8 @@ acceptance judge scores each delivery against ground truth built directly from t
 ## Highlights
 
 - **End to end on real cities.** 15 of 18 runs across Taipei, London, Melbourne and New York pass the independent
-  judge, using official open data and local models only (no cloud LLM).
+  judge, using official open data and local models only (no cloud LLM). On a held-out test set built after freezing
+  the code (Singapore, Paris, Cambridge MA), 8 of 9 pass.
 - **Verification that catches real faults.** Injected harmful faults are caught 97/99 (data) and 66/78 (model); a
   checker from a second LLM family catches 98% of data faults versus 73% for the doer's own family. No valid plan was
   wrongly rejected (300/300).
@@ -172,7 +173,7 @@ constraints, flipped objectives, dropped pairwise terms, counts off by one and b
      infeasible;
   3. *delivery*: the plan satisfies the original request and is within 10% of a reference computed from the raw data.
 - **Repeats.** Three runs per task; the first three finished runs count. Stop rules are written down before a batch
-  starts ([acceptance/PREREGISTRATION.md](QuantumQUBO%20Agent/acceptance/PREREGISTRATION.md)).
+  starts ([acceptance/PREREGISTRATION.md](novaq/acceptance/PREREGISTRATION.md)).
 - **Held-out test set.** The pipeline code is frozen (hash recorded) before the reference answers of new tasks are
   built, and is not changed while they run.
 
@@ -196,9 +197,19 @@ With a Qwen3.6-35B-A3B doer, the first four tasks pass 5/12.
 
 ### Held-out test set
 
-Singapore hawker-centre zones (balanced partition, data.gov.sg), a Paris Vélib' station tour (travelling salesman,
-opendata.paris.fr) and the Cambridge, MA participatory budget (knapsack, data.cambridgema.gov). The runs are in
-progress; results will be added here unchanged.
+The pipeline code was frozen (hash recorded) before the reference answers of three new tasks were built, and was not
+changed while they ran. Same configuration as above; the first three finished runs per task count.
+
+| City and task | Problem type | Official source | Instance | Passed |
+|---|---|---|---|:---:|
+| Singapore: hawker-centre zones | balanced partition | data.gov.sg Hawker Centres | 12 centres, 3 zones | 2/3 |
+| Paris: Vélib' station tour | travelling salesman | opendata.paris.fr | 10 stations | 3/3 |
+| Cambridge, MA: participatory budget | knapsack | data.cambridgema.gov ballot | 16 projects, $525k | 3/3 |
+| **Total** | | | | **8/9** |
+
+The failed run found no official source and fell back to OpenStreetMap food courts (49 places instead of 12 hawker
+centres); the judge caught it. All three Cambridge runs return the exact optimum (24,769 votes, versus 22,004 under the
+vote-order rule). Run-by-run notes: [results/e2e_test_RESULTS.md](novaq/results/e2e_test_RESULTS.md).
 
 ### Verification gates
 
@@ -225,7 +236,7 @@ QAOA samples the optimum on every instance but trails the annealers, because pen
 fraction.
 
 <p align="center">
-  <img src="QuantumQUBO%20Agent/results/experiments/qaoa_cudaq_20261020/figures/energy_rep.png" width="900"
+  <img src="novaq/results/experiments/qaoa_cudaq_20261020/figures/energy_rep.png" width="900"
        alt="Energy gap to the optimum per solver and problem">
 </p>
 
@@ -255,7 +266,7 @@ constraint-preserving QAOA mixers.
 
 ```bash
 git clone https://github.com/easonyang001/nova-q.git
-cd "nova-q/QuantumQUBO Agent"
+cd nova-q/novaq
 pip install -r requirements.txt
 cp .env.example .env          # LLM endpoint; optional D-Wave token and GPU-annealer address
 ```
@@ -283,7 +294,7 @@ python -m pytest -q tests
 
 ## Repository structure
 
-| Path (under `QuantumQUBO Agent/`) | Contents |
+| Path (under `novaq/`) | Contents |
 |---|---|
 | `qubo_auto/annealing/` | agents, data tools (`prep/`, `dataplan.py`, `dataagent.py`), checkers (`reqcheck.py`, `datacheck.py`), QUBO encodings, solver back-ends, workflow and repair |
 | `qubo_auto/prompts/annealing/` | agent prompts |
@@ -294,6 +305,7 @@ python -m pytest -q tests
 | `docs/` | agent guide and experiment notes |
 | `results/` | run settings, reference answers, per-run judge records, solver-comparison data |
 | `tests/` | unit tests |
+| `legacy/` | benchmark suite and reports of the earlier text-to-QUBO front end (not used by NOVA-Q) |
 
 Raw downloads, LLM transcripts and caches are not versioned.
 

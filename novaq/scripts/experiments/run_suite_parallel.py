@@ -70,7 +70,7 @@ def main() -> None:
     out = ROOT / "results" / f"{args.name}_{args.seed}.csv"
     log_root = ROOT / "results" / "benchmark_suite_logs" / f"{args.name}_{args.seed}"
     log_root.mkdir(parents=True, exist_ok=True)
-    benches = _select_benchmarks(ROOT / "benchmarks", args.benchmarks, args.skip)
+    benches = _select_benchmarks(ROOT / "legacy" / "benchmarks", args.benchmarks, args.skip)
     done = set()
     if args.resume and out.exists():
         done = {r["benchmark"] for r in csv.DictReader(out.open(encoding="utf-8")) if r["status"] != "script_failed"}

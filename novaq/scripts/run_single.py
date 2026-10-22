@@ -2,10 +2,10 @@
 
 Usage:
     # Existing cases already in cases/*.json:
-    python scripts/run_single.py benchmarks/max_cut
+    python scripts/run_single.py legacy/benchmarks/max_cut
 
     # Provide test cases as a text file — built after formulation, before coding:
-    python scripts/run_single.py benchmarks/max_cut --input my_cases.txt
+    python scripts/run_single.py legacy/benchmarks/max_cut --input my_cases.txt
 
 The benchmark folder must contain:
     prompt.txt      — natural-language problem statement
@@ -162,7 +162,7 @@ def _generate_latex_deliverable(root, config, result, nl_problem, benchmark_name
         print(f"[latex] Generation failed: {e}")
         return
 
-    out_dir = root / "deliverables" / benchmark_name
+    out_dir = root / "legacy" / "deliverables" / benchmark_name
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{benchmark_name}_{result.seed}.tex"
     out_path.write_text(latex, encoding="utf-8")

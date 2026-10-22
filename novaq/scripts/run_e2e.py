@@ -1,7 +1,7 @@
 """End to end (spec P5): natural-language problem -> QUBO -> decomposition -> feedback loop -> best solution.
 
-    python scripts/run_e2e.py benchmarks/knapsack --input benchmarks/knapsack/sample_cases.txt
-    python scripts/run_e2e.py benchmarks/knapsack --input benchmarks/knapsack/sample_cases.txt \
+    python scripts/run_e2e.py legacy/benchmarks/knapsack --input legacy/benchmarks/knapsack/sample_cases.txt
+    python scripts/run_e2e.py legacy/benchmarks/knapsack --input legacy/benchmarks/knapsack/sample_cases.txt \
         --instance my_instance.json --backend sa --policy agent
 
 Steps:

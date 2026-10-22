@@ -162,7 +162,7 @@ def _find_cases_for_benchmark(benchmark_name: str) -> list[TestCase]:
     Falls back to benchmarks/<name>/cases/ if no transcript cases exist.
     """
     runs_jsonl = ROOT / "results" / "runs.jsonl"
-    benchmark_dir = ROOT / "benchmarks" / benchmark_name
+    benchmark_dir = ROOT / "legacy" / "benchmarks" / benchmark_name
     transcripts_root = ROOT / "transcripts"
 
     # Try transcript directories from past runs (newest first)
@@ -344,7 +344,7 @@ def main() -> None:
     models = config["models"]
     if args.model:
         models["formulizer_agent"] = args.model
-    benchmarks = _select_benchmarks(ROOT / "benchmarks", args.benchmarks, args.skip)
+    benchmarks = _select_benchmarks(ROOT / "legacy" / "benchmarks", args.benchmarks, args.skip)
 
     if args.dry_run:
         print("Would run:")

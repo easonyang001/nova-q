@@ -37,3 +37,6 @@ Thumbs.db
 # Archived experiment raw logs (large)
 archive/our_runs/*/backend/
 archive/our_runs/*/loops/
+
+# compatibility link for processes started before the rename (not part of the project)
+/QuantumQUBO Agent
