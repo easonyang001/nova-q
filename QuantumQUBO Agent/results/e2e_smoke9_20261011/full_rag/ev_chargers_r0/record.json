@@ -1,0 +1,124 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 86.9
+  },
+  "model": {
+   "ok": true,
+   "seconds": 152.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 21.3
+  },
+  "data": {
+   "ok": false,
+   "seconds": 458.6,
+   "error": "ValueError: data preparation failed: the output cannot be stored as JSON (Out of range float values are not JSON compliant: nan); use lists, numbers and strings only | DATA PROBLEM FOUND BY A TOOL: ambiguous join on ['name_norm'] / ['name_norm']: keys repeat (e.g. 中央里, 中央里); add the parent level to the keys. Columns that look like a parent level: left [], right []. The left and right table has no parent-level column. If its ORIGINAL table lists the parent (e.g. district) as rows above its children, call prep.attach_parent(original_table, name_column, new='parent') BEFORE removing those rows with keep_level, then join on [parent, name]; if it has an administrative code, its leading digits may identify the parent."
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact binary formulation with auxiliary coverage indicators. Variables: x_j (station selection) and y_i (coverage indicator) for each district i. Total variables: 2*N ≈ 550 for N=275. This fits the CGA GPU annealer backend (few hundred variables). Linear constraints enforce cardinality (sum x = 5) and coverage logic (y_i <= sum x_j for covering j). Objective is linear in y (maximize sum p_i y_i). No quadratic terms needed; model is purely linear QUBO.",
+ "schema": {
+  "sets": {
+   "districts": {
+    "meaning": "Unique identifier for each district in Taipei",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of district center",
+    "index": [
+     "districts"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of district center",
+    "index": [
+     "districts"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Population of district",
+    "index": [
+     "districts"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "persons"
+   },
+   "k": {
+    "meaning": "Number of charging stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "radius": {
+    "meaning": "Coverage radius in meters",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1000.0,
+    "unit": "m"
+   },
+   "coverage": {
+    "meaning": "Binary matrix indicating if district j covers district i",
+    "index": [
+     "districts",
+     "districts"
+    ],
+    "type": "int",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat",
+      "lon",
+      "radius"
+     ],
+     "how": "Compute pairwise distances; set coverage[i,j]=1 if dist(i,j) <= radius"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "臺北市各里人口數按年齡分_110年每月各里人口數按年齡分.csv",
+  "臺北市各里人口數按年齡分_111年每月各里人口數按年齡分.csv",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 189553,
+  "solver_calls": null
+ },
+ "seconds": 720.2
+}

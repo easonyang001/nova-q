@@ -1,0 +1,74 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Steiner Tree Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Steiner Tree Problem}
+
+\paragraph{Problem Statement.}
+Given an undirected graph $G = (V, E)$ with non-negative edge weights $w_e$ for each $e \in E$, and a subset of terminal vertices $T \subseteq V$, the Steiner Tree Problem seeks a minimum-weight connected subgraph of $G$ that spans all vertices in $T$. The goal is to select a subset of edges such that all terminals are connected and the sum of the weights of the selected edges is minimized.
+
+\paragraph{Decision Variables.}
+For each edge $e \in E$, introduce a binary decision variable $x_e \in \{0,1\}$, where $x_e = 1$ if edge $e$ is selected in the subgraph, and $x_e = 0$ otherwise. The decision vector is denoted $\mathbf{x} = (x_e)_{e \in E} \in \{0,1\}^{|E|}$.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- The original objective is to minimize the total weight of the selected edges:
+\begin{align}
+\min_{\mathbf{x} \in \{0,1\}^{|E|}} \sum_{e \in E} w_e x_e.
+\end{align}
+
+Step 2 --- Connectivity is enforced via cut constraints. For any vertex partition $S \subset V$ such that $S \cap T \neq \emptyset$ and $(V \setminus S) \cap T \neq \emptyset$, at least one edge crossing the cut $\delta(S)$ must be selected:
+\begin{align}
+\sum_{e \in \delta(S)} x_e \ge 1, \quad \forall S \in \mathcal{C},
+\end{align}
+where $\mathcal{C}$ denotes the set of all valid terminal cuts.
+
+Step 3 --- Each cut constraint is converted to a quadratic penalty term. For a given cut $S \in \mathcal{C}$, we define the penalty as:
+\begin{align}
+P_S(\mathbf{x}) = \lambda_S \left(1 - \sum_{e \in \delta(S)} x_e\right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_e^2 = x_e$ for binary variables yields:
+\begin{align}
+P_S(\mathbf{x}) &= \lambda_S \left(1 - 2\sum_{e \in \delta(S)} x_e + \sum_{e \in \delta(S)} x_e^2 + \sum_{e, f \in \delta(S), e \neq f} x_e x_f\right) \\
+&= \lambda_S \left(1 - \sum_{e \in \delta(S)} x_e + \sum_{e, f \in \delta(S), e \neq f} x_e x_f\right).
+\end{align}
+This expression provides the general quadratic contribution of cut $S$ to the Hamiltonian.
+
+Step 4 --- Combining the objective and all penalty terms gives the full QUBO Hamiltonian:
+\begin{align}
+H(\mathbf{x}) = \sum_{e \in E} w_e x_e + \sum_{S \in \mathcal{C}} \lambda_S \left(1 - \sum_{e \in \delta(S)} x_e + \sum_{e, f \in \delta(S), e \neq f} x_e x_f\right).
+\end{align}
+
+Step 5 --- Reading off the coefficients from $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$, the QUBO matrix entries and constant offset are given in closed form as:
+\begin{align}
+Q_{e,e} &= w_e - \sum_{S \in \mathcal{C}: e \in \delta(S)} \lambda_S, \quad \forall e \in E, \\
+Q_{e,f} &= \sum_{S \in \mathcal{C}: \{e,f\} \subseteq \delta(S)} \lambda_S, \quad \forall e, f \in E, e \neq f, \\
+c &= \sum_{S \in \mathcal{C}} \lambda_S.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda_S$ is chosen such that $\lambda_S > \max_{e \in E} w_e$ for all $S \in \mathcal{C}$. This condition guarantees that the penalty incurred by violating any single cut constraint strictly exceeds the maximum possible reduction in the objective function achievable by omitting any set of edges. Consequently, any energy reduction from removing edges is always outweighed by the penalty cost, ensuring that the optimizer prioritizes feasibility.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{|E|}$ recovers the optimal Steiner tree because (i) any feasible solution satisfies all cut constraints, causing every penalty term $P_S(\mathbf{x})$ to vanish, so $H(\mathbf{x})$ reduces exactly to the original objective $\sum_{e \in E} w_e x_e$; and (ii) any infeasible solution violates at least one cut constraint, incurring a penalty of at least $\lambda_S > \max_{e \in E} w_e$. Since the maximum possible objective value for any subgraph is bounded by $\sum_{e \in E} w_e$, and the penalty strictly dominates any feasible objective gain, the global minimum of $H(\mathbf{x})$ must correspond to a feasible solution with the minimum possible edge weight.
+
+\paragraph{Illustrative Example.}
+Consider a graph with vertex set $V = \{0, 1, 2\}$ and edge set $E = \{e_{01}, e_{12}, e_{02}\}$, with weights $w_{01}, w_{12}, w_{02}$. The terminal set is $T = \{0, 2\}$. The only non-trivial terminal cut separates vertex $0$ from vertex $2$, yielding $\delta(S) = \{e_{01}, e_{02}\}$. We set the penalty weight $\lambda = 100$. The penalty term for this cut is $\lambda(1 - x_{01})(1 - x_{02}) = 100 - 100x_{01} - 100x_{02} + 100x_{01}x_{02}$. Adding the objective terms, the concrete Hamiltonian is:
+\begin{align}
+H(\mathbf{x}) &= w_{01}x_{01} + w_{12}x_{12} + w_{02}x_{02} + 100 - 100x_{01} - 100x_{02} + 100x_{01}x_{02}.
+\end{align}
+Collecting terms, the QUBO parameters are:
+\begin{align}
+Q_{0,0} &= w_{01} - 100, \\
+Q_{1,1} &= w_{12}, \\
+Q_{2,2} &= w_{02} - 100, \\
+Q_{0,2} &= 100, \\
+c &= 100.
+\end{align}
+Assuming weights $w_{01} = 5$, $w_{12} = 4$, $w_{02} = 6$, the optimal selection is $x_{01} = 1, x_{12} = 1, x_{02} = 0$, yielding a minimum energy of $H(\mathbf{x}^*) = 9$.
+
+\end{document}

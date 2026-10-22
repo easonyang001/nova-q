@@ -1,0 +1,141 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 509.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 880.0
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 997.6
+  },
+  "data": {
+   "ok": false,
+   "seconds": 4642.1,
+   "error": "ValueError: data preparation failed: 預處理失敗：PromptTooLong: step 'adapter': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 18596 output tokens and your prompt contains at least 14173 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "p-median formulation with reduced candidate set. For |L|=200 and |C|=15, total variables = 3,015, which fits the CGA limit of 3,600.",
+ "schema": {
+  "sets": {
+   "lsoas": {
+    "meaning": "LSOA demand points (all LSOAs in Camden and Islington)",
+    "source": "public"
+   },
+   "candidates": {
+    "meaning": "Candidate LSOA centroids for ambulance stations",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "2021 Census resident population of the LSOA",
+    "index": [
+     "lsoas"
+    ],
+    "type": "number",
+    "source": "public"
+   },
+   "lat_lsoa": {
+    "meaning": "Latitude of LSOA centroid",
+    "index": [
+     "lsoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_lsoa": {
+    "meaning": "Longitude of LSOA centroid",
+    "index": [
+     "lsoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "lat_cand": {
+    "meaning": "Latitude of candidate site centroid",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_cand": {
+    "meaning": "Longitude of candidate site centroid",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between LSOA i and candidate j",
+    "index": [
+     "lsoas",
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat_lsoa",
+      "lon_lsoa",
+      "lat_cand",
+      "lon_cand"
+     ],
+     "how": "Euclidean distance between LSOA and candidate coordinates"
+    }
+   },
+   "p": {
+    "meaning": "Number of ambulance stations to deploy",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "2021_Lower_layer_Super_Output_Area_Population_Weighted_Centr.geojson",
+  "Lower_layer_Super_Output_Areas_December_2021_EW_Population_W.csv",
+  "Statistical_GIS_Boundary_Files_for_London_statistical-lsoa20.zip",
+  "TS001_-_Number_of_usual_residents_in_households_and_communal.csv"
+ ],
+ "cost": {
+  "llm_tokens": 268879,
+  "solver_calls": null
+ },
+ "seconds": 7029.4
+}

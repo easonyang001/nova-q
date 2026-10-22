@@ -1,0 +1,94 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 96.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 154.1
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 37.5
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1425.2,
+   "error": "ValueError: data preparation failed: DATA PROBLEM FOUND BY A TOOL: ambiguous join on ['li_name_norm'] / ['li_name_norm']: keys repeat (e.g. 中央里, 中央里); add the parent level to the keys. Columns that look like a parent level: left [], right ['district']. The left table has no parent-level column. If its ORIGINAL table lists the parent (e.g. district) as rows above its children, call prep.attach_parent(original_table, name_column, new='parent') BEFORE removing those rows with keep_level, then join on [parent, name]; if it has an administrative code, its leading digits may identify the parent."
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 0,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "Maximum Coverage Problem with cardinality constraint. Uses 2N binary variables (N selection, N coverage indicators). Fits backend (N~270 -> 540 vars < 3600 limit). Exact formulation.",
+ "schema": {
+  "sets": {
+   "li": {
+    "meaning": "Administrative district (Li) in Taipei",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of Li centroid",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of Li centroid",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Population of Li",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "k": {
+    "meaning": "Number of stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   }
+  }
+ },
+ "data_found": [
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 224313,
+  "solver_calls": null
+ },
+ "seconds": 1713.4
+}

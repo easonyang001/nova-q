@@ -1,0 +1,65 @@
+Benchmark    : balanced_k_means_clustering
+Test input   : benchmarks\balanced_k_means_clustering\sample_cases.txt (cases built after formulation)
+Seed         : 42
+[00:36:20] === Pipeline START | run_id=balanced_k_means_clustering_42_8dd7847d ===
+[00:36:20] Benchmark : balanced_k_means_clustering  |  seed=42
+[00:36:20] Models    : planner_agent=qwen/qwen3.6-35b-a3b
+[00:36:20]             formulizer_agent=qwen/qwen3.6-35b-a3b
+[00:36:20]             judge_agent=qwen/qwen3.6-35b-a3b
+[00:36:20]             coder_agent=qwen/qwen3-coder-next
+[00:36:20] Cache     : disabled
+[00:36:20] [Stage 1] Planner � attempt 1/1
+[00:36:37] [Stage 1] Planner OK � 1 vars, 2 constraints
+[00:36:37] [Stage 1b] Judge � checking spec matches NL ...
+[00:37:06] [Stage 1b] Spec verification PASSED
+[00:37:06] [Stage 2] Formulizer � attempt 1/1
+[00:37:41] [Stage 2] Formulation OK � n_vars=8, 12 obj terms, 2 penalty groups
+[00:37:41] [Stage 2b] Judge � checking QUBO formulation ...
+[00:37:55] [Stage 2b] Formulation verification PASSED
+[00:37:55] [Stage 2.5] Building test cases from user input ...
+[00:38:10] [Stage 2.5] Wrote 2 case(s) to transcript, loaded 2 total
+[00:38:10] [Stage 3] Coder � attempt 1/1
+[00:38:26] [Stage 3] Code generated and compiled OK
+[00:38:26] [Stage 3b] Test Runner � running 2 pre-computed test cases ...
+[00:38:30] [Stage 3b] Tests: 0/2 passed (0%)  failure_class=formulation_error
+[00:38:30] [Stage 3b] Instance 0 error: [n4_balanced] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check pe
+[00:38:30] [Stage 3b] Instance 1 error: [n6_balanced] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 18 optimal bitstring(s); none overlap with the 6 correct optimal bitstring(s). Check p
+[00:38:30] === Pipeline FAILED � code exhausted all retries ===
+[00:38:30] Finalizing | status=failed | tokens=31993 | cost=$0.0220 | wall=130.5s
+
+Status:       failed
+Iterations:   3
+Wall time:    130.5s
+Tokens used:  31993
+Verification: {'passed': 0, 'total': 2}
+Failure modes: ['formulation_error']
+
+Error trace:
+Code failed after max retries. Last failure: formulation_error
+
+Full result:
+{
+  "run_id": "balanced_k_means_clustering_42_8dd7847d",
+  "benchmark": "balanced_k_means_clustering",
+  "seed": 42,
+  "status": "failed",
+  "n_iterations": 3,
+  "wall_time_s": 130.518141746521,
+  "models_used": {
+    "planner_agent": "qwen/qwen3.6-35b-a3b",
+    "formulizer_agent": "qwen/qwen3.6-35b-a3b",
+    "judge_agent": "qwen/qwen3.6-35b-a3b",
+    "coder_agent": "qwen/qwen3-coder-next",
+    "debugger_agent": "qwen/qwen3.6-35b-a3b"
+  },
+  "tokens_used": 31993,
+  "cost_used": 0.0219701677,
+  "verification": {
+    "passed": 0,
+    "total": 2
+  },
+  "error_trace": "Code failed after max retries. Last failure: formulation_error",
+  "failure_modes": [
+    "formulation_error"
+  ]
+}

@@ -1,0 +1,85 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Maximum Independent Set}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Maximum Independent Set}
+
+\paragraph{Problem Statement.}
+Let $G=(V,E)$ be an undirected graph with vertex set $V$ and edge set $E$. A subset $S \subseteq V$ is called an independent set if no two vertices in $S$ are adjacent, i.e., for every edge $(i,j) \in E$, at most one of $i$ or $j$ belongs to $S$. The Maximum Independent Set problem asks for an independent set $S$ of maximum cardinality.
+
+\paragraph{Decision Variables.}
+For each vertex $i \in V$, we introduce a binary decision variable $x_i \in \{0,1\}$. The variable $x_i$ indicates whether vertex $i$ is selected in the independent set:
+\[
+x_i = \begin{cases} 
+1 & \text{if } i \in S, \\
+0 & \text{otherwise}.
+\end{cases}
+\]
+
+\paragraph{QUBO Derivation.}
+We convert the maximization problem into a minimization problem suitable for a Quadratic Unconstrained Binary Optimization (QUBO) formulation.
+
+\textbf{Step 1: Objective Function.}
+The objective is to maximize the number of selected vertices, $\sum_{i \in V} x_i$. In QUBO, we minimize the negative of this quantity:
+\begin{align}
+\min_{x \in \{0,1\}^{|V|}} \left( -\sum_{i \in V} x_i \right).
+\end{align}
+
+\textbf{Step 2: Constraints.}
+The independence constraint requires that for every edge $(i,j) \in E$, we cannot select both endpoints. This is expressed as:
+\begin{align}
+x_i + x_j \le 1, \quad \forall (i,j) \in E.
+\end{align}
+
+\textbf{Step 3: Penalty Terms.}
+Since $x_i, x_j \in \{0,1\}$, the constraint $x_i + x_j \le 1$ is violated if and only if $x_i = 1$ and $x_j = 1$. In this case, the product $x_i x_j = 1$. For all feasible assignments, $x_i x_j = 0$. Therefore, the term $\lambda x_i x_j$ serves as a valid penalty: it is zero for feasible pairs and $\lambda$ for infeasible pairs. The total penalty contribution for the graph is:
+\begin{align}
+P(x) = \lambda \sum_{(i,j) \in E} x_i x_j,
+\end{align}
+where $\lambda > 0$ is a penalty weight.
+
+\textbf{Step 4: Combined Hamiltonian.}
+The QUBO Hamiltonian $H(x)$ is the sum of the objective and penalty terms:
+\begin{align}
+H(x) = -\sum_{i \in V} x_i + \lambda \sum_{(i,j) \in E} x_i x_j.
+\end{align}
+
+\textbf{Step 5: Q Matrix Entries.}
+The Hamiltonian can be written in standard QUBO form $H(x) = \sum_{i \in V} Q_{i,i} x_i + \sum_{i < j, (i,j) \in E} Q_{i,j} x_i x_j + c$. Comparing coefficients with $H(x)$, we obtain the Q matrix entries and offset:
+\begin{align}
+Q_{i,i} &= -1, \quad \forall i \in V, \\
+Q_{i,j} &= \lambda, \quad \forall (i,j) \in E \text{ with } i < j, \\
+c &= 0.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen large enough to ensure that any violation of the constraints is strictly more costly than the maximum possible gain in the objective function. The maximum gain from setting a variable $x_i$ to 1 is 1 (the coefficient magnitude in the objective). A single constraint violation involves setting two variables to 1 that cannot both be 1. The objective gain from this violation is at most 1 (since we gain 1 for the second variable but lose feasibility). To dominate this gain, we require $\lambda > 1$. A common choice is $\lambda = 2$, which guarantees that the penalty cost exceeds the best possible objective improvement from any single constraint violation.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^{|V|}$ recovers the optimal independent set. For any feasible solution, the penalty term is zero, so $H(x) = -\sum_{i \in V} x_i$, and minimizing $H$ is equivalent to maximizing the set size. For any infeasible solution $x'$, there exists at least one edge $(i,j)$ with $x'_i = x'_j = 1$. The penalty contribution is at least $\lambda$. Since $\lambda > 1$, we can construct a feasible solution $y$ by setting one of the violating variables to 0. This reduces the penalty by at least $\lambda$ and increases the objective term by at most 1, resulting in a strict decrease in energy: $H(y) < H(x')$. Thus, the global minimum must be feasible and optimal.
+
+\paragraph{Illustrative Example.}
+Consider a graph with $N=3$ vertices $V=\{0,1,2\}$ and edges $E=\{(0,1), (1,2)\}$, forming a path graph. We set $\lambda = 2$.
+
+The general formulas instantiate as follows:
+\begin{align}
+H(x) &= -x_0 - x_1 - x_2 + 2 x_0 x_1 + 2 x_1 x_2.
+\end{align}
+The Q matrix entries are:
+\begin{align}
+Q_{0,0} &= -1, \quad Q_{1,1} = -1, \quad Q_{2,2} = -1, \\
+Q_{0,1} &= 2, \quad Q_{1,2} = 2,
+\end{align}
+with all other entries zero and offset $c=0$.
+
+The optimal solution corresponds to the independent set $\{0,2\}$, given by $x^* = (1,0,1)$. The energy is:
+\begin{align}
+H(x^*) = -1 - 0 - 1 + 2(1)(0) + 2(0)(1) = -2.
+\end{align}
+This matches the maximum independent set size of 2. Any infeasible solution, such as $x=(1,1,0)$, yields energy $H(x) = -1-1-0 + 2(1)(1) + 0 = 0$, which is strictly greater than $-2$.
+\end{document}

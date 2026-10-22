@@ -1,0 +1,120 @@
+{
+ "case": "london_ambulance_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 134.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 641.5
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 0.2,
+   "error": "PromptTooLong: step 'req_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 28138 output tokens and your prompt contains at least 4631 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested "
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1032.0,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: Population data for MSOAs is missing from the provided tables.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 31, in load_data\nValueError: DATA GAP: Population data for MSOAs is missing from the provided tables.\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Standard p-median with explicit nearest-service exclusions; ~650 binary variables (25 y + 625 x); fits CGA backend (limit 3600) with room for constraint overhead.",
+ "schema": {
+  "sets": {
+   "msoa_demand": {
+    "meaning": "Camden MSOA identifier for demand points",
+    "source": "public"
+   },
+   "msoa_site": {
+    "meaning": "Camden MSOA identifier for candidate station sites",
+    "source": "public"
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "Population of each MSOA",
+    "index": [
+     "msoa_demand"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat": {
+    "meaning": "Latitude of MSOA population-weighted center",
+    "index": [
+     "msoa_site"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of MSOA population-weighted center",
+    "index": [
+     "msoa_site"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of ambulance stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   },
+   "dist": {
+    "meaning": "Euclidean straight-line distance between MSOAs",
+    "index": [
+     "msoa_site",
+     "msoa_site"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Compute pairwise Euclidean distance in meters"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "BFC_2021_Middle_layer_Super_Output_Area_Boundary_.geojson",
+  "BFE_2021_Middle_layer_Super_Output_Area_Boundary_.geojson",
+  "BGC_2021_Middle_layer_Super_Output_Area_Boundary_.geojson",
+  "BSC_2021_Middle_layer_Super_Output_Area_Boundary_.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 221447,
+  "solver_calls": null
+ },
+ "seconds": 1810.0
+}

@@ -1,0 +1,38 @@
+{
+ "case": "aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 129.4
+  },
+  "model": {
+   "ok": false,
+   "seconds": 240.4,
+   "error": "ValueError: model validation failed: make_example_data does not follow DATA_SCHEMA: keys ['category'] are not declared in DATA_SCHEMA (declare them or drop them)"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "cost": {
+  "llm_tokens": 70993,
+  "solver_calls": null
+ },
+ "seconds": 369.8
+}

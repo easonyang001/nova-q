@@ -1,0 +1,66 @@
+\section{Problem Setting and Design Principles}
+\label{sec:setting}
+
+\paragraph{Task.}
+The input is a problem described in plain language, possibly in one sentence. The output is (i)~a specification
+confirmed by the user, (ii)~the data used, with provenance, (iii)~a validated binary optimization model and its
+QUBO, (iv)~a feasible solution evaluated against a conventional baseline where available,
+and (v)~a figure and a plain-language explanation of the result and its assumptions. Delivery identifies whether
+the solution came from an annealer or the baseline. If no usable solution is available, the output states the
+failed stage, attempted repairs and missing information rather than reporting success because execution ended.
+
+\paragraph{Operational success and model verification.}
+The workflow seeks a feasible, interpretable result within a bounded resource budget. A known optimum is
+optional; a feasible baseline supplies a quality comparison when no optimum is available. This operational goal
+is distinct from the benchmark protocol in \cref{sec:verification}, which uses small instances with stated
+optima to test whether a generated formulation is correct.
+
+\paragraph{Three classes of model inputs.}
+``Real problems need real data'' is too coarse to act on: some inputs are facts about the world, some are
+preferences of the decision maker, and some are private. Every input field of a model is assigned to one class,
+and the class decides what the system does (\cref{tab:dataclasses}). A run counts as a \emph{real-data run} only if
+every class-A field comes from a cited source; fields filled by the model's own estimates are reported, never
+hidden.
+
+\begin{table}[t]
+\centering
+\caption{Classes of model inputs and the system's behaviour for each.}
+\label{tab:dataclasses}
+\small
+\begin{tabular}{@{}lp{4.2cm}p{6.3cm}@{}}
+\toprule
+Class & Examples & System behaviour \\
+\midrule
+A: public data & locations, population, existing facilities, road distances, laws, price histories &
+  searched, downloaded and preprocessed; every value traceable to a source; if not found, the gap is reported and
+  never filled silently \\
+B: user setting & visit durations, number of sites to open, budget, objective weights &
+  asked with sensible defaults the user can change; not ``data'' and not searched for \\
+C: private data & staff rosters, availability, internal costs and orders &
+  uploaded by the user; otherwise mock data, explicitly labelled as such in every output \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Design principles.}
+\begin{enumerate}
+  \item \emph{The model decides, code executes and checks.} Agents propose specifications, formulations, data
+        mappings and tuning actions as structured output; deterministic code validates, runs and enforces budgets.
+        Control flow is fixed, which keeps runs reproducible and every agent replaceable for ablations.
+  \item \emph{People confirm the specification, data assumptions and result.} The system can search and prepare
+        alternative data automatically, but unresolved substitutions or changes to requirements return to the
+        user. Choosing which dataset represents ``demand'' remains a modelling decision.
+  \item \emph{Local first.} Agent inference uses one locally served open model, avoiding a hosted-LLM dependency in the
+        reported configuration. Local inference still consumes compute, and cloud annealers receive the
+        submitted optimization instance; local serving alone does not guarantee that all data stays on the
+        machine. Individual roles can be routed to another model or provider by configuration.
+  \item \emph{Problem-independent mechanisms only.} When the model fails, we add checks that say \emph{what} is
+        wrong (an empty objective, a dropped hard constraint) rather than embedding a complete case-specific formulation in the prompt. Optional retrieval supplies
+        reusable modelling patterns, while the LLM still writes the instance-specific formulation.
+        Case-specific acceptance judges are evaluation artifacts, not inputs to the runtime agents; earlier
+        specified-source pilots used manually prepared specifications and checks.
+  \item \emph{Check tuning against the original problem.} Code enforces penalty heuristics, encoding-specific
+        checks, solver ranges and call budgets. Exact encodings are distinguished from approximate ones, and
+        feasibility and solution quality are evaluated on the original constraints and objective. A
+        single-flip penalty floor is not a certificate that a large QUBO preserves every global optimum.
+\end{enumerate}

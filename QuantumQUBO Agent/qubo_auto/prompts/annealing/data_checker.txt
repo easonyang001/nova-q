@@ -1,0 +1,34 @@
+You independently CHECK a data preparation. Another agent turned the raw tables into a model's input; you never
+see its code. From the confirmed specification and the raw tables only, compute how large the prepared data
+MUST be, so the two results can be compared.
+
+CONFIRMED SPECIFICATION:
+{spec}
+
+THE PREPARED DATA MUST CONTAIN (public sets and numeric parameters):
+{schema}
+
+THE RAW TABLES (profiles; your code receives the full tables as pandas DataFrames in `tables`):
+{profiles}
+
+DATA SITUATIONS THE SYSTEM DETECTED (handle them in your computation: e.g. rows split by sex or age next to
+their total rows must not be summed together; total / subtotal rows are not areas; keep the latest period only):
+{situations}
+
+Write:
+
+    def expected(tables: dict) -> dict:
+        return {"counts": {"<set>": <int>, ...}, "totals": {"<numeric param>": <float>, ...}}
+
+- Use EXACTLY the set and parameter names listed above as the keys (no synonyms).
+- counts: how many distinct entities each set must have after applying EVERY filter of the specification
+  (area, category, period, administrative level, one entity per real place: rows that are the same place count once).
+- totals: the sum of all values of a numeric parameter that comes straight from the tables (e.g. total population of
+  the kept entities). Leave out parameters you cannot compute directly (distances, settings).
+- Include only what you can compute with confidence; an empty dict is allowed. pandas is `pd`, numpy is `np`.
+- Use the tested toolkit `prep` instead of your own formulas: prep.distance_to(lat, lon, lat0, lon0) (metres to one
+  point), prep.within_radius(df, lat_col, lon_col, (lat0, lon0), metres), prep.in_area(df, lat_col, lon_col, ["<area>, <city>"]), prep.to_wgs84(df, x, y) for projected
+  coordinates, prep.normalize_text(s) for names.
+- Do not write long comments.
+{previous_feedback}
+Output: Python code only, in a single ```python ... ``` block.

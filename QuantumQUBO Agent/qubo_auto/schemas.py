@@ -61,7 +61,7 @@ class VerificationResult(BaseModel):
 
 class TestInstanceResult(BaseModel):
     instance_id: int
-    status: Literal["success", "coding_error", "formulation_error"]
+    status: Literal["success", "coding_error", "formulation_error", "unverifiable"]
     error_message: str = ""
     qubo_optimum: float | None = None
     problem_optimum: float | None = None
@@ -72,7 +72,7 @@ class RunResult(BaseModel):
     run_id: str
     benchmark: str
     seed: int
-    status: Literal["success", "failed", "partial"]
+    status: Literal["success", "failed", "partial", "unverifiable"]
     n_iterations: int = 0
     wall_time_s: float = 0.0
     models_used: dict[str, str] = Field(default_factory=dict)

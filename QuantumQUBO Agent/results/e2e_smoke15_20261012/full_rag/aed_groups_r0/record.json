@@ -1,0 +1,244 @@
+{
+ "case": "aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 171.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 214.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 70.8
+  },
+  "data": {
+   "ok": true,
+   "seconds": 581.9
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 99.8
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "One-hot assignment with quadratic intra-team distance objective and linear group-size bounds. Fits backend (3*N <= 750 for N<=250) and preserves exact pairwise interactions.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location ID after filtering",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "Inspection team ID",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "category": {
+    "meaning": "Category of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "num_teams": {
+    "meaning": "Number of inspection teams",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "normalize_text"
+  ],
+  "notes": "Filtered to Da'an District using code 63000100 (confirmed by data mean 6.30001e+07), excluded '學校、大型集會場所' and '其他', normalized place names and deduplicated to one entity per physical location. N ~ 537 matches expectation.",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-12T06:44:44.335469+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter Da'an District | 2729 | 214 | Kept rows with region code 63000100 |\n| Drop missing coordinates & category | 214 | 214 | Removed rows with NaN lat/lon/category |\n| Normalize place names | 214 | 214 | Applied prep.normalize_text to handle variations |\n| Exclude categories | 214 | 42 | Removed '學校、大型集會場所' and '其他' |\n| Deduplicate places | 42 | 37 | Kept first occurrence per normalized place name |",
+  "flags": [],
+  "review_required": [
+   "sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "teams: ['Teams are arbitrarily numbered 1-3 to break symmetry in QUBO']",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "category: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "num_teams: ['Confirmed by problem spec']",
+   "獨立資料核對不一致：set 'sites' has 37 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 537. Check which rows you keep and whether duplicates of the same place are merged"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T06:44:44.335469+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 111,
+  "n_constraints": 40,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 537
+    },
+    "totals": {}
+   },
+   "issues": [
+    "set 'sites' has 37 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 537. Check which rows you keep and whether duplicates of the same place are merged"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "0c02a774da04fddf15979473",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 31,
+    "invalid": 31,
+    "not_comparable": 0,
+    "rank_agreement": 0.992
+   }
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:solve",
+  "delivery:no_solution",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": 4.383094078468733,
+  "baseline_objective": 4.383094078468733
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "",
+    "entity_set_declared": true,
+    "instance_entities": 37,
+    "mapped": 0,
+    "duplicates": [],
+    "missing_real_entities": 48,
+    "missing_examples": [
+     "Pro Space",
+     "Vital Essence Fitness 運動賦能",
+     "亞東百貨股份有限公司遠企分公司",
+     "低氧喜客",
+     "台北大安伊普索酒店",
+     "台北市建國假日玉市A區",
+     "台北福華大飯店",
+     "台北美侖大飯店",
+     "台北遠東香格里拉/Shangri-La Far Eastern Taipei (鼎鼎大飯店股份有限公司)",
+     "和苑三井花園飯店 台北忠孝"
+    ],
+    "unmapped_ids": [
+     "大潤發流通事業股份有限公司南湖分公司",
+     "禮客Outlet內湖一館",
+     "好市多股份有限公司內湖分公司",
+     "哈拉數位影城",
+     "康達盛通生活事業股份有限公司臺北內湖分公司",
+     "禮客Outlet內湖二館",
+     "臺北市政府警察局內湖分局潭美派出所",
+     "臺北市政府警察局內湖分局西湖派出所",
+     "臺北市政府警察局內湖分局(本部)",
+     "臺北市政府警察局內湖分局文德派出所"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 37,
+    "error": "ValueError: decision variables do not name the real entities"
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 172976,
+  "solver_calls": 3
+ },
+ "seconds": 1138.1
+}

@@ -1,0 +1,58 @@
+You are the Decomposer Agent. A QUBO for this problem has already been built and verified by brute force
+(the build_qubo code below). Split it into parts so that an annealing workflow can tune each constraint's
+penalty separately while the objective stays fixed, and so that solutions can be judged on the ORIGINAL problem.
+
+PROBLEM SPEC:
+{spec_json}
+
+QUBO FORMULATION:
+{formulation_json}
+
+VERIFIED build_qubo CODE (its Q is the ground truth for your decomposition):
+```python
+{build_qubo_code}
+```
+
+SAMPLE INSTANCE (exact dict your functions receive):
+{sample_instance}
+
+Write ONE Python module that defines exactly these names (numpy only, no other imports):
+
+SENSE = "minimize" or "maximize"          # sense of the ORIGINAL objective in the spec
+
+def build_objective(instance) -> tuple[np.ndarray, float]:
+    # Upper-triangular Q_obj and offset for the objective ONLY, in MINIMISATION form
+    # (negate it if the original objective is maximised). Same n and variable order as build_qubo.
+
+def build_penalties(instance) -> dict[str, tuple[np.ndarray, float, float]]:
+    # One entry per constraint: name -> (Q_c, offset_c, default_weight).
+    # Q_c/offset_c are the penalty with UNIT weight: x^T Q_c x + offset_c >= 0 for every x, and it is 0
+    # exactly when the constraint holds (for slack/auxiliary variables: 0 for the right slack values).
+    # default_weight is the weight build_qubo uses, so that
+    #     Q_obj + sum_c default_weight_c * Q_c  ==  build_qubo's Q   (same energies for every x).
+    # Use an empty dict if the problem has no constraints.
+
+def decision_variables(instance) -> list[int]:
+    # Indices of the ORIGINAL decision variables. Every other index is auxiliary (e.g. slack bits).
+
+def objective_value(instance, x) -> float:
+    # The ORIGINAL objective of the spec evaluated directly from the problem data for the 0/1 list x,
+    # in its own sense (do NOT compute it from Q). Ignore auxiliary/slack variables.
+
+def check_constraints(instance, x) -> dict[str, bool]:
+    # For each constraint name used in build_penalties: True if the ORIGINAL constraint is satisfied by x,
+    # judged directly from the problem data (not from the penalty value). Auxiliary/slack variables
+    # must not affect the result.
+
+Rules:
+- Matrices are upper triangular, shape (n, n), with n computed from the instance exactly like build_qubo.
+- Constraint names must be short identifiers (e.g. "one_color_per_node", "capacity").
+- Deterministic code will check every requirement above by brute force on the test cases, including:
+  if the original constraint holds for the decision variables, SOME choice of auxiliary variables must make
+  its penalty exactly 0. (An inequality encoded without slack, e.g. (sum w x - C)^2 for sum w x <= C, fails
+  this: it forbids every solution that leaves capacity unused. Do not hide such an error: the decomposition
+  must match build_qubo, so report it via the verification instead.)
+
+{previous_feedback}
+
+Output: Python code only, in a single ```python ... ``` block.

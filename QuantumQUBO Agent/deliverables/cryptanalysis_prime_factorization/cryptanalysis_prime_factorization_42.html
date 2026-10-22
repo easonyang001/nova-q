@@ -42,108 +42,64 @@
     <h2 class='subsection'>Cryptanalysis Prime Factorization Toy Problem</h2>
 
 <h3>Problem Statement</h3>
-Given a target composite integer $N$ and a set of $M$ candidate factor pairs $\{(p_i, q_i)\}_{i=0}^{M-1}$, the goal is to select exactly one candidate pair such that the product of its factors equals $N$. Each candidate pair $i$ is associated with a product error term $(p_i q_i - N)^2$ and an optional instance-specific penalty $\text{pen}_i$. The objective is to minimize the total score, defined as the product error plus the penalty, subject to the constraint that exactly one pair is selected.
+Given a composite integer $N$ and a finite set of $M$ candidate factor pairs $\{(p_i, q_i)\}_{i=0}^{M-1}$, the objective is to select exactly one pair whose product equals $N$. Each candidate is evaluated by a precomputed error metric $e_i = (p_i q_i - N)^2$, potentially augmented with additional penalties for trivial factors. The task is to choose the candidate that minimizes this error while satisfying the selection constraint.
 
 <h3>Decision Variables</h3>
-Let $x_i \in \{0,1\}$ for $i \in \{0, \dots, M-1\}$ be binary decision variables. The variable $x_i$ indicates the selection of candidate pair $i$:
-\[
-x_i = \begin{cases} 
-1 & \text{if candidate pair } i \text{ is selected}, \\
-0 & \text{otherwise}.
-\end{cases}
-\]
+For each candidate $i \in \{0, 1, \dots, M-1\}$, introduce a binary variable $x_i \in \{0,1\}$. The variable $x_i = 1$ indicates that the $i$-th candidate factor pair is selected, and $x_i = 0$ otherwise.
 
 <h3>QUBO Derivation</h3>
-We derive the Quadratic Unconstrained Binary Optimization (QUBO) formulation by encoding the objective function and the selection constraint into a single energy function $H(\mathbf{x})$.
-
-<strong>Step 1: Objective Function.</strong>
-Define the error score for candidate pair $i$ as $E_i = (p_i q_i - N)^2 + \text{pen}_i$. The objective is to minimize the weighted sum of these scores:
-\[
-\min_{\mathbf{x}} \sum_{i=0}^{M-1} E_i x_i.
-\]
-
-<strong>Step 2: Constraint.</strong>
-The requirement to select exactly one pair is expressed as the equality constraint:
-\[
-\sum_{i=0}^{M-1} x_i = 1.
-\]
-
-<strong>Step 3: Penalty Term Expansion.</strong>
-We enforce the constraint using a quadratic penalty term with weight $\lambda > 0$:
-\[
-P(\mathbf{x}) = \lambda \left( \sum_{i=0}^{M-1} x_i - 1 \right)^2.
-\]
-Expanding the square:
-\[
-\left( \sum_{i=0}^{M-1} x_i - 1 \right)^2 = \sum_{i=0}^{M-1} x_i^2 + \sum_{i \neq j} x_i x_j - 2 \sum_{i=0}^{M-1} x_i + 1.
-\]
-Using the idempotent property of binary variables, $x_i^2 = x_i$, and noting that $\sum_{i \neq j} x_i x_j = 2 \sum_{0 \le i < j \le M-1} x_i x_j$, we obtain:
-\[
-\begin{aligned}
-\left( \sum_{i=0}^{M-1} x_i - 1 \right)^2 &= \sum_{i=0}^{M-1} x_i + 2 \sum_{0 \le i < j \le M-1} x_i x_j - 2 \sum_{i=0}^{M-1} x_i + 1 \\
-&= -\sum_{i=0}^{M-1} x_i + 2 \sum_{0 \le i < j \le M-1} x_i x_j + 1.
-\end{aligned}
-\]
-Thus, the penalty contribution is:
-\[
-P(\mathbf{x}) = \lambda \left( -\sum_{i=0}^{M-1} x_i + 2 \sum_{0 \le i < j \le M-1} x_i x_j + 1 \right).
-\]
-
-<strong>Step 4: Combined Hamiltonian.</strong>
-The total QUBO Hamiltonian $H(\mathbf{x})$ combines the objective and penalty terms:
-\[
-H(\mathbf{x}) = \sum_{i=0}^{M-1} E_i x_i + \lambda \left( -\sum_{i=0}^{M-1} x_i + 2 \sum_{0 \le i < j \le M-1} x_i x_j + 1 \right).
-\]
-Grouping terms by variable products:
-\[
-H(\mathbf{x}) = \sum_{i=0}^{M-1} (E_i - \lambda) x_i + \sum_{0 \le i < j \le M-1} (2\lambda) x_i x_j + \lambda.
-\]
-
-<strong>Step 5: Q Matrix and Offset.</strong>
-The QUBO is defined by the upper-triangular matrix $Q$ and scalar offset $c$ such that $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$. Reading off the coefficients from the general form above:
+<strong>Step 1 --- Objective.</strong> The original optimization problem is to minimize the total error over the selected candidate:
 \begin{align}
-Q_{i,i} &= E_i - \lambda, \quad \text{for } i \in \{0, \dots, M-1\}, \\
-Q_{i,j} &= 2\lambda, \quad \text{for } 0 \le i < j \le M-1, \\
+\min_{\mathbf{x} \in \{0,1\}^M} \sum_{i=0}^{M-1} e_i x_i.
+\end{align}
+
+<strong>Step 2 --- Constraint.</strong> The selection must satisfy the cardinality constraint that exactly one candidate is chosen:
+\begin{align}
+\sum_{i=0}^{M-1} x_i = 1.
+\end{align}
+
+<strong>Step 3 --- Penalty Term Expansion.</strong> We convert the equality constraint into a quadratic penalty term with weight $\lambda > 0$:
+\begin{align}
+P(\mathbf{x}) &= \lambda \left( \sum_{i=0}^{M-1} x_i - 1 \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+P(\mathbf{x}) &= \lambda \left( \sum_{i=0}^{M-1} x_i^2 - 2\sum_{i=0}^{M-1} x_i + 1 \right).
+\end{align}
+Applying the idempotent property $x_i^2 = x_i$ for binary variables gives:
+\begin{align}
+P(\mathbf{x}) &= \lambda \left( \sum_{i=0}^{M-1} x_i - 2\sum_{i=0}^{M-1} x_i + 1 \right) = \lambda \left( 1 - \sum_{i=0}^{M-1} x_i \right) = \lambda - \lambda \sum_{i=0}^{M-1} x_i.
+\end{align}
+Thus, the penalty contributes a linear term $-\lambda x_i$ to each variable and a constant offset $\lambda$.
+
+<strong>Step 4 --- Combined Hamiltonian.</strong> Adding the objective and the penalty term produces the full QUBO Hamiltonian:
+\begin{align}
+H(\mathbf{x}) &= \sum_{i=0}^{M-1} e_i x_i + \lambda - \lambda \sum_{i=0}^{M-1} x_i = \sum_{i=0}^{M-1} (e_i - \lambda) x_i + \lambda.
+\end{align}
+
+<strong>Step 5 --- Q Matrix and Offset.</strong> Reading off the coefficients from the general closed form of $H(\mathbf{x})$, the QUBO parameters are:
+\begin{align}
+Q_{i,i} &= e_i - \lambda \quad \text{for } i \in \{0, \dots, M-1\}, \\
+Q_{i,j} &= 0 \quad \text{for } i \neq j, \\
 c &= \lambda.
 \end{align}
 
 <h3>Penalty Weight Justification</h3>
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any infeasible solution has strictly higher energy than any feasible solution. The minimum penalty incurred by any infeasible assignment is $\lambda$ (achieved when $\sum x_i = 0$ or $\sum x_i \ge 2$). The maximum possible objective value for any feasible solution is $\max_i E_i$. Therefore, choosing
-\[
-\lambda > \max_{i \in \{0, \dots, M-1\}} E_i
-\]
-guarantees that the energy of any infeasible solution exceeds the energy of any feasible solution, as the penalty term alone dominates the maximum possible reduction in the objective function.
+Let $E_{\max} = \max_{i} e_i$. To guarantee that any feasible solution (exactly one $x_i=1$) has strictly lower energy than any infeasible solution (zero or multiple $x_i=1$), we require $\lambda > E_{\max}$. If zero variables are selected, the penalty evaluates to $\lambda$. If exactly one variable $x_i$ is selected, the energy is $e_i$. Since $e_i \le E_{\max} < \lambda$, all feasible solutions are energetically favored over the zero-selection case. If two or more variables are selected, the penalty term grows quadratically, yielding an energy of at least $\lambda$, which again exceeds any feasible energy. Therefore, $\lambda > E_{\max}$ ensures that constraint violations are strictly penalized.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^M$ recovers the optimal factor pair. For any feasible solution satisfying $\sum_i x_i = 1$, the penalty term vanishes, and $H(\mathbf{x})$ equals the objective value $\sum_i E_i x_i$. For any infeasible solution, the penalty term is at least $\lambda$. By the choice $\lambda > \max_i E_i$, the energy of any infeasible solution is strictly greater than the energy of any feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must be feasible and corresponds to the candidate pair with the minimum score $E_i$.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^M$ recovers the optimal factor pair because the penalty term enforces the cardinality constraint. Any feasible assignment has energy equal to its objective value, which is bounded above by $E_{\max} < \lambda$. Any infeasible assignment incurs a penalty of at least $\lambda$, making its energy strictly greater than that of any feasible assignment. Consequently, the global minimum of $H$ must correspond to a feasible solution, and among those, it selects the one with the smallest error $e_i$.
 
 <h3>Illustrative Example</h3>
-Consider an instance with $M=3$ candidate pairs and target $N=15$. Let the pairs and penalties be:
-<ul>
-    <li> Pair 0: $(p_0, q_0) = (3, 5)$, $\text{pen}_0 = 0$.
-    <li> Pair 1: $(p_1, q_1) = (1, 15)$, $\text{pen}_1 = 10$.
-    <li> Pair 2: $(p_2, q_2) = (5, 3)$, $\text{pen}_2 = 0$.
-</ul>
-The error scores are $E_0 = (15-15)^2 + 0 = 0$, $E_1 = (15-15)^2 + 10 = 10$, and $E_2 = (15-15)^2 + 0 = 0$.
-We choose $\lambda = 11$, satisfying $\lambda > \max\{0, 10, 0\}$.
-
-The Q matrix entries and offset are:
+Consider an instance with $M=3$ candidates and precomputed errors $e_0 = 4$, $e_1 = 9$, and $e_2 = 1$. We choose $\lambda = 10$, which satisfies $\lambda > \max\{4, 9, 1\}$. Substituting these values into the general formulas yields the diagonal Q matrix entries $Q_{0,0} = 4 - 10 = -6$, $Q_{1,1} = 9 - 10 = -1$, and $Q_{2,2} = 1 - 10 = -9$, with $Q_{i,j} = 0$ for $i \neq j$. The offset is $c = 10$. The concrete Hamiltonian is:
 \begin{align}
-Q_{0,0} &= 0 - 11 = -11, \quad Q_{1,1} = 10 - 11 = -1, \quad Q_{2,2} = 0 - 11 = -11, \\
-Q_{0,1} &= 2(11) = 22, \quad Q_{0,2} = 22, \quad Q_{1,2} = 22, \\
-c &= 11.
+H(x_0, x_1, x_2) = -6x_0 - x_1 - 9x_2 + 10.
 \end{align}
-The resulting Hamiltonian is:
-\[
-H(\mathbf{x}) = -11 x_0 - x_1 - 11 x_2 + 22 x_0 x_1 + 22 x_0 x_2 + 22 x_1 x_2 + 11.
-\]
-Evaluating $H$ for feasible solutions:
-<ul>
-    <li> $\mathbf{x} = (1,0,0)$: $H = -11 + 11 = 0$.
-    <li> $\mathbf{x} = (0,1,0)$: $H = -1 + 11 = 10$.
-    <li> $\mathbf{x} = (0,0,1)$: $H = -11 + 11 = 0$.
-</ul>
-The minimum energy is $0$, achieved by $\mathbf{x} = (1,0,0)$ or $\mathbf{x} = (0,0,1)$, correctly identifying pairs 0 and 2 as optimal factorizations of 15.
+Enumerating the feasible assignments:
+\begin{align}
+H(1,0,0) &= 4, \quad H(0,1,0) = 9, \quad H(0,0,1) = 1.
+\end{align}
+Infeasible assignments (e.g., $x=(1,1,0)$ or $x=(0,0,0)$) yield energies $\ge 10$. The global minimum occurs at $x_2 = 1$ with energy $1$, correctly identifying the second candidate as the optimal factor pair.
   </div>
 
   <div class="src-header">
@@ -155,108 +111,64 @@ The minimum energy is $0$, achieved by $\mathbf{x} = (1,0,0)$ or $\mathbf{x} = (
 \subsection*{Cryptanalysis Prime Factorization Toy Problem}
 
 \paragraph{Problem Statement.}
-Given a target composite integer $N$ and a set of $M$ candidate factor pairs $\{(p_i, q_i)\}_{i=0}^{M-1}$, the goal is to select exactly one candidate pair such that the product of its factors equals $N$. Each candidate pair $i$ is associated with a product error term $(p_i q_i - N)^2$ and an optional instance-specific penalty $\text{pen}_i$. The objective is to minimize the total score, defined as the product error plus the penalty, subject to the constraint that exactly one pair is selected.
+Given a composite integer $N$ and a finite set of $M$ candidate factor pairs $\{(p_i, q_i)\}_{i=0}^{M-1}$, the objective is to select exactly one pair whose product equals $N$. Each candidate is evaluated by a precomputed error metric $e_i = (p_i q_i - N)^2$, potentially augmented with additional penalties for trivial factors. The task is to choose the candidate that minimizes this error while satisfying the selection constraint.
 
 \paragraph{Decision Variables.}
-Let $x_i \in \{0,1\}$ for $i \in \{0, \dots, M-1\}$ be binary decision variables. The variable $x_i$ indicates the selection of candidate pair $i$:
-\[
-x_i = \begin{cases} 
-1 &amp; \text{if candidate pair } i \text{ is selected}, \\
-0 &amp; \text{otherwise}.
-\end{cases}
-\]
+For each candidate $i \in \{0, 1, \dots, M-1\}$, introduce a binary variable $x_i \in \{0,1\}$. The variable $x_i = 1$ indicates that the $i$-th candidate factor pair is selected, and $x_i = 0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-We derive the Quadratic Unconstrained Binary Optimization (QUBO) formulation by encoding the objective function and the selection constraint into a single energy function $H(\mathbf{x})$.
-
-\textbf{Step 1: Objective Function.}
-Define the error score for candidate pair $i$ as $E_i = (p_i q_i - N)^2 + \text{pen}_i$. The objective is to minimize the weighted sum of these scores:
-\[
-\min_{\mathbf{x}} \sum_{i=0}^{M-1} E_i x_i.
-\]
-
-\textbf{Step 2: Constraint.}
-The requirement to select exactly one pair is expressed as the equality constraint:
-\[
-\sum_{i=0}^{M-1} x_i = 1.
-\]
-
-\textbf{Step 3: Penalty Term Expansion.}
-We enforce the constraint using a quadratic penalty term with weight $\lambda &gt; 0$:
-\[
-P(\mathbf{x}) = \lambda \left( \sum_{i=0}^{M-1} x_i - 1 \right)^2.
-\]
-Expanding the square:
-\[
-\left( \sum_{i=0}^{M-1} x_i - 1 \right)^2 = \sum_{i=0}^{M-1} x_i^2 + \sum_{i \neq j} x_i x_j - 2 \sum_{i=0}^{M-1} x_i + 1.
-\]
-Using the idempotent property of binary variables, $x_i^2 = x_i$, and noting that $\sum_{i \neq j} x_i x_j = 2 \sum_{0 \le i &lt; j \le M-1} x_i x_j$, we obtain:
-\[
-\begin{aligned}
-\left( \sum_{i=0}^{M-1} x_i - 1 \right)^2 &amp;= \sum_{i=0}^{M-1} x_i + 2 \sum_{0 \le i &lt; j \le M-1} x_i x_j - 2 \sum_{i=0}^{M-1} x_i + 1 \\
-&amp;= -\sum_{i=0}^{M-1} x_i + 2 \sum_{0 \le i &lt; j \le M-1} x_i x_j + 1.
-\end{aligned}
-\]
-Thus, the penalty contribution is:
-\[
-P(\mathbf{x}) = \lambda \left( -\sum_{i=0}^{M-1} x_i + 2 \sum_{0 \le i &lt; j \le M-1} x_i x_j + 1 \right).
-\]
-
-\textbf{Step 4: Combined Hamiltonian.}
-The total QUBO Hamiltonian $H(\mathbf{x})$ combines the objective and penalty terms:
-\[
-H(\mathbf{x}) = \sum_{i=0}^{M-1} E_i x_i + \lambda \left( -\sum_{i=0}^{M-1} x_i + 2 \sum_{0 \le i &lt; j \le M-1} x_i x_j + 1 \right).
-\]
-Grouping terms by variable products:
-\[
-H(\mathbf{x}) = \sum_{i=0}^{M-1} (E_i - \lambda) x_i + \sum_{0 \le i &lt; j \le M-1} (2\lambda) x_i x_j + \lambda.
-\]
-
-\textbf{Step 5: Q Matrix and Offset.}
-The QUBO is defined by the upper-triangular matrix $Q$ and scalar offset $c$ such that $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$. Reading off the coefficients from the general form above:
+\textbf{Step 1 --- Objective.} The original optimization problem is to minimize the total error over the selected candidate:
 \begin{align}
-Q_{i,i} &amp;= E_i - \lambda, \quad \text{for } i \in \{0, \dots, M-1\}, \\
-Q_{i,j} &amp;= 2\lambda, \quad \text{for } 0 \le i &lt; j \le M-1, \\
+\min_{\mathbf{x} \in \{0,1\}^M} \sum_{i=0}^{M-1} e_i x_i.
+\end{align}
+
+\textbf{Step 2 --- Constraint.} The selection must satisfy the cardinality constraint that exactly one candidate is chosen:
+\begin{align}
+\sum_{i=0}^{M-1} x_i = 1.
+\end{align}
+
+\textbf{Step 3 --- Penalty Term Expansion.} We convert the equality constraint into a quadratic penalty term with weight $\lambda &gt; 0$:
+\begin{align}
+P(\mathbf{x}) &amp;= \lambda \left( \sum_{i=0}^{M-1} x_i - 1 \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+P(\mathbf{x}) &amp;= \lambda \left( \sum_{i=0}^{M-1} x_i^2 - 2\sum_{i=0}^{M-1} x_i + 1 \right).
+\end{align}
+Applying the idempotent property $x_i^2 = x_i$ for binary variables gives:
+\begin{align}
+P(\mathbf{x}) &amp;= \lambda \left( \sum_{i=0}^{M-1} x_i - 2\sum_{i=0}^{M-1} x_i + 1 \right) = \lambda \left( 1 - \sum_{i=0}^{M-1} x_i \right) = \lambda - \lambda \sum_{i=0}^{M-1} x_i.
+\end{align}
+Thus, the penalty contributes a linear term $-\lambda x_i$ to each variable and a constant offset $\lambda$.
+
+\textbf{Step 4 --- Combined Hamiltonian.} Adding the objective and the penalty term produces the full QUBO Hamiltonian:
+\begin{align}
+H(\mathbf{x}) &amp;= \sum_{i=0}^{M-1} e_i x_i + \lambda - \lambda \sum_{i=0}^{M-1} x_i = \sum_{i=0}^{M-1} (e_i - \lambda) x_i + \lambda.
+\end{align}
+
+\textbf{Step 5 --- Q Matrix and Offset.} Reading off the coefficients from the general closed form of $H(\mathbf{x})$, the QUBO parameters are:
+\begin{align}
+Q_{i,i} &amp;= e_i - \lambda \quad \text{for } i \in \{0, \dots, M-1\}, \\
+Q_{i,j} &amp;= 0 \quad \text{for } i \neq j, \\
 c &amp;= \lambda.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any infeasible solution has strictly higher energy than any feasible solution. The minimum penalty incurred by any infeasible assignment is $\lambda$ (achieved when $\sum x_i = 0$ or $\sum x_i \ge 2$). The maximum possible objective value for any feasible solution is $\max_i E_i$. Therefore, choosing
-\[
-\lambda &gt; \max_{i \in \{0, \dots, M-1\}} E_i
-\]
-guarantees that the energy of any infeasible solution exceeds the energy of any feasible solution, as the penalty term alone dominates the maximum possible reduction in the objective function.
+Let $E_{\max} = \max_{i} e_i$. To guarantee that any feasible solution (exactly one $x_i=1$) has strictly lower energy than any infeasible solution (zero or multiple $x_i=1$), we require $\lambda &gt; E_{\max}$. If zero variables are selected, the penalty evaluates to $\lambda$. If exactly one variable $x_i$ is selected, the energy is $e_i$. Since $e_i \le E_{\max} &lt; \lambda$, all feasible solutions are energetically favored over the zero-selection case. If two or more variables are selected, the penalty term grows quadratically, yielding an energy of at least $\lambda$, which again exceeds any feasible energy. Therefore, $\lambda &gt; E_{\max}$ ensures that constraint violations are strictly penalized.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^M$ recovers the optimal factor pair. For any feasible solution satisfying $\sum_i x_i = 1$, the penalty term vanishes, and $H(\mathbf{x})$ equals the objective value $\sum_i E_i x_i$. For any infeasible solution, the penalty term is at least $\lambda$. By the choice $\lambda &gt; \max_i E_i$, the energy of any infeasible solution is strictly greater than the energy of any feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must be feasible and corresponds to the candidate pair with the minimum score $E_i$.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^M$ recovers the optimal factor pair because the penalty term enforces the cardinality constraint. Any feasible assignment has energy equal to its objective value, which is bounded above by $E_{\max} &lt; \lambda$. Any infeasible assignment incurs a penalty of at least $\lambda$, making its energy strictly greater than that of any feasible assignment. Consequently, the global minimum of $H$ must correspond to a feasible solution, and among those, it selects the one with the smallest error $e_i$.
 
 \paragraph{Illustrative Example.}
-Consider an instance with $M=3$ candidate pairs and target $N=15$. Let the pairs and penalties be:
-\begin{itemize}
-    \item Pair 0: $(p_0, q_0) = (3, 5)$, $\text{pen}_0 = 0$.
-    \item Pair 1: $(p_1, q_1) = (1, 15)$, $\text{pen}_1 = 10$.
-    \item Pair 2: $(p_2, q_2) = (5, 3)$, $\text{pen}_2 = 0$.
-\end{itemize}
-The error scores are $E_0 = (15-15)^2 + 0 = 0$, $E_1 = (15-15)^2 + 10 = 10$, and $E_2 = (15-15)^2 + 0 = 0$.
-We choose $\lambda = 11$, satisfying $\lambda &gt; \max\{0, 10, 0\}$.
-
-The Q matrix entries and offset are:
+Consider an instance with $M=3$ candidates and precomputed errors $e_0 = 4$, $e_1 = 9$, and $e_2 = 1$. We choose $\lambda = 10$, which satisfies $\lambda &gt; \max\{4, 9, 1\}$. Substituting these values into the general formulas yields the diagonal Q matrix entries $Q_{0,0} = 4 - 10 = -6$, $Q_{1,1} = 9 - 10 = -1$, and $Q_{2,2} = 1 - 10 = -9$, with $Q_{i,j} = 0$ for $i \neq j$. The offset is $c = 10$. The concrete Hamiltonian is:
 \begin{align}
-Q_{0,0} &amp;= 0 - 11 = -11, \quad Q_{1,1} = 10 - 11 = -1, \quad Q_{2,2} = 0 - 11 = -11, \\
-Q_{0,1} &amp;= 2(11) = 22, \quad Q_{0,2} = 22, \quad Q_{1,2} = 22, \\
-c &amp;= 11.
+H(x_0, x_1, x_2) = -6x_0 - x_1 - 9x_2 + 10.
 \end{align}
-The resulting Hamiltonian is:
-\[
-H(\mathbf{x}) = -11 x_0 - x_1 - 11 x_2 + 22 x_0 x_1 + 22 x_0 x_2 + 22 x_1 x_2 + 11.
-\]
-Evaluating $H$ for feasible solutions:
-\begin{itemize}
-    \item $\mathbf{x} = (1,0,0)$: $H = -11 + 11 = 0$.
-    \item $\mathbf{x} = (0,1,0)$: $H = -1 + 11 = 10$.
-    \item $\mathbf{x} = (0,0,1)$: $H = -11 + 11 = 0$.
-\end{itemize}
-The minimum energy is $0$, achieved by $\mathbf{x} = (1,0,0)$ or $\mathbf{x} = (0,0,1)$, correctly identifying pairs 0 and 2 as optimal factorizations of 15.</pre>
+Enumerating the feasible assignments:
+\begin{align}
+H(1,0,0) &amp;= 4, \quad H(0,1,0) = 9, \quad H(0,0,1) = 1.
+\end{align}
+Infeasible assignments (e.g., $x=(1,1,0)$ or $x=(0,0,0)$) yield energies $\ge 10$. The global minimum occurs at $x_2 = 1$ with energy $1$, correctly identifying the second candidate as the optimal factor pair.</pre>
 
   <script>
     function copyLatex(btn) {

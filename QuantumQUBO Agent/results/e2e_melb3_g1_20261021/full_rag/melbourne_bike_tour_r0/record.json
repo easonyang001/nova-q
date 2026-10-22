@@ -1,0 +1,35 @@
+{
+ "case": "melbourne_bike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 341.8
+  },
+  "model": {
+   "ok": false,
+   "seconds": 3625.3,
+   "error": "ValueError: model validation failed: empty answer"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [],
+ "cost": {
+  "llm_tokens": 16523,
+  "solver_calls": null
+ },
+ "seconds": 3967.1
+}

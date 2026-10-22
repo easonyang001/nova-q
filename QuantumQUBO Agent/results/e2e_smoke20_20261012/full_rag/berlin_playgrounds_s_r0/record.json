@@ -1,0 +1,394 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 88.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 225.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 70.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1035.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 676.1
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "修正未通過檢查，保留先前版本：修正後仍與需求檢查不一致：the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'candidates': '040112'}, {'candidates': '040109'}, {'candidates': '040111'}]; the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'candidates': '040112'}, {'candidates': '040108'}, {'candidates': '040109'}]; the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'candidates': '040107'}, {'candidates': '040106'}, {'candidates': '040110'}]"
+  },
+  {
+   "workflow": "修正未通過檢查，保留先前版本：修正後仍與需求檢查不一致：the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'candidates': '040112'}, {'candidates': '040109'}, {'candidates': '040111'}]; the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'candidates': '040112'}, {'candidates': '040108'}, {'candidates': '040109'}]; the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'candidates': '040107'}, {'candidates': '040106'}, {'candidates': '040110'}]"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Direct binary formulation with helper coverage indicators. ~30 candidates + ~150 valid blocks = ~180 variables. Fits easily within 1,500 variable threshold for CGA GPU annealer. Uses linear constraints for cardinality and coverage implication. Invalid blocks are removed in data generation to ensure every block has a variable.",
+ "schema": {
+  "sets": {
+   "candidates": {
+    "meaning": "LOR planning area center",
+    "source": "public"
+   },
+   "blocks": {
+    "meaning": "Street block (only those not already covered by existing playgrounds)",
+    "source": "public"
+   },
+   "existing_playgrounds": {
+    "meaning": "Existing playground locations",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat_c": {
+    "meaning": "Latitude of candidate",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_c": {
+    "meaning": "Longitude of candidate",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "lat_b": {
+    "meaning": "Latitude of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_b": {
+    "meaning": "Longitude of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Population of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat_e": {
+    "meaning": "Latitude of existing playground",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_e": {
+    "meaning": "Longitude of existing playground",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "Einwohnerdichte_2019_Umweltatlas_Einwohnerdichte_2019_WFS_la.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "distance_to",
+   "in_area"
+  ],
+  "notes": "Filtered existing playgrounds and blocks to Friedrichshain-Kreuzberg district. \nExcluded blocks within 250m of existing playgrounds. \nGenerated candidate locations by computing the centroid of blocks grouped by LOR code extracted from block keys (digits 5-8), \nas LOR shapefiles were not provided. \nk=3 is fixed per specification.",
+  "prep_log": "**資料來源**\n\n- Einwohnerdichte 2019 (Umweltatlas) — Einwohnerdichte 2019 (WFS layer)（catalogue govdata.de） <https://www.govdata.de/suche/daten/einwohnerdichte-2019-umweltatlas>，授權：待確認，取得 2026-10-12T20:08:04.702718+00:00\n- Grünanlagenbestand Berlin (einschließlich der öffentlichen Spielplätze) - [WFS] — Spielplätze (WFS layer)（catalogue datenregister.berlin.de） <https://daten.berlin.de/datensaetze/grunanlagenbestand-berlin-einschliesslich-der-offentlichen-spielplatze-wfs-737fd0a4>，授權：待確認，取得 2026-10-12T20:08:12.535397+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter existing playgrounds to Friedrichshain-Kreuzberg | 1886 | 166 |  |\n| 依實際邊界保留區域 ['Friedrichshain-Kreuzberg'] | 15100 | 488 | 各區點數 {'Friedrichshain-Kreuzberg': 488} |\n| Filter blocks to Friedrichshain-Kreuzberg | 15100 | 488 |  |\n| Drop missing lat/lon/pop | 488 | 488 |  |\n| Derive LOR centers from block centroids | 488 | 418 |  |\n| Exclude blocks within 250m of existing playgrounds | 488 | 75 |  |",
+  "flags": [],
+  "review_required": [
+   "candidates: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "candidates: ['LOR centers derived from block centroids grouped by LOR code extracted from block key (digits 5-8)']",
+   "blocks: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "existing_playgrounds: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat_c: 尚未聲明 unit，需求為 deg_lat",
+   "lat_c: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon_c: 尚未聲明 unit，需求為 deg_lon",
+   "lon_c: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat_b: 尚未聲明 unit，需求為 deg_lat",
+   "lat_b: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon_b: 尚未聲明 unit，需求為 deg_lon",
+   "lon_b: 缺少實際來源對應，不能確認為公開真實資料",
+   "pop: 尚未聲明 unit，需求為 persons",
+   "pop: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat_e: 尚未聲明 unit，需求為 deg_lat",
+   "lat_e: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon_e: 尚未聲明 unit，需求為 deg_lon",
+   "lon_e: 缺少實際來源對應，不能確認為公開真實資料",
+   "k: ['Fixed at 3 as per spec']",
+   "adapter 沒有聲明這些欄位的來源與單位：lat_b, lat_c, lat_e, lon_b, lon_c, lon_e, pop"
+  ],
+  "sources": [
+   {
+    "title": "Einwohnerdichte 2019 (Umweltatlas) — Einwohnerdichte 2019 (WFS layer)",
+    "url": "https://www.govdata.de/suche/daten/einwohnerdichte-2019-umweltatlas",
+    "resource_url": "https://gdi.berlin.de/services/wfs/ua_einwohnerdichte_2019?service=WFS&version=2.0.0&request=GetFeature&typeNames=ua_einwohnerdichte_2019%3Aua_einwohnerdichte_2019&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "catalogue govdata.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T20:08:04.702718+00:00",
+    "sha256": "a23ce8a1185b445564f474430b0f85cc510b9038d5c83034f688e550f632dabf",
+    "bytes": 11354889
+   },
+   {
+    "title": "Grünanlagenbestand Berlin (einschließlich der öffentlichen Spielplätze) - [WFS] — Spielplätze (WFS layer)",
+    "url": "https://daten.berlin.de/datensaetze/grunanlagenbestand-berlin-einschliesslich-der-offentlichen-spielplatze-wfs-737fd0a4",
+    "resource_url": "https://gdi.berlin.de/services/wfs/gruenanlagen?service=WFS&version=2.0.0&request=GetFeature&typeNames=gruenanlagen%3Aspielplaetze&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "catalogue datenregister.berlin.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T20:08:12.535397+00:00",
+    "sha256": "03c263a506887a3398f6ca2345cb25d466d236093bfa76a0ad73d2db080c85da",
+    "bytes": 4540411
+   }
+  ],
+  "n_variables": 493,
+  "n_constraints": 76,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: UFuncTypeError: Cannot cast ufunc 'bitwise_or' output from dtype('O') to dtype('bool') with casting rule 'same_kind'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/datacheck.py\", line 34, in _expected\n    out = ns[\"expected\"]({k: v.copy() for k, v in tables.items()})\n  File \"<data_checker>\", line 11, in expected\nnumpy._core._exceptions._UFuncOutputCastingError: Cannot cast ufunc 'bitwise_or' output from dtype('O') to dtype('bool') with casting rule 'same_kind'\n"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "issues",
+   "version": "deee627339252f5718a63a7b",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.50 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.498
+   }
+  },
+  {
+   "status": "issues",
+   "version": "deee627339252f5718a63a7b",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.50 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.498
+   }
+  },
+  {
+   "status": "issues",
+   "version": "deee627339252f5718a63a7b",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.50 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.498
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "deee627339252f5718a63a7b",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "已有可行方案，達到簡單基準的品質；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": -11256.0,
+  "baseline_objective": -11256.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "candidates",
+    "mapping": "coordinates within 200 m",
+    "entity_set_declared": true,
+    "instance_entities": 418,
+    "mapped": 112,
+    "duplicates": [
+     "Am Berlin Museum",
+     "Andreasviertel",
+     "Boxhagener Platz",
+     "Chamissokiez",
+     "Forckenbeckplatz",
+     "Friedenstraße",
+     "Graefekiez Nord",
+     "Graefekiez Süd",
+     "Hausburgviertel",
+     "Köpenicker Straße",
+     "Lausitzer Platz",
+     "Moritzplatz",
+     "Niederbarnimstraße",
+     "Oranienplatz",
+     "Pettenkofer Straße",
+     "Prinzenstraße",
+     "Rathaus Yorckstraße",
+     "Reichenberger Straße Ost",
+     "Reichenberger Straße West",
+     "Revaler Straße"
+    ],
+    "missing_real_entities": 2,
+    "missing_examples": [
+     "Barnimkiez",
+     "Wriezener Bahnhof"
+    ],
+    "unmapped_ids": [
+     "2001",
+     "2002",
+     "2004",
+     "2005",
+     "2006",
+     "2007",
+     "2009",
+     "2010",
+     "2011",
+     "2012"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "resident_totals": {
+     "lat_c": 21947,
+     "lon_c": 5614,
+     "lat_b": 3938,
+     "lon_b": 1007,
+     "pop": 41527,
+     "lat_e": 8716,
+     "lon_e": 2229
+    },
+    "resident_truth": {
+     "all": 290380,
+     "not_near_a_playground": 40673
+    }
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "blocks"
+     ],
+     [
+      "candidates"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 14,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 8788.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 471122,
+  "solver_calls": 1
+ },
+ "seconds": 2096.4
+}

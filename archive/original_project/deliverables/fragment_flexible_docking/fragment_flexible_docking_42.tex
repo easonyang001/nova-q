@@ -1,0 +1,103 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+
+\title{QUBO Formulation: Fragment-Based Flexible Docking Placement Selection Problem}
+\date{}
+
+\begin{document}
+\maketitle
+
+\subsection*{Fragment-Based Flexible Docking Placement Selection Problem}
+
+\paragraph{Problem Statement.}
+In fragment-based flexible protein--ligand docking, a ligand is decomposed into a set of rigid fragments. For each fragment, a discrete set of candidate geometric placements within the protein binding pocket is precomputed. Each candidate placement is associated with a protein--fragment interaction energy. Additionally, pairs of placements belonging to different fragments interact through geometric clash penalties and, when chemically bonded and geometrically compatible, bond rewards. The optimization task is to select exactly one candidate placement for each fragment such that the resulting collection of placements minimizes the total docking score, defined as the sum of individual placement energies, plus the sum of clash penalties between selected pairs, minus the sum of bond rewards between selected pairs.
+
+\paragraph{Decision Variables.}
+Let $\mathcal{F}$ denote the set of ligand fragments, indexed by $f \in \mathcal{F}$. For each fragment $f$, let $\mathcal{P}_f$ denote the finite set of candidate placements, indexed by $p \in \mathcal{P}_f$. We introduce binary decision variables $x_{f,p} \in \{0,1\}$ for all $f \in \mathcal{F}$ and $p \in \mathcal{P}_f$, where $x_{f,p} = 1$ if and only if placement $p$ of fragment $f$ is selected, and $x_{f,p} = 0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 -- Original Objective.}
+The docking score to be minimized is given by
+\begin{align}
+J(\mathbf{x}) = \sum_{f \in \mathcal{F}} \sum_{p \in \mathcal{P}_f} E_{f,p} \, x_{f,p} 
++ \sum_{(f,p),(g,q) \in \mathcal{C}} C_{(f,p),(g,q)} \, x_{f,p} x_{g,q} 
+- \sum_{(f,p),(g,q) \in \mathcal{B}} B_{(f,p),(g,q)} \, x_{f,p} x_{g,q},
+\end{align}
+where $E_{f,p}$ is the interaction energy of placement $(f,p)$, $\mathcal{C}$ is the set of placement pairs that geometrically clash with penalty coefficients $C_{(f,p),(g,q)} \geq 0$, and $\mathcal{B}$ is the set of bonded, compatible placement pairs with reward coefficients $B_{(f,p),(g,q)} \geq 0$.
+
+\textbf{Step 2 -- Constraints.}
+Exactly one placement must be chosen per fragment:
+\begin{align}
+\sum_{p \in \mathcal{P}_f} x_{f,p} = 1 \quad \forall f \in \mathcal{F}.
+\end{align}
+
+\textbf{Step 3 -- Penalty Term Expansion.}
+We enforce the constraints using a quadratic penalty method with weight $\lambda > 0$. The penalty function is
+\begin{align}
+P(\mathbf{x}) = \lambda \sum_{f \in \mathcal{F}} \left( \sum_{p \in \mathcal{P}_f} x_{f,p} - 1 \right)^2.
+\end{align}
+Expanding the square for a fixed fragment $f$:
+\begin{align}
+\left( \sum_{p \in \mathcal{P}_f} x_{f,p} - 1 \right)^2 
+&= \sum_{p \in \mathcal{P}_f} x_{f,p}^2 - 2 \sum_{p \in \mathcal{P}_f} x_{f,p} + 1 + \sum_{p \in \mathcal{P}_f} \sum_{q \in \mathcal{P}_f, q \neq p} x_{f,p} x_{f,q}.
+\end{align}
+Using the idempotent property of binary variables, $x_{f,p}^2 = x_{f,p}$, the expression simplifies to
+\begin{align}
+\sum_{p \in \mathcal{P}_f} x_{f,p} - 2 \sum_{p \in \mathcal{P}_f} x_{f,p} + 1 + \sum_{p \neq q} x_{f,p} x_{f,q} 
+= 1 - \sum_{p \in \mathcal{P}_f} x_{f,p} + \sum_{p \neq q} x_{f,p} x_{f,q}.
+\end{align}
+Substituting back into $P(\mathbf{x})$ yields the general penalty contribution:
+\begin{align}
+P(\mathbf{x}) = \lambda \sum_{f \in \mathcal{F}} \left( 1 - \sum_{p \in \mathcal{P}_f} x_{f,p} + \sum_{p \neq q} x_{f,p} x_{f,q} \right).
+\end{align}
+
+\textbf{Step 4 -- Combined QUBO Hamiltonian.}
+The total QUBO Hamiltonian $H(\mathbf{x}) = J(\mathbf{x}) + P(\mathbf{x})$ is obtained by collecting linear and quadratic terms:
+\begin{align}
+H(\mathbf{x}) &= \sum_{f \in \mathcal{F}} \sum_{p \in \mathcal{P}_f} (E_{f,p} - \lambda) \, x_{f,p} 
++ \sum_{(f,p),(g,q) \in \mathcal{C}} C_{(f,p),(g,q)} \, x_{f,p} x_{g,q} 
+- \sum_{(f,p),(g,q) \in \mathcal{B}} B_{(f,p),(g,q)} \, x_{f,p} x_{g,q} \nonumber \\
+&\quad + \lambda \sum_{f \in \mathcal{F}} \sum_{p \neq q} x_{f,p} x_{f,q} 
++ \lambda |\mathcal{F}|.
+\end{align}
+
+\textbf{Step 5 -- Q Matrix Entries and Offset.}
+Writing $H(\mathbf{x})$ in standard QUBO form $H(\mathbf{x}) = \sum_{f,p} Q_{f,p}^{(1)} x_{f,p} + \sum_{(f,p),(g,q)} Q_{(f,p),(g,q)}^{(2)} x_{f,p} x_{g,q} + c$, the coefficients are:
+\begin{align}
+Q_{f,p}^{(1)} &= E_{f,p} - \lambda, \\
+Q_{(f,p),(g,q)}^{(2)} &= 
+\begin{cases}
+C_{(f,p),(g,q)} & \text{if } (f,p),(g,q) \in \mathcal{C}, \\
+-B_{(f,p),(g,q)} & \text{if } (f,p),(g,q) \in \mathcal{B}, \\
+\lambda & \text{if } f = g \text{ and } p \neq q, \\
+0 & \text{otherwise},
+\end{cases} \\
+c &= \lambda |\mathcal{F}|.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any constraint violation is energetically unfavorable compared to any feasible configuration. Let $M_{\max} = \max_{f \in \mathcal{F}} |\mathcal{P}_f|$ and let $W_{\max} = \max \{ |E_{f,p}|, |C_{(f,p),(g,q)}|, |B_{(f,p),(g,q)}| \}$. We require
+\begin{align}
+\lambda > W_{\max} \cdot M_{\max}.
+\end{align}
+If a constraint for fragment $f$ is violated, the term $\left( \sum_{p} x_{f,p} - 1 \right)^2$ evaluates to at least $1$. The resulting penalty increase is at least $\lambda$. The maximum possible reduction in the objective function $J(\mathbf{x})$ achievable by altering placement choices is bounded by $W_{\max} \cdot M_{\max}$. Since $\lambda$ strictly exceeds this bound, any infeasible assignment incurs a higher energy than the best feasible assignment, guaranteeing that the penalty dominates any potential objective gain from constraint violation.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{|\mathcal{F}| \times M_{\max}}$ recovers the optimal docking placement selection. For any feasible solution, the penalty terms vanish, so $H(\mathbf{x}) = J(\mathbf{x})$. For any infeasible solution, at least one constraint is violated, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, the energy of any infeasible solution strictly exceeds the energy of the optimal feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must occur at a feasible point, and among feasible points, $H(\mathbf{x})$ coincides with $J(\mathbf{x})$, ensuring the global minimum corresponds exactly to the placement selection that minimizes the original docking score.
+
+\paragraph{Illustrative Example.}
+Consider a minimal instance with $|\mathcal{F}| = 2$ fragments and $|\mathcal{P}_0| = |\mathcal{P}_1| = 3$ placements per fragment. Let the interaction energies be $E_{0,0}=-10, E_{0,1}=-5, E_{0,2}=-8$ and $E_{1,0}=-12, E_{1,1}=-6, E_{1,2}=-9$. Suppose placement $(0,0)$ clashes with $(1,0)$ with penalty $C_{(0,0),(1,0)} = 20$, and placements $(0,1)$ and $(1,1)$ are bonded and compatible with reward $B_{(0,1),(1,1)} = 5$. All other pairwise terms are zero. We set $\lambda = 1000$.
+
+The concrete linear coefficients are $Q_{f,p}^{(1)} = E_{f,p} - 1000$. The concrete quadratic coefficients are $Q_{(0,0),(1,0)}^{(2)} = 20$, $Q_{(0,1),(1,1)}^{(2)} = -5$, and $Q_{(f,p),(f,q)}^{(2)} = 1000$ for $p \neq q$ within the same fragment. The offset is $c = 1000 \times 2 = 2000$.
+
+The resulting Hamiltonian is
+\begin{align}
+H(\mathbf{x}) &= \sum_{f=0}^{1} \sum_{p=0}^{2} (E_{f,p} - 1000) x_{f,p} 
++ 20 x_{0,0} x_{1,0} - 5 x_{0,1} x_{1,1} 
++ 1000 \sum_{f=0}^{1} \sum_{p \neq q} x_{f,p} x_{f,q} + 2000.
+\end{align}
+Evaluating feasible configurations (where $x_{0,0}+x_{0,1}+x_{0,2}=1$ and $x_{1,0}+x_{1,1}+x_{1,2}=1$), the minimum energy occurs at $x_{0,2}=1, x_{1,0}=1$ (all other $x$ zero), yielding $H = (-8-1000) + (-12-1000) + 2000 = -1000$. This corresponds to selecting placement $2$ of fragment $0$ and placement $0$ of fragment $1$, with a minimum total docking score of $-20$.
+
+\end{document}

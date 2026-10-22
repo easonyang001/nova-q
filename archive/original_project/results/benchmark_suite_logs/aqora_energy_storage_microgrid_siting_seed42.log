@@ -1,0 +1,151 @@
+Benchmark    : aqora_energy_storage_microgrid_siting
+Test input   : benchmarks\aqora_energy_storage_microgrid_siting\sample_cases.txt (cases built after formulation)
+Seed         : 42
+[00:22:49] === Pipeline START | run_id=aqora_energy_storage_microgrid_siting_42_48dff9dc ===
+[00:22:49] Benchmark : aqora_energy_storage_microgrid_siting  |  seed=42
+[00:22:49] Models    : planner_agent=qwen/qwen3.6-35b-a3b
+[00:22:49]             formulizer_agent=qwen/qwen3.6-35b-a3b
+[00:22:49]             judge_agent=qwen/qwen3.6-35b-a3b
+[00:22:49]             coder_agent=qwen/qwen3-coder-next
+[00:22:49] Cache     : disabled
+[00:22:49] [Stage 1] Planner � attempt 1/1
+[00:23:53] [Stage 1] Planner OK � 1 vars, 1 constraints
+[00:23:53] [Stage 1b] Judge � checking spec matches NL ...
+[00:24:01] [Stage 1b] Spec verification PASSED
+[00:24:01] [Stage 2] Formulizer � attempt 1/1
+[00:25:06] [Stage 2] Formulation OK � n_vars=3, 6 obj terms, 1 penalty groups
+[00:25:06] [Stage 2b] Judge � checking QUBO formulation ...
+[00:26:10] [Stage 2b] Formulation verification PASSED
+[00:26:10] [Stage 2.5] Building test cases from user input ...
+[00:27:18] [Stage 2.5] Wrote 2 case(s) to transcript, loaded 2 total
+[00:27:18] [Stage 3] Coder � attempt 1/1
+[00:27:41] [Stage 3] Code generated and compiled OK
+[00:27:41] [Stage 3b] Test Runner � running 2 pre-computed test cases ...
+[00:27:41] [Stage 3b] Tests: 2/2 passed (100%)  failure_class=success
+[00:27:41] === Pipeline SUCCESS ===
+[00:27:41] Finalizing | status=success | tokens=26557 | cost=$0.0193 | wall=292.8s
+
+Status:       success
+Iterations:   2
+Wall time:    292.8s
+Tokens used:  26557
+Verification: {'passed': 2, 'total': 2}
+
+[latex] Generating LaTeX deliverable (model=qwen/qwen3.6-35b-a3b) ...
+[latex] Saved to deliverables\aqora_energy_storage_microgrid_siting\aqora_energy_storage_microgrid_siting_42.tex
+
+============================================================
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Energy Storage and Microgrid Siting Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Energy Storage and Microgrid Siting Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ candidate locations for energy storage systems or microgrids, each location $i$ is associated with a resilience benefit score $b_i$, an investment cost $c_i$, and pairwise overlap penalties $p_{ij}$ that quantify the redundancy cost when two selected sites protect the same load region. The task is to select exactly $K$ distinct sites such that the total siting score is maximized. The total siting score is defined as the sum of the resilience benefits of the selected sites, minus the sum of their investment costs, minus the sum of the pairwise overlap penalties among all selected pairs.
+
+\paragraph{Decision Variables.}
+For each candidate site $i \in \{0, 1, \dots, N-1\}$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ takes the value $1$ if site $i$ is selected for deployment, and $0$ otherwise. The complete decision vector is denoted by $x = (x_0, x_1, \dots, x_{N-1}) \in \{0, 1\}^N$.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 --- Objective formulation.} The original problem requires maximizing the total siting score. In QUBO convention, we minimize the negative of this objective. The original objective function is
+\begin{align}
+    f(x) = \sum_{i=0}^{N-1} (b_i - c_i) x_i - \sum_{0 \le i < j \le N-1} p_{ij} x_i x_j.
+\end{align}
+Negating $f(x)$ to obtain a minimization problem yields the objective Hamiltonian:
+\begin{align}
+    H_{\text{obj}}(x) = \sum_{i=0}^{N-1} (c_i - b_i) x_i + \sum_{0 \le i < j \le N-1} p_{ij} x_i x_j.
+\end{align}
+
+\textbf{Step 2 --- Constraint formulation.} The requirement to select exactly $K$ sites is expressed as the equality constraint:
+\begin{align}
+    \sum_{i=0}^{N-1} x_i = K.
+\end{align}
+
+\textbf{Step 3 --- Penalty term expansion.} We enforce the constraint by adding a quadratic penalty term to the objective, scaled by a positive weight $\lambda$:
+\begin{align}
+    H_{\text{pen}}(x) = \lambda \left( \sum_{i=0}^{N-1} x_i - K \right)^2.
+\end{align}
+Expanding the squared term gives:
+\begin{align}
+    H_{\text{pen}}(x) = \lambda \left( \left( \sum_{i=0}^{N-1} x_i \right)^2 - 2K \sum_{i=0}^{N-1} x_i + K^2 \right).
+\end{align}
+Using the algebraic identity $\left( \sum_{i} x_i \right)^2 = \sum_{i} x_i^2 + \sum_{i \neq j} x_i x_j$ and the idempotent property of binary variables $x_i^2 = x_i$, we rewrite the quadratic sum as:
+\begin{align}
+    \left( \sum_{i=0}^{N-1} x_i \right)^2 = \sum_{i=0}^{N-1} x_i + 2 \sum_{0 \le i < j \le N-1} x_i x_j.
+\end{align}
+Substituting this back into the penalty expression and collecting like terms yields:
+\begin{align}
+    H_{\text{pen}}(x) = \lambda(1 - 2K) \sum_{i=0}^{N-1} x_i + 2\lambda \sum_{0 \le i < j \le N-1} x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 4 --- Combined Hamiltonian.} Adding the objective and penalty Hamiltonians gives the total QUBO energy function:
+\begin{align}
+    H(x) = H_{\text{obj}}(x) + H_{\text{pen}}(x) = \sum_{i=0}^{N-1} \left[ (c_i - b_i) + \lambda(1 - 2K) \right] x_i + \sum_{0 \le i < j \le N-1} \left[ p_{ij} + 2\lambda \right] x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 5 --- Q matrix and offset.} Reading off the coefficients from the general closed form of $H(x)$, the upper-triangular QUBO matrix entries and constant offset are:
+\begin{align}
+    Q_{i,i} &= (c_i - b_i) + \lambda(1 - 2K), & i \in \{0, \dots, N-1\}, \\
+    Q_{i,j} &= p_{ij} + 2\lambda, & 0 \le i < j \le N-1, \\
+    Q_{i,j} &= 0, & i > j, \\
+    c &= \lambda K^2. &
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the exact-$K$ constraint increases the total energy more than the maximum possible improvement in the objective function from selecting or deselecting a single site. The maximum absolute value of any single-variable coefficient in the original objective is $\max_{i} |c_i - b_i|$. Therefore, selecting $\lambda > \max_{i} |c_i - b_i|$ guarantees that deviating from exactly $K$ selected sites by even one unit incurs a penalty strictly greater than the best possible net benefit gain from any individual site, thereby enforcing feasibility.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0, 1\}^N$ recovers the optimal solution because the penalty term is non-negative and vanishes exactly when $\sum_{i} x_i = K$. For any feasible assignment, $H(x)$ equals the original objective function to be minimized. For any infeasible assignment, the penalty term strictly increases $H(x)$. By construction of $\lambda$, the energy of any infeasible solution exceeds that of at least one feasible solution, ensuring that the global minimum of $H(x)$ must occur at a feasible point that simultaneously minimizes the original objective.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N=3$ candidate sites and $K=2$ required selections. Let the benefits be $b_0=10, b_1=8, b_2=12$, the costs be $c_0=4, c_1=3, c_2=5$, and the pairwise overlap penalties be $p_{01}=2, p_{02}=1, p_{12}=3$. The maximum absolute single-variable coefficient is $\max(|4-10|, |3-8|, |5-12|) = 7$, so we choose $\lambda = 10$. Substituting these values into the general formulas yields the concrete objective Hamiltonian $H_{\text{obj}}(x) = -6x_0 - 5x_1 - 7x_2 + 2x_0x_1 + 1x_0x_2 + 3x_1x_2$ and the concrete penalty term $H_{\text{pen}}(x) = -20x_0 - 20x_1 - 20x_2 + 20x_0x_1 + 20x_0x_2 + 20x_1x_2 + 40$. Summing these yields the total Hamiltonian $H(x) = -36x_0 - 35x_1 - 37x_2 + 22x_0x_1 + 21x_0x_2 + 23x_1x_2 + 40$. The resulting QUBO coefficients are:
+\begin{align}
+    Q_{0,0} &= -36, & Q_{1,1} &= -35, & Q_{2,2} &= -37, \\
+    Q_{0,1} &= 22, & Q_{0,2} &= 21, & Q_{1,2} &= 23, & c &= 40.
+\end{align}
+Enumerating the feasible solutions satisfying $x_0+x_1+x_2=2$:
+\begin{align}
+    x^{(1)} &= (1,1,0) \Rightarrow H = -36 - 35 + 22 + 40 = -9, \\
+    x^{(2)} &= (1,0,1) \Rightarrow H = -36 - 37 + 21 + 40 = -12, \\
+    x^{(3)} &= (0,1,1) \Rightarrow H = -35 - 37 + 23 + 40 = -9.
+\end{align}
+The global minimum occurs at $x^* = (1,0,1)$ with energy $-12$, corresponding to the maximum siting score of $12$. This confirms that sites $0$ and $2$ should be selected.
+
+\end{document}
+============================================================
+
+[html] Saved to aqora_energy_storage_microgrid_siting/aqora_energy_storage_microgrid_siting_42.html
+[view] Opening aqora_energy_storage_microgrid_siting_42.html ...
+[pdf] Compiling aqora_energy_storage_microgrid_siting_42.tex ...
+[pdf] PDF also saved to aqora_energy_storage_microgrid_siting/aqora_energy_storage_microgrid_siting_42.pdf
+
+Full result:
+{
+  "run_id": "aqora_energy_storage_microgrid_siting_42_48dff9dc",
+  "benchmark": "aqora_energy_storage_microgrid_siting",
+  "seed": 42,
+  "status": "success",
+  "n_iterations": 2,
+  "wall_time_s": 292.75048089027405,
+  "models_used": {
+    "planner_agent": "qwen/qwen3.6-35b-a3b",
+    "formulizer_agent": "qwen/qwen3.6-35b-a3b",
+    "judge_agent": "qwen/qwen3.6-35b-a3b",
+    "coder_agent": "qwen/qwen3-coder-next",
+    "debugger_agent": "qwen/qwen3.6-35b-a3b"
+  },
+  "tokens_used": 26557,
+  "cost_used": 0.0192902613,
+  "verification": {
+    "passed": 2,
+    "total": 2
+  },
+  "error_trace": "",
+  "failure_modes": []
+}

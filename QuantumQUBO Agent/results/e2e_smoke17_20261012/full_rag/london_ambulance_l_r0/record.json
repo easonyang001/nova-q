@@ -1,0 +1,261 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 141.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 133.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 74.5
+  },
+  "data": {
+   "ok": true,
+   "seconds": 269.3
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1148.3
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 2.9
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "資料修復失敗：RuntimeError: AttributeError: Can only use .str accessor with string values, not floating\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 166, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 35, in load_data\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 101, in wrapped\n    return obj(*a, **kw)\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qu"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 2,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Standard P-median with k-nearest candidate restriction (k=5). Reduces y-variables from N^2 to N*k. Total variables ~408 for N=68, well within the 3,600 CGA limit. Nearest assignment is enforced by restricting y to the 5 closest candidates and minimizing weighted distance, which naturally selects the nearest open facility among them.",
+ "schema": {
+  "sets": {
+   "lsoa": {
+    "meaning": "LSOA population-weighted centroid in Camden & Islington",
+    "source": "public",
+    "reducible": null
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "2021 census resident population",
+    "index": [
+     "lsoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "x_coord": {
+    "meaning": "Easting coordinate (OSGB36)",
+    "index": [
+     "lsoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m"
+   },
+   "y_coord": {
+    "meaning": "Northing coordinate (OSGB36)",
+    "index": [
+     "lsoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m"
+   },
+   "num_stations": {
+    "meaning": "Number of ambulance stations to open",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "2021_Lower_layer_Super_Output_Area_Population_Weighted_Centr.geojson",
+  "Cookie_Consent.zip",
+  "Lower_layer_Super_Output_Areas_December_2021_EW_Population_W.csv",
+  "Lower_layer_Super_Output_Areas_December_2021_EW_Population_W.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "match"
+  ],
+  "notes": "Filtered LSOAs to Camden (E0100) and Islington (E0101) based on ONS code prefixes. Joined 2021 population data from NOMIS census table. Converted WGS84 longitude/latitude to OSGB36 Easting/Northing coordinates using pyproj. Sorted output by LSOA code for deterministic ordering.",
+  "prep_log": "**資料來源**\n\n- 2021 Lower layer Super Output Area (Population Weighted Centroid)（ArcGIS Hub） <https://hub.arcgis.com/datasets/ce789f97d0194b39a284d48ef1293b11_0>，授權：待確認，取得 2026-10-12T13:33:57.882909+00:00\n- Cookie Consent（www.nomisweb.co.uk） <https://www.nomisweb.co.uk/sources/census_2021_bulk>，授權：待確認，取得 2026-10-12T13:33:52.311278+00:00\n- Lower layer Super Output Areas (December 2021) EW Population Weighted Centroids — CSV（CKAN data.gov.uk） <https://data.gov.uk/dataset/lower-layer-super-output-areas-december-2021-ew-population-weighted-centroids2>，授權：待確認，取得 2026-10-12T13:33:56.353864+00:00\n- Lower layer Super Output Areas (December 2021) EW Population Weighted Centroids（ArcGIS Hub） <https://hub.arcgis.com/datasets/32729e42d05e4e23bc7e43a36aa4ae8b_0>，授權：待確認，取得 2026-10-12T13:33:59.369655+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter LSOA centroids to Camden and Islington | 1000 | 586 |  |\n| 合併（CODE ↔ geography code） | 586 | 586 | 完全對上 586、模糊對上 0、對不上 0 |\n| Join population data to LSOA centroids | 586 | 586 |  |",
+  "flags": [],
+  "review_required": [],
+  "sources": [
+   {
+    "title": "2021 Lower layer Super Output Area (Population Weighted Centroid)",
+    "url": "https://hub.arcgis.com/datasets/ce789f97d0194b39a284d48ef1293b11_0",
+    "resource_url": "https://services-eu1.arcgis.com/6BsumkdKnml1ntNV/arcgis/rest/services/2021_LSOA_Population_Weighted_Centroid/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+    "publisher": "ArcGIS Hub",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T13:33:57.882909+00:00",
+    "sha256": "c4cf35094bf4f9a11d1655f0c43b07a5f2fc72de42965a0e8709db6756c95beb",
+    "bytes": 182308
+   },
+   {
+    "title": "Cookie Consent",
+    "url": "https://www.nomisweb.co.uk/sources/census_2021_bulk",
+    "resource_url": "https://www.nomisweb.co.uk/output/census/2021/census2021-ts001.zip",
+    "publisher": "www.nomisweb.co.uk",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T13:33:52.311278+00:00",
+    "sha256": "b724c1208b7628c7c558156fcc619446486353a12d0b6e0bf388add225653dc6",
+    "bytes": 1870128
+   },
+   {
+    "title": "Lower layer Super Output Areas (December 2021) EW Population Weighted Centroids — CSV",
+    "url": "https://data.gov.uk/dataset/lower-layer-super-output-areas-december-2021-ew-population-weighted-centroids2",
+    "resource_url": "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/32729e42d05e4e23bc7e43a36aa4ae8b/csv?layers=0",
+    "publisher": "CKAN data.gov.uk",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T13:33:56.353864+00:00",
+    "sha256": "6cfcfd5190533e382a8131b61c2c83b9af136efd81410b7047863fe1fb1f7ffa",
+    "bytes": 4171421
+   },
+   {
+    "title": "Lower layer Super Output Areas (December 2021) EW Population Weighted Centroids",
+    "url": "https://hub.arcgis.com/datasets/32729e42d05e4e23bc7e43a36aa4ae8b_0",
+    "resource_url": "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LSOA_PopCentroids_EW_2021_V4/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+    "publisher": "ArcGIS Hub",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T13:33:59.369655+00:00",
+    "sha256": "8670fbb7ad1c74d4b399837f67efbfe020748695080e3cc5fe7803a8eed70bad",
+    "bytes": 516648
+   }
+  ],
+  "n_variables": 3516,
+  "n_constraints": 3517,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: ValueError: in_area: no boundary found for 'Islington, Greater London'; write the area as '<area>, <city>'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/datacheck.py\", line 34, in _expected\n    out = ns[\"expected\"]({k: v.copy() for k, v in tables.items()})\n  File \"<data_checker>\", line 8, in expected\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/prep/geo.py\", line 315, in in_area\n    hit = points_in_polygon(la, lo, area_polygon(a, country))\n                                    ~~~~~~~~~~~~^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/prep/geo.py\", line 302, in area_polygon\n    raise ValueError(f\"in_area: no boundary found for {name!r}; write the area as '<area>, <city>'\")\nValueError: in_area: no boundary found for 'Islington, Greater London'; write the area as '<area>, <city>'\n"
+   ]
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:infeasible",
+  "diagnosis:diagnose",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "delivery:needs_input"
+ ],
+ "delivery": {
+  "status": "no_solution",
+  "message": "資料／模型檢查未通過，未消耗退火機額度",
+  "solution_source": null,
+  "quality_gap": null,
+  "objective": null,
+  "baseline_objective": null
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "lsoa",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 586,
+    "mapped": 19,
+    "duplicates": [],
+    "missing_real_entities": 237,
+    "missing_examples": [
+     "Camden 001A",
+     "Camden 001B",
+     "Camden 001C",
+     "Camden 001D",
+     "Camden 001E",
+     "Camden 002A",
+     "Camden 002B",
+     "Camden 002C",
+     "Camden 002D",
+     "Camden 002E"
+    ],
+    "unmapped_ids": [
+     "E01000001",
+     "E01000008",
+     "E01000018",
+     "E01000037",
+     "E01000044",
+     "E01000069",
+     "E01000074",
+     "E01000085",
+     "E01000103",
+     "E01000120"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "pop",
+    "population_exact_matches": 19,
+    "population_total": 1017543.0,
+    "population_truth_total": 426727
+   }
+  },
+  "model": {
+   "ok": false,
+   "checks": {
+    "decision_sets": [
+     [
+      "lsoa"
+     ]
+    ],
+    "valid_decisions_feasible": "0/30",
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "infeasible"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "solution": "none delivered"
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 410704,
+  "solver_calls": 0
+ },
+ "seconds": 1770.8
+}

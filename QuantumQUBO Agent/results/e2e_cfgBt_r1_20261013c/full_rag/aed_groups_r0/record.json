@@ -1,0 +1,252 @@
+{
+ "case": "aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 319.7
+  },
+  "model": {
+   "ok": true,
+   "seconds": 342.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 231.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1213.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 154.1
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment [mp-one-hot-assignment] with balanced group size [mp-group-size]. For N locations and 3 groups, there are 3N binary variables. For N=500, this is 1500 variables, which fits well within the CGA GPU annealer's capacity (up to 3600 variables).",
+ "schema": {
+  "sets": {
+   "locations": {
+    "meaning": "Filtered AED location ID",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "groups": {
+    "meaning": "Inspection group index",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of the location",
+    "index": [
+     "locations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the location",
+    "index": [
+     "locations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "name": {
+    "meaning": "Name of the AED location",
+    "index": [
+     "locations"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two locations",
+    "index": [
+     "locations",
+     "locations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   },
+   "num_groups": {
+    "meaning": "Number of inspection groups",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "in_area",
+   "merge_same_place"
+  ],
+  "notes": "\n1. Filtered for '大安區, 臺北市' using prep.in_area with the '區域代碼' column to ensure correct district membership.\n2. Excluded locations where '場所分類' is '學校、大型集會場所' or '其他' as per the problem specification.\n3. Deduplicated locations using prep.merge_same_place based on '場所名稱' and coordinates (max 150m) to ensure one entry per physical venue. \n   Note: Positional arguments are used for prep.merge_same_place to avoid TypeError.\n4. Calculated the pairwise straight-line distance matrix using prep.haversine_matrix.\n5. Set num_groups to 3 as per the confirmed specification.\n",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-13T13:00:02.616644+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依實際邊界保留區域 ['大安區, 臺北市'] | 2729 | 320 | 各區點數 {'大安區, 臺北市': 327}；對應的區域代碼 {'大安區, 臺北市': 63000030}（以發布者代碼篩選） |\n| Filter Area (Da'an District) | 2729 | 320 |  |\n| Exclude Categories | 320 | 54 | Excluded: ['學校、大型集會場所', '其他'] |\n| 合併同名且相距 150 m 內的同一地點 | 54 | 48 | 合併 6 筆 |\n| Merge Same Places | 54 | 48 |  |",
+  "flags": [],
+  "review_required": [
+   "dist: ['Haversine distance used for straight-line approximation']"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T13:00:02.616644+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 144,
+  "n_constraints": 51,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "locations": 48
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "f6536eac9f01ffac97e3aa88",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 44,
+    "invalid": 44,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "f6536eac9f01ffac97e3aa88",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.3787129982307867,
+  "objective": 368673.31646189303,
+  "baseline_objective": 593402.5907705091
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "locations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 48,
+    "mapped": 48,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "groups"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "groups",
+      "locations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 48,
+    "meets_original_requirements": true,
+    "true_quality": 368673.31646189303,
+    "reference_quality": 370657.2329274105,
+    "gap_vs_reference": -0.0054
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 92572,
+  "solver_calls": 3
+ },
+ "seconds": 2261.5
+}

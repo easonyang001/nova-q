@@ -1,0 +1,68 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Electrical Distribution Network Reconfiguration Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Electrical Distribution Network Reconfiguration Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ candidate radial switch configurations for an electrical distribution network, each configuration $i$ is associated with a cost $c_i$ that accounts for power-loss losses and any voltage or feasibility penalties. The objective is to select exactly one configuration such that the total network loss cost is minimized.
+
+\paragraph{Decision Variables.}
+We introduce binary decision variables $x_i \in \{0,1\}$ for each candidate configuration $i \in \{0, \dots, N-1\}$. The variable $x_i$ equals $1$ if configuration $i$ is selected, and $0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1.} The original optimization problem is formulated as:
+\begin{align}
+\min_{x \in \{0,1\}^N} \sum_{i=0}^{N-1} c_i x_i.
+\end{align}
+
+\textbf{Step 2.} The requirement to select exactly one configuration is expressed as the linear equality constraint:
+\begin{align}
+\sum_{i=0}^{N-1} x_i = 1.
+\end{align}
+
+\textbf{Step 3.} We convert the constraint into a quadratic penalty term. Let $\lambda > 0$ be a penalty weight. The penalty function is:
+\begin{align}
+P(x) = \lambda \left( \sum_{i=0}^{N-1} x_i - 1 \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+P(x) = \lambda \left( \sum_{i=0}^{N-1} x_i^2 + 2 \sum_{0 \le i < j \le N-1} x_i x_j - 2 \sum_{i=0}^{N-1} x_i + 1 \right).
+\end{align}
+Applying the idempotent property $x_i^2 = x_i$ for binary variables, we simplify the expression to:
+\begin{align}
+P(x) = \lambda \left( -\sum_{i=0}^{N-1} x_i + 2 \sum_{0 \le i < j \le N-1} x_i x_j + 1 \right).
+\end{align}
+
+\textbf{Step 4.} Combining the objective and the penalty term gives the full QUBO Hamiltonian $H(x)$:
+\begin{align}
+H(x) = \sum_{i=0}^{N-1} c_i x_i + \lambda \left( -\sum_{i=0}^{N-1} x_i + 2 \sum_{0 \le i < j \le N-1} x_i x_j + 1 \right).
+\end{align}
+
+\textbf{Step 5.} By collecting coefficients for each monomial, we read off the QUBO matrix entries and constant offset $c$:
+\begin{align}
+Q_{i,i} &= c_i - \lambda, & i \in \{0, \dots, N-1\}, \\
+Q_{i,j} &= 2\lambda, & 0 \le i < j \le N-1, \\
+c &= \lambda.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the exactly-one constraint results in an energy strictly greater than the minimum achievable objective value. The maximum possible reduction in the objective cost from selecting a configuration is bounded by $\max_i c_i$. Therefore, choosing $\lambda > \max_i c_i$ guarantees that the penalty incurred by any infeasible state (where $\sum_{i=0}^{N-1} x_i \neq 1$) dominates any potential gain in the objective function, thereby enforcing feasibility at the global minimum.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal configuration because feasible solutions satisfy $\sum_{i=0}^{N-1} x_i = 1$, causing the penalty term to vanish. For these solutions, $H(x)$ equals the original objective $\sum_{i=0}^{N-1} c_i x_i$. Conversely, any infeasible solution violates the constraint, incurring a penalty of at least $\lambda$. Since $\lambda$ exceeds the maximum possible objective value, every infeasible state has strictly higher energy than the best feasible state. Consequently, the global minimum of $H(x)$ must correspond to a feasible configuration that minimizes the original cost.
+
+\paragraph{Illustrative Example.}
+Consider a small instance with $N=3$ candidate configurations and costs $c_0, c_1, c_2$. Setting $\lambda = 100$, the Hamiltonian becomes:
+\begin{align}
+H(x) &= c_0 x_0 + c_1 x_1 + c_2 x_2 + 100(x_0 + x_1 + x_2 - 1)^2 \\
+&= c_0 x_0 + c_1 x_1 + c_2 x_2 + 100\left(-x_0 - x_1 - x_2 + 2x_0 x_1 + 2x_0 x_2 + 2x_1 x_2 + 1\right).
+\end{align}
+The corresponding QUBO parameters are $Q_{0,0} = c_0 - 100$, $Q_{1,1} = c_1 - 100$, $Q_{2,2} = c_2 - 100$, $Q_{i,j} = 200$ for all $i \neq j$, and offset $c = 100$. Evaluating $H(x)$ over all $2^3 = 8$ binary assignments shows that the three feasible states $(1,0,0)$, $(0,1,0)$, and $(0,0,1)$ yield energies $c_0$, $c_1$, and $c_2$, respectively. The infeasible states incur an additional penalty of $100$, $200$, or $300$. Thus, the global minimum occurs at the configuration $x^*$ with $x^*_k = 1$ for $k = \arg\min_i c_i$, and the minimum energy equals $\min_i c_i$.
+
+\end{document}

@@ -1,0 +1,40 @@
+{
+  "target": "QCNC 2027",
+  "format": "IEEEtran conference compsoc, 10pt, Letter",
+  "pages": 8,
+  "page_limit": 8,
+  "anonymous_author_metadata": false,
+  "undefined_references": false,
+  "overfull_boxes": false,
+  "figure_count": 3,
+  "appendix_included": false,
+  "internal_experiment_labels": false,
+  "pdf_sha256": "a04481edc749cdff73b430fc8bfd9a89e1edb2bf40227f08568316785cd85cc2",
+  "remaining_evidence": "Frozen repeated autonomous acceptance comparison is incomplete; no improvement claim for its new checkers, repair, or modelling retrieval.",
+  "sources": [
+    "https://www.qcnc.org/2027/submission.php",
+    "https://www.qcnc.org/2027/track2.php"
+  ],
+  "figures_redesigned": "2026-10-12",
+  "vector_assets": [
+    "evidence.svg"
+  ],
+  "editable_workflow_source": "figures/workflow.drawio",
+  "workflow_export_method": "User-selected raster illustration, edited with built-in image generation to correct coverage and checker labels",
+  "all_main_figures_skill_guided": true,
+  "editable_sources": [
+    "figures/workflow.drawio",
+    "figures/workflow.svg",
+    "figures/verification_layers.drawio",
+    "figures/verification_layers.svg",
+    "figures/evidence.svg"
+  ],
+  "drawio_gui_rendering_verified": false,
+  "evidence_plot_repetitions_shown": true,
+  "selected_illustration_embedded": "figures/verification-illustrated.png",
+  "selected_illustration_pixel_identity_verified": true,
+  "selected_workflow_embedded": "figures/workflow-illustrated.png",
+  "selected_workflow_pixel_identity_verified": true,
+  "editable_sources_are_alternatives": true,
+  "author": "Chia Chen Yang"
+}

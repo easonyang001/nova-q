@@ -1,0 +1,253 @@
+{
+ "case": "aed_groups_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 319.3
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1572.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 172.7
+  },
+  "data": {
+   "ok": true,
+   "seconds": 962.1
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 240.0
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 43.4
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment [mp-one-hot-assignment] with balanced group size [mp-group-size]. For N=400 sites and 4 teams, we have 1600 binary variables. This fits the CGA GPU annealer (up to 3,600 variables) and directly encodes the intra-cluster distance minimization.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Filtered AED locations in the 4 target districts",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "user"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the AED location",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Haversine distance between two sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   },
+   "num_teams": {
+    "meaning": "Number of inspection teams",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 4
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "in_area",
+   "merge_same_place"
+  ],
+  "notes": "\n1. Filtered AED locations to only include the four target districts (Songshan, Xinyi, Da'an, Zhongshan) using prep.in_area.\n2. Excluded locations categorized as '學校、大型集會場所' and '其他'.\n3. Deduplicated locations using prep.merge_same_place based on name and coordinates to ensure one entry per physical site.\n4. Handled the 'equal team size' constraint by removing (N mod 4) locations if the total count was not divisible by 4.\n5. Computed the pairwise Haversine distance matrix using prep.haversine_matrix.\n",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-13T17:19:33.601384+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依實際邊界保留區域 ['松山區', '信義區', '大安區', '中山區'] | 2729 | 1151 | 各區點數 {'松山區': 231, '信義區': 280, '大安區': 327, '中山區': 317}；對應的區域代碼 {'松山區': 63000010, '信義區': 63000020, '大安區': 63000030, '中山區': 63000040}（以發布者代碼篩選） |\n| Filter by target districts | 2729 | 1151 | Kept: ['松山區', '信義區', '大安區', '中山區'] |\n| Exclude categories | 407 | 405 | Excluded: ['學校、大型集會場所', '其他'] |\n| Drop missing coordinates | 405 | 405 | Removed rows with NaN lat/lon |\n| 合併同名且相距 150 m 內的同一地點 | 405 | 201 | 合併 204 筆 |\n| Merge same places | 201 | 201 | Deduplicated by name and proximity |\n| Ensure divisibility by 4 | 201 | 200 | Removed 1 points to allow equal team distribution |",
+  "flags": [],
+  "review_required": [],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T17:19:33.601384+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 800,
+  "n_constraints": 204,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 201
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "65bbd11f03a9834215fe1bb3",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 54,
+    "invalid": 54,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "65bbd11f03a9834215fe1bb3",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.48806921777714646,
+  "objective": 7206227.266716749,
+  "baseline_objective": 14076565.654885229
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 200,
+    "mapped": 200,
+    "duplicates": [
+     "臺北大巨蛋"
+    ],
+    "missing_real_entities": 1,
+    "missing_examples": [
+     "給力健身房林森店"
+    ],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 3,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.974,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 200,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 7206657.906369695
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 104270,
+  "solver_calls": 3
+ },
+ "seconds": 3310.5
+}

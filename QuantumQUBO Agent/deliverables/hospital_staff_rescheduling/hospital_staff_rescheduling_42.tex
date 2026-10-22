@@ -10,71 +10,98 @@
 \subsection*{Hospital Staff Rescheduling Problem}
 
 \paragraph{Problem Statement.}
-Given a set of $S$ uncovered shifts and a set of $M$ available staff members, assign exactly one qualified staff member to each shift. Each potential assignment carries a cost reflecting fatigue, travel distance, overtime, or preference penalties. The goal is to minimize the total assignment cost while respecting qualification constraints and ensuring that no staff member covers more than one shift during the rescheduling window.
+Let $\mathcal{S}$ denote the set of available staff members and $\mathcal{J}$ denote the set of uncovered shifts. Let $\mathcal{A} \subseteq \mathcal{S} \times \mathcal{J}$ be the set of qualified staff-shift pairs, where $(s,j) \in \mathcal{A}$ indicates that staff member $s$ is qualified to cover shift $j$. For each qualified pair $(s,j) \in \mathcal{A}$, let $c_{s,j} \ge 0$ represent the cost of assigning staff $s$ to shift $j$, which may encode fatigue, travel distance, overtime, or preference penalties. The objective is to select a set of assignments such that every shift in $\mathcal{J}$ is covered by exactly one staff member, each staff member covers at most one shift, and the total assignment cost is minimized.
 
 \paragraph{Decision Variables.}
-Let $x_{i,j} \in \{0,1\}$ denote the binary assignment decision for shift $i \in \{0,\dots,S-1\}$ and staff member $j \in \{0,\dots,M-1\}$. The variable $x_{i,j} = 1$ if and only if staff member $j$ is assigned to shift $i$. Variables are strictly defined only for qualified staff-shift pairs; unqualified pairs are excluded from the variable domain.
+For each qualified pair $(s,j) \in \mathcal{A}$, introduce a binary decision variable $x_{s,j} \in \{0,1\}$. The variable $x_{s,j}$ takes the value $1$ if staff member $s$ is assigned to shift $j$, and $0$ otherwise. The qualification constraint is enforced by restricting the variable domain to $\mathcal{A}$; variables corresponding to unqualified pairs are excluded from the formulation.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 --- Objective Function.} The original minimization objective is given by the total assignment cost:
-\begin{align}
-  \min_{\mathbf{x}} \quad C(\mathbf{x}) = \sum_{i=0}^{S-1} \sum_{j=0}^{M-1} c_{i,j} x_{i,j},
-\end{align}
-where $c_{i,j}$ represents the cost of assigning staff member $j$ to shift $i$.
+We construct a Quadratic Unconstrained Binary Optimization (QUBO) formulation by converting the constrained minimization problem into an unconstrained energy minimization problem $H(\mathbf{x})$.
 
-\textbf{Step 2 --- Constraints.} The problem is subject to two sets of constraints:
+\textbf{Step 1: Objective Function.}
+The original objective is to minimize the total assignment cost:
 \begin{align}
-  \sum_{j=0}^{M-1} x_{i,j} &= 1, \quad \forall i \in \{0,\dots,S-1\}, \\
-  \sum_{i=0}^{S-1} x_{i,j} &\le 1, \quad \forall j \in \{0,\dots,M-1\}.
+    \min \sum_{(s,j) \in \mathcal{A}} c_{s,j} x_{s,j}.
 \end{align}
-The first equation enforces that every shift is covered exactly once, while the second limits each staff member to at most one shift.
+This term is retained directly in the QUBO Hamiltonian.
 
-\textbf{Step 3 --- Penalty Expansion.} We convert the constraints into quadratic penalty terms using a positive weight $\lambda$. For the shift coverage constraint, we form:
+\textbf{Step 2: Constraints.}
+The problem imposes two types of constraints:
+\begin{enumerate}
+    \item \textit{Shift Coverage:} Each shift $j \in \mathcal{J}$ must be assigned exactly one staff member. Let $\mathcal{S}_j = \{s \in \mathcal{S} : (s,j) \in \mathcal{A}\}$ be the set of qualified staff for shift $j$. The constraint is:
+    \begin{align}
+        \sum_{s \in \mathcal{S}_j} x_{s,j} = 1 \quad \forall j \in \mathcal{J}.
+    \end{align}
+    \item \textit{Staff Limit:} Each staff member $s \in \mathcal{S}$ can cover at most one shift. Let $\mathcal{J}_s = \{j \in \mathcal{J} : (s,j) \in \mathcal{A}\}$ be the set of shifts qualified for staff $s$. The constraint is:
+    \begin{align}
+        \sum_{j \in \mathcal{J}_s} x_{s,j} \le 1 \quad \forall s \in \mathcal{S}.
+    \end{align}
+\end{enumerate}
+
+\textbf{Step 3: Penalty Terms.}
+We convert constraints to quadratic penalty terms using a penalty weight $\lambda > 0$.
+
+\textit{Shift Coverage Penalty:}
+For each shift $j$, we enforce equality using the squared penalty:
 \begin{align}
-  P_{\text{shift}}(\mathbf{x}) &= \lambda \sum_{i=0}^{S-1} \left( \sum_{j=0}^{M-1} x_{i,j} - 1 \right)^2.
+    P_{\text{shift},j} = \lambda \left( \sum_{s \in \mathcal{S}_j} x_{s,j} - 1 \right)^2.
 \end{align}
-Expanding the square and applying the idempotent property $x_{i,j}^2 = x_{i,j}$ for binary variables yields:
+Expanding using the idempotent property $x_{s,j}^2 = x_{s,j}$ for binary variables:
 \begin{align}
-  \left( \sum_{j=0}^{M-1} x_{i,j} - 1 \right)^2 &= \sum_{j=0}^{M-1} x_{i,j}^2 - 2\sum_{j=0}^{M-1} x_{i,j} + 1 + \sum_{j \neq k} x_{i,j}x_{i,k} \nonumber \\
-  &= -\sum_{j=0}^{M-1} x_{i,j} + 2\sum_{0 \le j < k \le M-1} x_{i,j}x_{i,k} + 1.
+    P_{\text{shift},j} &= \lambda \left( \sum_{s \in \mathcal{S}_j} x_{s,j}^2 - 2 \sum_{s \in \mathcal{S}_j} x_{s,j} + 1 \right) \\
+    &= \lambda \left( -\sum_{s \in \mathcal{S}_j} x_{s,j} + 2 \sum_{\substack{s,s' \in \mathcal{S}_j \\ s < s'}} x_{s,j} x_{s',j} + 1 \right).
 \end{align}
-Thus, the total shift penalty contribution is:
+Summing over all shifts gives the total shift penalty $H_{\text{shift}} = \sum_{j \in \mathcal{J}} P_{\text{shift},j}$.
+
+\textit{Staff Limit Penalty:}
+For each staff member $s$, we enforce the inequality $\sum_{j \in \mathcal{J}_s} x_{s,j} \le 1$ using the squared penalty $\lambda \left( \sum_{j \in \mathcal{J}_s} x_{s,j} \right)^2$, which is zero for sums $0$ or $1$ and positive for sums greater than $1$:
 \begin{align}
-  P_{\text{shift}}(\mathbf{x}) = \lambda \sum_{i=0}^{S-1} \left( -\sum_{j=0}^{M-1} x_{i,j} + 2\sum_{j < k} x_{i,j}x_{i,k} + 1 \right).
+    P_{\text{staff},s} = \lambda \left( \sum_{j \in \mathcal{J}_s} x_{s,j} \right)^2.
 \end{align}
-For the staff capacity constraint, we enforce at-most-one via pairwise quadratic penalties:
+Expanding:
 \begin{align}
-  P_{\text{staff}}(\mathbf{x}) &= \lambda \sum_{j=0}^{M-1} \sum_{0 \le i < i' \le S-1} x_{i,j}x_{i',j}.
+    P_{\text{staff},s} &= \lambda \left( \sum_{j \in \mathcal{J}_s} x_{s,j}^2 + 2 \sum_{\substack{j,j' \in \mathcal{J}_s \\ j < j'}} x_{s,j} x_{s,j'} \right) \\
+    &= \lambda \left( \sum_{j \in \mathcal{J}_s} x_{s,j} + 2 \sum_{\substack{j,j' \in \mathcal{J}_s \\ j < j'}} x_{s,j} x_{s,j'} \right).
+\end{align}
+Summing over all staff gives the total staff penalty $H_{\text{staff}} = \sum_{s \in \mathcal{S}} P_{\text{staff},s}$.
+
+\textbf{Step 4: Hamiltonian.}
+The total QUBO Hamiltonian combines the objective and penalty terms. We subtract a constant offset to remove the constant terms arising from the shift coverage expansion:
+\begin{align}
+    H(\mathbf{x}) = \sum_{(s,j) \in \mathcal{A}} c_{s,j} x_{s,j} + H_{\text{shift}} + H_{\text{staff}} - \lambda |\mathcal{J}|.
 \end{align}
 
-\textbf{Step 4 --- Combined Hamiltonian.} The full QUBO Hamiltonian $H(\mathbf{x})$ is the sum of the objective and penalty terms:
+\textbf{Step 5: Q Matrix and Offset.}
+Collecting coefficients for linear and quadratic terms yields the QUBO parameters. The Hamiltonian can be written as $H(\mathbf{x}) = \sum_{(s,j) \in \mathcal{A}} Q_{(s,j),(s,j)} x_{s,j} + \sum_{(s,j) \neq (s',j') \in \mathcal{A}^2} Q_{(s,j),(s',j')} x_{s,j} x_{s',j'} + c$. The entries are:
 \begin{align}
-  H(\mathbf{x}) = \sum_{i=0}^{S-1} \sum_{j=0}^{M-1} c_{i,j} x_{i,j} + P_{\text{shift}}(\mathbf{x}) + P_{\text{staff}}(\mathbf{x}).
+    Q_{(s,j),(s,j)} &= c_{s,j} - \lambda + \lambda = c_{s,j}, \\
+    Q_{(s,j),(s',j)} &= 2\lambda \quad \text{for } s \neq s', \\
+    Q_{(s,j),(s,j')} &= 2\lambda \quad \text{for } j \neq j', \\
+    Q_{(s,j),(s',j')} &= 0 \quad \text{otherwise}, \\
+    c &= 0.
 \end{align}
-
-\textbf{Step 5 --- Q Matrix and Offset.} Collecting coefficients for each monomial yields the general closed-form expressions for the upper-triangular Q matrix entries and the constant offset $c$:
-\begin{align}
-  Q_{(i,j),(i,j)} &= c_{i,j} - \lambda, \\
-  Q_{(i,j),(i,k)} &= 2\lambda, \quad \text{for } j \neq k, \\
-  Q_{(i,j),(i',j)} &= \lambda, \quad \text{for } i \neq i', \\
-  Q_{(i,j),(i',k)} &= 0, \quad \text{otherwise}, \\
-  c &= S\lambda.
-\end{align}
+Here, $Q_{(s,j),(s',j)}$ corresponds to pairs sharing the same shift, and $Q_{(s,j),(s,j')}$ corresponds to pairs sharing the same staff member.
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that constraint violations are strictly penalized over any potential reduction in the assignment cost. The maximum possible reduction in the objective function achievable by violating a single constraint is bounded by the maximum assignment cost $\max_{i,j} c_{i,j}$. Therefore, selecting $\lambda > \max_{i,j} c_{i,j}$ guarantees that the energy increase from any infeasible assignment outweighs the best-case cost savings, preserving the equivalence between the constrained optimization problem and the unconstrained QUBO minimization.
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the constraints results in an energy increase that outweighs any potential reduction in the objective cost. Specifically, let $C_{\max} = \max_{(s,j) \in \mathcal{A}} c_{s,j}$. Choosing $\lambda > C_{\max}$ guarantees that the penalty for violating a constraint exceeds the maximum possible gain from the objective function. For the shift coverage constraint, a violation allows at most saving $C_{\max}$ in cost (by omitting an assignment), while incurring a penalty of at least $\lambda$. For the staff limit constraint, a violation incurs a penalty of at least $\lambda$ with no cost reduction. Thus, $\lambda > C_{\max}$ ensures that infeasible solutions have strictly higher energy than the best feasible solution.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^{S \times M}$ recovers the optimal staff schedule because feasible assignments satisfy all constraints, resulting in zero penalty energy. Any infeasible assignment violates at least one constraint, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, this penalty strictly exceeds the maximum possible reduction in the original cost function. Consequently, the global minimum of $H$ must correspond to a feasible solution, and among all feasible solutions, it minimizes the original objective $C(\mathbf{x})$.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{|\mathcal{A}|}$ recovers the optimal assignment schedule. For any feasible solution, the penalty terms vanish (after offset subtraction), so $H(\mathbf{x})$ equals the total assignment cost. For any infeasible solution, at least one penalty term is positive, contributing at least $\lambda$ to the energy. Since $\lambda > C_{\max}$, the energy of any infeasible solution exceeds the cost of any feasible solution (assuming costs are non-negative and at least one feasible assignment exists). Therefore, the global minimum of $H(\mathbf{x})$ must be a feasible solution with minimum total cost, corresponding to the optimal staff rescheduling.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $S=3$ shifts and $M=3$ staff members, where all staff are qualified for all shifts. We assign the following costs: $c_{0,0}=5, c_{0,1}=8, c_{0,2}=3, c_{1,0}=4, c_{1,1}=9, c_{1,2}=2, c_{2,0}=7, c_{2,1}=6, c_{2,2}=1$. Let $\lambda = 1000$. Using the variable mapping $x_{i,j} \mapsto x_{3i+j}$ for $i,j \in \{0,1,2\}$, the general formulas instantiate to the following explicit Hamiltonian:
+Consider a small instance with $|\mathcal{S}| = 2$ staff members ($s \in \{0,1\}$) and $|\mathcal{J}| = 2$ shifts ($j \in \{0,1\}$), where all staff are qualified for all shifts, so $\mathcal{A} = \mathcal{S} \times \mathcal{J}$. Let the cost matrix be:
 \begin{align}
-  H(\mathbf{x}) &= 5x_0 + 8x_1 + 3x_2 + 4x_3 + 9x_4 + 2x_5 + 7x_6 + 6x_7 + 1x_8 \nonumber \\
-  &\quad - 1000(x_0 + x_1 + x_2 + x_3 + x_4 + x_5 + x_6 + x_7 + x_8) \nonumber \\
-  &\quad + 2000(x_0x_1 + x_0x_2 + x_1x_2 + x_3x_4 + x_3x_5 + x_4x_5 + x_6x_7 + x_6x_8 + x_7x_8) \nonumber \\
-  &\quad + 1000(x_0x_3 + x_0x_6 + x_3x_6 + x_1x_4 + x_1x_7 + x_4x_7 + x_2x_5 + x_2x_8 + x_5x_8) + 3000.
+    c_{0,0} = 10, \quad c_{0,1} = 20, \quad c_{1,0} = 15, \quad c_{1,1} = 5.
 \end{align}
-Evaluating all $2^9 = 512$ binary assignments reveals that the global minimum occurs at the feasible assignment $x_{0,2}=1, x_{1,0}=1, x_{2,1}=1$ (shifts 0, 1, 2 assigned to staff 2, 0, 1 respectively). This assignment yields a total cost of $3+4+6=13$ and an energy $H(\mathbf{x}^*) = 13 + 3000 = 3013$. All other feasible assignments yield strictly higher costs, confirming the formulation correctly encodes the problem and recovers the optimal schedule.
-
+The decision variables are $x_{0,0}, x_{0,1}, x_{1,0}, x_{1,1}$. The QUBO Hamiltonian is:
+\begin{align}
+    H(\mathbf{x}) &= 10 x_{0,0} + 20 x_{0,1} + 15 x_{1,0} + 5 x_{1,1} \nonumber \\
+    &\quad + \lambda (x_{0,0} + x_{1,0} - 1)^2 + \lambda (x_{0,1} + x_{1,1} - 1)^2 \nonumber \\
+    &\quad + \lambda (x_{0,0} + x_{0,1})^2 + \lambda (x_{1,0} + x_{1,1})^2 - 2\lambda.
+\end{align}
+Expanding and collecting terms yields the Q matrix entries consistent with the general derivation. For $\lambda > 20$, the optimal solution minimizes the cost subject to constraints. The feasible assignments are $(x_{0,0}=1, x_{1,1}=1)$ with cost $15$, and $(x_{0,1}=1, x_{1,0}=1)$ with cost $35$. The global minimum is achieved at:
+\begin{align}
+    x_{0,0} = 1, \quad x_{1,1} = 1, \quad x_{0,1} = 0, \quad x_{1,0} = 0,
+\end{align}
+with minimum energy $H(\mathbf{x}^*) = 15$. This corresponds to assigning staff $0$ to shift $0$ and staff $1$ to shift $1$, yielding the minimum total cost of $15$.
 \end{document}

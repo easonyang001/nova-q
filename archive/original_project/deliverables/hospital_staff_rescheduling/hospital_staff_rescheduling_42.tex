@@ -1,0 +1,80 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Hospital Staff Rescheduling Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Hospital Staff Rescheduling Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $S$ uncovered shifts and a set of $M$ available staff members, assign exactly one qualified staff member to each shift. Each potential assignment carries a cost reflecting fatigue, travel distance, overtime, or preference penalties. The goal is to minimize the total assignment cost while respecting qualification constraints and ensuring that no staff member covers more than one shift during the rescheduling window.
+
+\paragraph{Decision Variables.}
+Let $x_{i,j} \in \{0,1\}$ denote the binary assignment decision for shift $i \in \{0,\dots,S-1\}$ and staff member $j \in \{0,\dots,M-1\}$. The variable $x_{i,j} = 1$ if and only if staff member $j$ is assigned to shift $i$. Variables are strictly defined only for qualified staff-shift pairs; unqualified pairs are excluded from the variable domain.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 --- Objective Function.} The original minimization objective is given by the total assignment cost:
+\begin{align}
+  \min_{\mathbf{x}} \quad C(\mathbf{x}) = \sum_{i=0}^{S-1} \sum_{j=0}^{M-1} c_{i,j} x_{i,j},
+\end{align}
+where $c_{i,j}$ represents the cost of assigning staff member $j$ to shift $i$.
+
+\textbf{Step 2 --- Constraints.} The problem is subject to two sets of constraints:
+\begin{align}
+  \sum_{j=0}^{M-1} x_{i,j} &= 1, \quad \forall i \in \{0,\dots,S-1\}, \\
+  \sum_{i=0}^{S-1} x_{i,j} &\le 1, \quad \forall j \in \{0,\dots,M-1\}.
+\end{align}
+The first equation enforces that every shift is covered exactly once, while the second limits each staff member to at most one shift.
+
+\textbf{Step 3 --- Penalty Expansion.} We convert the constraints into quadratic penalty terms using a positive weight $\lambda$. For the shift coverage constraint, we form:
+\begin{align}
+  P_{\text{shift}}(\mathbf{x}) &= \lambda \sum_{i=0}^{S-1} \left( \sum_{j=0}^{M-1} x_{i,j} - 1 \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_{i,j}^2 = x_{i,j}$ for binary variables yields:
+\begin{align}
+  \left( \sum_{j=0}^{M-1} x_{i,j} - 1 \right)^2 &= \sum_{j=0}^{M-1} x_{i,j}^2 - 2\sum_{j=0}^{M-1} x_{i,j} + 1 + \sum_{j \neq k} x_{i,j}x_{i,k} \nonumber \\
+  &= -\sum_{j=0}^{M-1} x_{i,j} + 2\sum_{0 \le j < k \le M-1} x_{i,j}x_{i,k} + 1.
+\end{align}
+Thus, the total shift penalty contribution is:
+\begin{align}
+  P_{\text{shift}}(\mathbf{x}) = \lambda \sum_{i=0}^{S-1} \left( -\sum_{j=0}^{M-1} x_{i,j} + 2\sum_{j < k} x_{i,j}x_{i,k} + 1 \right).
+\end{align}
+For the staff capacity constraint, we enforce at-most-one via pairwise quadratic penalties:
+\begin{align}
+  P_{\text{staff}}(\mathbf{x}) &= \lambda \sum_{j=0}^{M-1} \sum_{0 \le i < i' \le S-1} x_{i,j}x_{i',j}.
+\end{align}
+
+\textbf{Step 4 --- Combined Hamiltonian.} The full QUBO Hamiltonian $H(\mathbf{x})$ is the sum of the objective and penalty terms:
+\begin{align}
+  H(\mathbf{x}) = \sum_{i=0}^{S-1} \sum_{j=0}^{M-1} c_{i,j} x_{i,j} + P_{\text{shift}}(\mathbf{x}) + P_{\text{staff}}(\mathbf{x}).
+\end{align}
+
+\textbf{Step 5 --- Q Matrix and Offset.} Collecting coefficients for each monomial yields the general closed-form expressions for the upper-triangular Q matrix entries and the constant offset $c$:
+\begin{align}
+  Q_{(i,j),(i,j)} &= c_{i,j} - \lambda, \\
+  Q_{(i,j),(i,k)} &= 2\lambda, \quad \text{for } j \neq k, \\
+  Q_{(i,j),(i',j)} &= \lambda, \quad \text{for } i \neq i', \\
+  Q_{(i,j),(i',k)} &= 0, \quad \text{otherwise}, \\
+  c &= S\lambda.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that constraint violations are strictly penalized over any potential reduction in the assignment cost. The maximum possible reduction in the objective function achievable by violating a single constraint is bounded by the maximum assignment cost $\max_{i,j} c_{i,j}$. Therefore, selecting $\lambda > \max_{i,j} c_{i,j}$ guarantees that the energy increase from any infeasible assignment outweighs the best-case cost savings, preserving the equivalence between the constrained optimization problem and the unconstrained QUBO minimization.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{S \times M}$ recovers the optimal staff schedule because feasible assignments satisfy all constraints, resulting in zero penalty energy. Any infeasible assignment violates at least one constraint, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, this penalty strictly exceeds the maximum possible reduction in the original cost function. Consequently, the global minimum of $H$ must correspond to a feasible solution, and among all feasible solutions, it minimizes the original objective $C(\mathbf{x})$.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $S=3$ shifts and $M=3$ staff members, where all staff are qualified for all shifts. We assign the following costs: $c_{0,0}=5, c_{0,1}=8, c_{0,2}=3, c_{1,0}=4, c_{1,1}=9, c_{1,2}=2, c_{2,0}=7, c_{2,1}=6, c_{2,2}=1$. Let $\lambda = 1000$. Using the variable mapping $x_{i,j} \mapsto x_{3i+j}$ for $i,j \in \{0,1,2\}$, the general formulas instantiate to the following explicit Hamiltonian:
+\begin{align}
+  H(\mathbf{x}) &= 5x_0 + 8x_1 + 3x_2 + 4x_3 + 9x_4 + 2x_5 + 7x_6 + 6x_7 + 1x_8 \nonumber \\
+  &\quad - 1000(x_0 + x_1 + x_2 + x_3 + x_4 + x_5 + x_6 + x_7 + x_8) \nonumber \\
+  &\quad + 2000(x_0x_1 + x_0x_2 + x_1x_2 + x_3x_4 + x_3x_5 + x_4x_5 + x_6x_7 + x_6x_8 + x_7x_8) \nonumber \\
+  &\quad + 1000(x_0x_3 + x_0x_6 + x_3x_6 + x_1x_4 + x_1x_7 + x_4x_7 + x_2x_5 + x_2x_8 + x_5x_8) + 3000.
+\end{align}
+Evaluating all $2^9 = 512$ binary assignments reveals that the global minimum occurs at the feasible assignment $x_{0,2}=1, x_{1,0}=1, x_{2,1}=1$ (shifts 0, 1, 2 assigned to staff 2, 0, 1 respectively). This assignment yields a total cost of $3+4+6=13$ and an energy $H(\mathbf{x}^*) = 13 + 3000 = 3013$. All other feasible assignments yield strictly higher costs, confirming the formulation correctly encodes the problem and recovers the optimal schedule.
+
+\end{document}

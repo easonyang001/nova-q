@@ -1,0 +1,5 @@
+benchmark,seed,status,tests_passed,total_tests,wall_time_s,tokens_used,total_llm_cost,failure_modes
+max_cut,42,failed,0,0,0.1,0,0.0000,
+max_cut,42,success,8,8,105.3,20501,0.0000,
+max_cut,42,success,8,8,39.0,6430,0.0000,
+knapsack,42,failed,0,0,226.9,32768,0.0000,coding_error

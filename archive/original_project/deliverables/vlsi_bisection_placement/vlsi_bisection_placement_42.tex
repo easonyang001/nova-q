@@ -1,0 +1,78 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: VLSI Bisection Placement Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{VLSI Bisection Placement Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ circuit modules indexed by $V = \{0, 1, \dots, N-1\}$ and a set of weighted net connections $E$ with associated non-negative weights $w_{ij}$ for each $(i,j) \in E$, the VLSI Bisection Placement Problem requires partitioning the modules into two placement regions of equal cardinality. The objective is to minimize the total weight of nets that cross between the two regions.
+
+\paragraph{Decision Variables.}
+For each module $i \in V$, introduce a binary decision variable $x_i \in \{0, 1\}$. The value $x_i = 0$ indicates that module $i$ is assigned to region A, while $x_i = 1$ indicates assignment to region B.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 --- Objective Function.} A net $(i,j) \in E$ is cut if and only if $x_i \neq x_j$. For binary variables, the indicator of a cut is $x_i + x_j - 2x_i x_j$. Minimizing the total cut weight yields:
+\begin{align}
+\min_{x \in \{0,1\}^N} \sum_{(i,j) \in E} w_{ij} (x_i + x_j - 2x_i x_j).
+\end{align}
+
+\textbf{Step 2 --- Constraint.} The two regions must contain equal numbers of modules, which requires:
+\begin{align}
+\sum_{i \in V} x_i = \frac{N}{2}.
+\end{align}
+
+\textbf{Step 3 --- Penalty Term Expansion.} The equality constraint is enforced via a quadratic penalty with weight $\lambda > 0$:
+\begin{align}
+P(x) = \lambda \left( \sum_{i \in V} x_i - \frac{N}{2} \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_i^2 = x_i$ for binary variables gives:
+\begin{align}
+\left( \sum_{i \in V} x_i - \frac{N}{2} \right)^2 &= \sum_{i \in V} x_i^2 - N \sum_{i \in V} x_i + \frac{N^2}{4} + \sum_{i \neq j} x_i x_j \\
+&= \sum_{i \in V} x_i - N \sum_{i \in V} x_i + \sum_{i \neq j} x_i x_j + \frac{N^2}{4} \\
+&= (1 - N) \sum_{i \in V} x_i + \sum_{i \neq j} x_i x_j + \frac{N^2}{4}.
+\end{align}
+Multiplying by $\lambda$ yields the penalty contribution to the Hamiltonian:
+\begin{align}
+\lambda P(x) = \lambda(1 - N) \sum_{i \in V} x_i + \lambda \sum_{i \neq j} x_i x_j + \frac{\lambda N^2}{4}.
+\end{align}
+
+\textbf{Step 4 --- Combined Hamiltonian.} Adding the objective and penalty terms produces the QUBO Hamiltonian $H(x)$:
+\begin{align}
+H(x) = \sum_{(i,j) \in E} w_{ij} (x_i + x_j - 2x_i x_j) + \lambda(1 - N) \sum_{i \in V} x_i + \lambda \sum_{i \neq j} x_i x_j + \frac{\lambda N^2}{4}.
+\end{align}
+
+\textbf{Step 5 --- Q Matrix Entries and Offset.} Collecting coefficients for the standard QUBO form $H(x) = \sum_{i \leq j} Q_{ij} x_i x_j + c$, we obtain the following closed-form expressions for the matrix entries and constant offset:
+\begin{align}
+Q_{ii} &= \sum_{j : (i,j) \in E} w_{ij} + \lambda(1 - N), \quad \forall i \in V, \\
+Q_{ij} &= -2w_{ij} + 2\lambda, \quad \forall i, j \in V, i \neq j, \\
+c &= \frac{\lambda N^2}{4}.
+\end{align}
+Note that the term $\lambda \sum_{i \neq j} x_i x_j$ contributes $2\lambda$ to each off-diagonal entry $Q_{ij}$ because the double sum counts each unordered pair twice.
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen large enough to ensure that any violation of the balance constraint is strictly more costly than the maximum possible reduction in cut weight. Let $W_{\text{total}} = \sum_{(i,j) \in E} w_{ij}$ denote the sum of all net weights. The maximum objective gain achievable by moving a single module to an unbalanced configuration is bounded by $W_{\text{total}}$. Therefore, selecting $\lambda > W_{\text{total}}$ guarantees that the penalty incurred by any infeasible assignment exceeds any feasible reduction in the cut weight, forcing the optimizer to prefer balanced configurations.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal bisection because (i) any feasible assignment satisfying $\sum_{i \in V} x_i = N/2$ incurs zero penalty, so $H(x)$ evaluates exactly to the cut weight; (ii) any infeasible assignment violates the balance constraint, incurring a penalty of at least $\lambda$. By choosing $\lambda > W_{\text{total}}$, the energy of every infeasible solution strictly exceeds the energy of the best feasible solution. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that minimizes the cut weight, which is precisely the optimal solution to the original VLSI Bisection Placement Problem.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N = 4$ modules $V = \{0, 1, 2, 3\}$ and edges $E = \{(0,1), (1,2), (2,3), (0,3)\}$ with weights $w_{01}, w_{12}, w_{23}, w_{03}$. Substituting $N=4$ into the general formulas yields:
+\begin{align}
+Q_{00} &= w_{01} + w_{03} - 3\lambda, & Q_{01} &= -2w_{01} + 2\lambda, & Q_{02} &= 2\lambda, & Q_{03} &= -2w_{03} + 2\lambda, \\
+Q_{11} &= w_{01} + w_{12} - 3\lambda, & Q_{12} &= -2w_{12} + 2\lambda, & Q_{13} &= 2\lambda, & Q_{10} &= Q_{01}, \\
+Q_{22} &= w_{12} + w_{23} - 3\lambda, & Q_{23} &= -2w_{23} + 2\lambda, & Q_{20} &= 2\lambda, & Q_{21} &= Q_{12}, \\
+Q_{33} &= w_{03} + w_{23} - 3\lambda, & Q_{30} &= -2w_{03} + 2\lambda, & Q_{31} &= 2\lambda, & Q_{32} &= Q_{23}.
+\end{align}
+The constant offset is $c = 4\lambda$. The resulting Hamiltonian is:
+\begin{align}
+H(x) &= w_{01}(x_0 + x_1 - 2x_0 x_1) + w_{12}(x_1 + x_2 - 2x_1 x_2) + w_{23}(x_2 + x_3 - 2x_2 x_3) + w_{03}(x_0 + x_3 - 2x_0 x_3) \\
+&\quad - 3\lambda(x_0 + x_1 + x_2 + x_3) + 2\lambda(x_0 x_1 + x_0 x_2 + x_0 x_3 + x_1 x_2 + x_1 x_3 + x_2 x_3) + 4\lambda.
+\end{align}
+For a balanced assignment such as $x = (0,0,1,1)$, the penalty term vanishes, and the energy equals the cut weight $w_{12} + w_{23}$. Any unbalanced assignment, such as $x = (0,0,0,1)$, incurs a penalty of $\lambda$, raising the energy above the optimal feasible value when $\lambda > W_{\text{total}}$. Minimizing $H(x)$ over all $2^4 = 16$ binary configurations recovers the minimum cut partition.
+
+\end{document}

@@ -1,0 +1,135 @@
+{
+ "case": "ev_chargers_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 85.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 501.2
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 128.7,
+   "error": "ValueError: checker failed: RuntimeError: ModuleNotFoundError: No module named 'prep'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/reqcheck.py\", line 146, in _samples\n    ns = _exec(code)\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/reqcheck.py\", line 140, in _exec\n    exec(compile(code, \"<checker>\", \"exec\"), ns)\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<checker>\", line 2, in <module>\nModuleNotFoundError: No module named 'prep'\n"
+  },
+  "data": {
+   "ok": false,
+   "seconds": 965.1,
+   "error": "ValueError: data preparation failed: RuntimeError: TypeError: tuple() takes no keyword arguments\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 162, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 14, in load_data\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 101, in wrapped\n    return obj(*a, **kw)\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/prep/table.py\", line 140, in latest_period\n    key = df[columns].apply(lambda c: pd.to_numeric(c, errors=\"coerce\")).apply(tuple, axis=1)\nTypeError: tuple() takes no keyword arguments\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Candidate locations for charging stations (ward centers)",
+    "source": "user"
+   },
+   "wards": {
+    "meaning": "Administrative wards (Li) in Daan District",
+    "source": "user"
+   }
+  },
+  "params": {
+   "site_id": {
+    "meaning": "Identifier for each candidate site",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "user"
+   },
+   "ward_id": {
+    "meaning": "Identifier for each ward",
+    "index": [
+     "wards"
+    ],
+    "type": "text",
+    "source": "user"
+   },
+   "lat": {
+    "meaning": "Latitude of candidate sites",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "user",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of candidate sites",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "user",
+    "unit": "deg_lon"
+   },
+   "ward_lat": {
+    "meaning": "Latitude of ward centers",
+    "index": [
+     "wards"
+    ],
+    "type": "number",
+    "source": "user",
+    "unit": "deg_lat"
+   },
+   "ward_lon": {
+    "meaning": "Longitude of ward centers",
+    "index": [
+     "wards"
+    ],
+    "type": "number",
+    "source": "user",
+    "unit": "deg_lon"
+   },
+   "population": {
+    "meaning": "Population of each ward",
+    "index": [
+     "wards"
+    ],
+    "type": "int",
+    "source": "user",
+    "unit": "persons"
+   },
+   "k": {
+    "meaning": "Number of charging stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3,
+    "unit": "stations"
+   }
+  }
+ },
+ "data_found": [
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 292308,
+  "solver_calls": null
+ },
+ "seconds": 1680.7
+}

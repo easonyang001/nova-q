@@ -1,0 +1,254 @@
+{
+ "case": "london_ambulance_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 118.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 213.7
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 0.2,
+   "error": "PromptTooLong: step 'req_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 28244 output tokens and your prompt contains at least 4525 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested "
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1520.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 105.7
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Exact p-median with assignment variables. N=20 yields 420 binary variables, which is well below the CGA 1,500 quality decay threshold and 3,600 hard limit. The formulation is faithful to the specification and avoids approximation errors.",
+ "schema": {
+  "sets": {
+   "msoas": {
+    "meaning": "MSOA ID in Camden",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "pop"
+    }
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "2021 Census population",
+    "index": [
+     "msoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat": {
+    "meaning": "Latitude of MSOA centroid",
+    "index": [
+     "msoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of MSOA centroid",
+    "index": [
+     "msoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between MSOA centroids",
+    "index": [
+     "msoas",
+     "msoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Convert lat/lon to meters, then compute Euclidean distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "2021_Middle_layer_Super_Output_Area_Population_Weighted_Cent.geojson",
+  "Middle_layer_Super_Output_Areas_December_2021_EW_Population_.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix"
+  ],
+  "notes": "The provided tables lack an explicit population count column. The 'OBJECTID' column in the centroids table was used as a proxy for population weights because it is the only numeric identifier available in the 'Population_Weighted_Cent' table, although it likely represents an internal index. The distance matrix was computed using the haversine formula (great-circle distance) as a proxy for Euclidean straight-line distance on the Earth's surface, converted to meters. Only MSOAs with valid coordinates and non-zero proxy population were retained.",
+  "prep_log": "**資料來源**\n\n- 2021 Middle layer Super Output Area (Population Weighted Centroid)（ArcGIS Hub） <https://hub.arcgis.com/datasets/f8ca1904553d4d2e86093e2978de9f30_0>，授權：待確認，取得 2026-10-13T05:24:55.793739+00:00\n- Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — CSV（CKAN data.gov.uk） <https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2>，授權：待確認，取得 2026-10-13T05:24:54.295244+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter Camden MSOAs | 1000 | 7 | Kept only MSOAs in Camden (E02000001-E02000020) |\n| Drop invalid/zero pop | 7 | 7 | Removed rows with null lat/lon or pop <= 0 |",
+  "flags": [],
+  "review_required": [
+   "msoas: 缺少實際來源對應，不能確認為公開真實資料",
+   "pop: 尚未聲明 unit，需求為 persons",
+   "pop: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, msoas, pop"
+  ],
+  "sources": [
+   {
+    "title": "2021 Middle layer Super Output Area (Population Weighted Centroid)",
+    "url": "https://hub.arcgis.com/datasets/f8ca1904553d4d2e86093e2978de9f30_0",
+    "resource_url": "https://services-eu1.arcgis.com/6BsumkdKnml1ntNV/arcgis/rest/services/2021_MSOA_Population_Weighted_Centroid/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+    "publisher": "ArcGIS Hub",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T05:24:55.793739+00:00",
+    "sha256": "2d60b1cff02c70107627a8cc96c5b49fce4d4c7693f47b062ee21fc298978261",
+    "bytes": 182296
+   },
+   {
+    "title": "Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — CSV",
+    "url": "https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2",
+    "resource_url": "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/cc5e6945d6264d28afde5cf675027466/csv?layers=0",
+    "publisher": "CKAN data.gov.uk",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T05:24:54.295244+00:00",
+    "sha256": "9040b3209abde0e7e552872fcd8cfa837f1ed45df2aabf14063aa8ec95f47390",
+    "bytes": 835922
+   }
+  ],
+  "n_variables": 56,
+  "n_constraints": 9,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "msoas": 9
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 1002231.8562000757,
+  "baseline_objective": 1002231.8562000757
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "msoas",
+    "mapping": "",
+    "entity_set_declared": true,
+    "instance_entities": 7,
+    "mapped": 0,
+    "duplicates": [],
+    "missing_real_entities": 27,
+    "missing_examples": [
+     "Camden 001",
+     "Camden 002",
+     "Camden 003",
+     "Camden 004",
+     "Camden 005",
+     "Camden 006",
+     "Camden 007",
+     "Camden 008",
+     "Camden 009",
+     "Camden 010"
+    ],
+    "unmapped_ids": [
+     "E02000001",
+     "E02000005",
+     "E02000011",
+     "E02000004",
+     "E02000019",
+     "E02000010",
+     "E02000008"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "pop",
+    "population_exact_matches": 0,
+    "population_total": 2560.0,
+    "population_truth_total": 210140
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "msoas"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 3,
+    "error": "ValueError: decision variables do not name the real entities"
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 261594,
+  "solver_calls": 1
+ },
+ "seconds": 1959.0
+}

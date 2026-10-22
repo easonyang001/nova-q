@@ -1,0 +1,24 @@
+{
+ "case": "berlin_playgrounds_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": false,
+   "seconds": 260.6,
+   "error": "ValueError: blocking questions are still open:\n- 空間資料（LOR 多邊形、街廓邊界、現有遊戲場座標）將以何種格式提供？\n- 模型預估 1,000–2,500 變數，超出 CGA 已測試範圍。是否接受「預先篩選 unreachable 街廓」並依賴後端時間限制運算？"
+  }
+ },
+ "failed_stage": "clarify",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "cost": {
+  "llm_tokens": 43681,
+  "solver_calls": null
+ },
+ "seconds": 260.6
+}

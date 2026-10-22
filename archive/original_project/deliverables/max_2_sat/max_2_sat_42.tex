@@ -1,0 +1,81 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Weighted Max-2-SAT}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Weighted Max-2-SAT}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ Boolean variables $\mathcal{X} = \{x_1, \dots, x_N\}$ and a collection of $M$ weighted clauses $\mathcal{C} = \{C_1, \dots, C_M\}$, where each clause $C_j$ contains at most two literals and carries a non-negative weight $w_j \geq 0$, the Weighted Max-2-SAT problem seeks a truth assignment to $\mathcal{X}$ that maximizes the total weight of satisfied clauses.
+
+\paragraph{Decision Variables.}
+For each Boolean variable $x_i \in \{0,1\}$, $i \in \{1, \dots, N\}$, we introduce a binary decision variable $x_i \in \{0,1\}$ representing its truth value (1 for true, 0 for false). Each clause $C_j$ involves a set of literals $\mathcal{L}_j$. For each literal $\ell \in \mathcal{L}_j$, we define a binary indicator $y_{j,\ell} \in \{0,1\}$ that evaluates to 1 if the literal is true under the assignment and 0 otherwise. Specifically, if $\ell = x_i$, then $y_{j,\ell} = x_i$; if $\ell = \neg x_i$, then $y_{j,\ell} = 1 - x_i$.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1.} The original objective is to maximize the total weight of satisfied clauses:
+\begin{align}
+    \max_{\mathbf{x} \in \{0,1\}^N} \sum_{j=1}^M w_j s_j,
+\end{align}
+where $s_j \in \{0,1\}$ is the satisfaction indicator for clause $C_j$. For a clause with two literals $\ell_{j,1}$ and $\ell_{j,2}$, the indicator is given by the logical OR:
+\begin{align}
+    s_j = 1 - (1 - y_{j,\ell_{j,1}})(1 - y_{j,\ell_{j,2}}) = y_{j,\ell_{j,1}} + y_{j,\ell_{j,2}} - y_{j,\ell_{j,1}}y_{j,\ell_{j,2}}.
+\end{align}
+Since QUBO solvers minimize energy, we define the Hamiltonian as the negative of the objective:
+\begin{align}
+    H(\mathbf{x}) = -\sum_{j=1}^M w_j s_j = -\sum_{j=1}^M w_j \left( y_{j,\ell_{j,1}} + y_{j,\ell_{j,2}} - y_{j,\ell_{j,1}}y_{j,\ell_{j,2}} \right).
+\end{align}
+
+\textbf{Step 2.} The problem is an unconstrained maximization over the binary hypercube $\{0,1\}^N$. There are no explicit constraints on the variable assignments.
+
+\textbf{Step 3.} Consequently, no penalty terms are required. The feasible space is the entire domain $\{0,1\}^N$, and the Hamiltonian directly encodes the objective function.
+
+\textbf{Step 4.} Combining the objective terms yields the single QUBO Hamiltonian:
+\begin{align}
+    H(\mathbf{x}) = \sum_{j=1}^M w_j \left( -y_{j,\ell_{j,1}} - y_{j,\ell_{j,2}} + y_{j,\ell_{j,1}}y_{j,\ell_{j,2}} \right).
+\end{align}
+Substituting the literal mappings $y_{j,\ell} \in \{x_i, 1-x_i\}$ and expanding using the idempotent property $x_i^2 = x_i$, each clause $C_j$ contributes linear, quadratic, and constant terms to $H(\mathbf{x})$. For a clause involving variables $x_i$ and $x_k$ with polarities $p_{j,1}, p_{j,2} \in \{0,1\}$ (where $0$ denotes a positive literal and $1$ denotes a negated literal), the expansion yields:
+\begin{align}
+    H_j(\mathbf{x}) = -w_j(1-2p_{j,1})x_i - w_j(1-2p_{j,2})x_k + w_j(1-2p_{j,1})(1-2p_{j,2})x_i x_k - w_j(1 - p_{j,1} - p_{j,2} + p_{j,1}p_{j,2}).
+\end{align}
+Summing over all clauses gives the full Hamiltonian $H(\mathbf{x}) = \sum_{j=1}^M H_j(\mathbf{x})$.
+
+\textbf{Step 5.} Reading off the coefficients from the expanded Hamiltonian, the QUBO matrix entries $Q_{i,k}$ and offset $c$ are given in closed form by:
+\begin{align}
+    Q_{i,i} &= \sum_{j: x_i \in C_j} -w_j(1-2p_{j,m}), \\
+    Q_{i,k} &= \sum_{j: x_i, x_k \in C_j} w_j(1-2p_{j,1})(1-2p_{j,2}), \\
+    c &= \sum_{j=1}^M -w_j(1 - p_{j,1} - p_{j,2} + p_{j,1}p_{j,2}),
+\end{align}
+where $p_{j,m}$ is the polarity of the $m$-th literal in clause $C_j$ mapping to variable $x_i$ or $x_k$. For clauses with only one literal, the corresponding quadratic and second linear terms vanish.
+
+\paragraph{Penalty Weight Justification.}
+The Weighted Max-2-SAT problem is inherently unconstrained over the binary assignment space. Therefore, no penalty weights $\lambda$ are introduced, and the penalty term set is empty. The Hamiltonian $H(\mathbf{x})$ directly represents the negative of the objective function, eliminating the need for constraint penalties or weight tuning.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ is mathematically equivalent to maximizing $\sum_{j=1}^M w_j s_j$. Since $w_j \geq 0$ and $s_j \in \{0,1\}$, each term $-w_j s_j$ in the Hamiltonian is minimized when $s_j = 1$. Any assignment that leaves a clause $C_j$ unsatisfied ($s_j = 0$) results in a strictly higher energy contribution ($0$) compared to a satisfied assignment ($-w_j$). Consequently, the global minimum of $H(\mathbf{x})$ must occur at a truth assignment that maximizes the total satisfied clause weight, guaranteeing that the QUBO ground state corresponds to the optimal solution of the original problem.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N=3$ variables and $M=2$ clauses. Let $C_1 = (x_1 \lor x_2)$ with weight $w_1 = 5$, and $C_2 = (\neg x_2 \lor x_3)$ with weight $w_2 = 3$. 
+For $C_1$, both literals are positive ($p_{1,1}=0, p_{1,2}=0$). Applying the general formula:
+\begin{align}
+    H_1(\mathbf{x}) = -5x_1 - 5x_2 + 5x_1x_2.
+\end{align}
+For $C_2$, the first literal is negated ($p_{2,1}=1$) and the second is positive ($p_{2,2}=0$). Applying the general formula:
+\begin{align}
+    H_2(\mathbf{x}) = -3(1-2)x_2 - 3(1)x_3 + 3(1-2)(1)x_2x_3 - 3(1 - 1 - 0 + 0) = 3x_2 - 3x_3 - 3x_2x_3.
+\end{align}
+Summing $H_1$ and $H_2$ gives the concrete Hamiltonian:
+\begin{align}
+    H(\mathbf{x}) = -5x_1 - 2x_2 - 3x_3 + 5x_1x_2 - 3x_2x_3.
+\end{align}
+The corresponding QUBO matrix entries and offset are:
+\begin{align}
+    Q_{1,1} &= -5, & Q_{2,2} &= -2, & Q_{3,3} &= -3, \\
+    Q_{1,2} &= 5, & Q_{2,3} &= -3, & Q_{1,3} &= 0, \\
+    c &= 0.
+\end{align}
+Evaluating $H(\mathbf{x})$ over the $2^3=8$ possible assignments reveals that the assignment $\mathbf{x}^* = (1, 0, 1)$ yields the minimum energy $H(\mathbf{x}^*) = -8$. This corresponds to satisfying both clauses, achieving the maximum possible weight of $5 + 3 = 8$.
+\end{document}

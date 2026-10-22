@@ -1,0 +1,50 @@
+\documentclass[11pt]{article}
+% Draft in a neutral layout; switch to the venue template once the target is fixed.
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+% Improve line breaking and keep text within the margins.
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,multirow}
+\usepackage{graphicx}
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{hyperref}
+\hypersetup{pdfauthor={Chia Chen Yang}}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% Marks for the draft: what still needs evidence or checking.
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\pending}[1]{\textcolor{orange}{[PENDING: #1]}}
+
+\title{From a Sentence to an Annealer: A Local-LLM Agent System for\\
+Real-World QUBO Optimization with Problem-Level Verification}
+\author{Chia Chen Yang}
+\date{Draft, \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\input{sections/introduction}
+\input{sections/related}
+\input{sections/setting}
+\input{sections/system}
+\input{sections/verification}
+\input{sections/experiments}
+\input{sections/limitations}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\clearpage
+\appendix
+\input{sections/appendix}
+
+\end{document}

@@ -1,0 +1,220 @@
+{
+ "case": "aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 106.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 471.0
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 233.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 540.0
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 219.5
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "One-hot assignment with cardinality constraints. Variables: 3*N. Fits backend: N~50-150 -> 150-450 vars. Well within CGA limit.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location index",
+    "source": "public",
+    "reducible": null
+   },
+   "groups": {
+    "meaning": "Inspection team index",
+    "source": "user",
+    "reducible": null
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "in_area"
+  ],
+  "notes": "Filtered AED locations to Da'an District using area name matching. Excluded '其他' and '學校、大型集會場所' categories. Deduplicated sites based on exact name+address match to preserve distinct physical locations with different coordinates. Truncated to largest multiple of 3 for equal group assignment. Groups fixed to G1, G2, G3.",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-13T05:38:36.749408+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Drop missing coordinates | 2729 | 2729 | Removed rows with NaN lat/lon |\n| 依實際邊界保留區域 ['大安區, 台北市'] | 2729 | 327 | 各區點數 {'大安區, 台北市': 327} |\n| Filter by Da'an District | 2729 | 327 | Kept rows matching Da'an District via area name |\n| Exclude categories | 327 | 57 | Removed '其他' and '學校、大型集會場所' |\n| Deduplicate places | 57 | 51 | Dropped duplicate rows with same name and address |\n| Truncate to multiple of 3 | 51 | 51 | Truncated from 51 to 51 sites for equal group size |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：groups, lat, lon, sites"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T05:38:36.749408+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 153,
+  "n_constraints": 54,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 51
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "569042a0cdfad50ee213c09e",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 48,
+    "invalid": 48,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "569042a0cdfad50ee213c09e",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.3820290471858954,
+  "objective": 424330.2276187705,
+  "baseline_objective": 686650.7651961042
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "coordinates within 60 m",
+    "entity_set_declared": true,
+    "instance_entities": 51,
+    "mapped": 49,
+    "duplicates": [
+     "臺北捷運忠孝新生站O07"
+    ],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [
+     "S19",
+     "S30"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "groups"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "groups",
+      "sites"
+     ]
+    ],
+    "structure": "51 decision entities but only 49 map to real ones: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 51,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 370657.2329274105
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 141137,
+  "solver_calls": 3
+ },
+ "seconds": 1569.8
+}

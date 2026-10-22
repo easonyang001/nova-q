@@ -1,0 +1,100 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Facility Location Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Facility Location Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $M$ candidate facilities and $N$ customers, the objective is to select a subset of facilities to open and assign each customer to exactly one open facility so as to minimize the total cost. The total cost comprises the fixed opening costs of the selected facilities and the variable assignment costs between customers and their assigned facilities.
+
+\paragraph{Decision Variables.}
+Let $y_i \in \{0,1\}$ for $i \in \{0,\dots,M-1\}$ be a binary variable indicating whether facility $i$ is opened ($y_i=1$) or not ($y_i=0$). Let $x_{ij} \in \{0,1\}$ for $i \in \{0,\dots,M-1\}$ and $j \in \{0,\dots,N-1\}$ be a binary variable indicating whether customer $j$ is assigned to facility $i$ ($x_{ij}=1$) or not ($x_{ij}=0$). The parameters $f_i \ge 0$ denote the opening cost of facility $i$, and $c_{ij} \ge 0$ denote the assignment cost for customer $j$ to facility $i$.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- Original Objective. The problem is to minimize the total cost:
+\begin{align}
+\min \quad C(\mathbf{x},\mathbf{y}) = \sum_{i=0}^{M-1} f_i y_i + \sum_{i=0}^{M-1} \sum_{j=0}^{N-1} c_{ij} x_{ij}.
+\end{align}
+Since QUBO solvers minimize quadratic forms, we retain the minimization direction directly.
+
+Step 2 --- Constraints. The problem is subject to two sets of constraints:
+\begin{align}
+\sum_{i=0}^{M-1} x_{ij} = 1 \quad \text{for each } j \in \{0,\dots,N-1\}, \tag{C1}
+\end{align}
+\begin{align}
+x_{ij} \le y_i \quad \text{for each } i \in \{0,\dots,M-1\}, j \in \{0,\dots,N-1\}. \tag{C2}
+\end{align}
+
+Step 3 --- Penalty Term Construction. We introduce a penalty weight $\lambda > 0$ and convert each constraint into a quadratic penalty term added to the objective.
+
+For constraint (C1), the penalty is:
+\begin{align}
+P_1 = \lambda \sum_{j=0}^{N-1} \left( \sum_{i=0}^{M-1} x_{ij} - 1 \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_{ij}^2 = x_{ij}$ for binary variables yields:
+\begin{align}
+\left( \sum_{i=0}^{M-1} x_{ij} - 1 \right)^2 &= \sum_{i=0}^{M-1} x_{ij}^2 + \sum_{i \neq k} x_{ij}x_{kj} - 2\sum_{i=0}^{M-1} x_{ij} + 1 \nonumber \\
+&= \sum_{i \neq k} x_{ij}x_{kj} - \sum_{i=0}^{M-1} x_{ij} + 1.
+\end{align}
+Thus, the general penalty contribution is:
+\begin{align}
+P_1 = \lambda \sum_{j=0}^{N-1} \left( \sum_{i \neq k} x_{ij}x_{kj} - \sum_{i=0}^{M-1} x_{ij} + 1 \right).
+\end{align}
+
+For constraint (C2), since $x_{ij}, y_i \in \{0,1\}$, the condition $x_{ij} \le y_i$ is equivalent to $x_{ij}(1-y_i) = 0$. The penalty term is:
+\begin{align}
+P_2 = \lambda \sum_{i=0}^{M-1} \sum_{j=0}^{N-1} (x_{ij} - x_{ij}y_i).
+\end{align}
+
+Step 4 --- Combined QUBO Hamiltonian. The full QUBO energy function $H(\mathbf{x},\mathbf{y})$ is the sum of the original objective and all penalty terms:
+\begin{align}
+H(\mathbf{x},\mathbf{y}) = \sum_{i=0}^{M-1} f_i y_i + \sum_{i=0}^{M-1} \sum_{j=0}^{N-1} c_{ij} x_{ij} + P_1 + P_2.
+\end{align}
+
+Step 5 --- Q Matrix Entries and Offset. Collecting coefficients for linear and quadratic terms yields the following general closed-form expressions for the QUBO matrix entries and constant offset $c$:
+\begin{align}
+Q_{y_i,y_i} &= f_i, \quad i \in \{0,\dots,M-1\}, \nonumber \\
+Q_{x_{ij},x_{ij}} &= c_{ij} - \lambda, \quad i \in \{0,\dots,M-1\}, j \in \{0,\dots,N-1\}, \nonumber \\
+Q_{x_{ij},x_{kj}} &= \lambda, \quad j \in \{0,\dots,N-1\}, i,k \in \{0,\dots,M-1\}, i \neq k, \nonumber \\
+Q_{x_{ij},y_i} &= -\lambda, \quad i \in \{0,\dots,M-1\}, j \in \{0,\dots,N-1\}, \nonumber \\
+c &= \lambda N.
+\end{align}
+All other entries are zero. The Hamiltonian is then expressed as $H = \mathbf{z}^T Q \mathbf{z} + c$, where $\mathbf{z}$ is the vector of all binary variables.
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any constraint violation is strictly more costly than the maximum possible reduction in the original objective function. The maximum possible reduction in the objective from any single variable assignment is bounded by $\max_{i,j} \{f_i, c_{ij}\}$. Therefore, choosing $\lambda > \max_{i,j} \{f_i, c_{ij}\}$ guarantees that the penalty incurred by an infeasible solution dominates any feasible cost savings, forcing the optimizer toward valid assignments.
+
+\paragraph{Correctness Argument.}
+Minimizing $H$ over $\{0,1\}^n$ recovers the optimal solution because (i) all feasible assignments satisfy the constraints exactly, yielding zero penalty, so their energy equals the original objective cost; (ii) any infeasible assignment violates at least one constraint, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, this penalty exceeds the maximum possible decrease in the original objective cost, guaranteeing that the global minimum of $H$ corresponds to a feasible solution with the minimum original cost.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $M=2$ facilities and $N=2$ customers. The variables are $y_0, y_1, x_{00}, x_{01}, x_{10}, x_{11}$. Let the costs be $f_0=10, f_1=12, c_{00}=1, c_{01}=2, c_{10}=3, c_{11}=4$. Using $\lambda=10000$, the concrete objective is:
+\begin{align}
+C = 10y_0 + 12y_1 + 1x_{00} + 2x_{01} + 3x_{10} + 4x_{11}.
+\end{align}
+The concrete penalty terms expand to:
+\begin{align}
+P_1 &= 10000\left[(x_{00}+x_{10}-1)^2 + (x_{01}+x_{11}-1)^2\right], \\
+P_2 &= 10000\left[(x_{00}-x_{00}y_0) + (x_{01}-x_{01}y_0) + (x_{10}-x_{10}y_1) + (x_{11}-x_{11}y_1)\right].
+\end{align}
+The resulting QUBO Hamiltonian $H(x,y)$ written out explicitly is:
+\begin{align}
+H &= 10y_0 + 12y_1 + (1-10000)x_{00} + (2-10000)x_{01} + (3-10000)x_{10} + (4-10000)x_{11} \nonumber \\
+&\quad + 10000x_{00}x_{10} + 10000x_{01}x_{11} - 10000x_{00}y_0 - 10000x_{01}y_0 - 10000x_{10}y_1 - 10000x_{11}y_1 + 20000.
+\end{align}
+The corresponding Q matrix entries for this instance are:
+\begin{align}
+Q_{y_0,y_0} &= 10, & Q_{y_1,y_1} &= 12, \nonumber \\
+Q_{x_{00},x_{00}} &= -9999, & Q_{x_{01},x_{01}} &= -9998, & Q_{x_{10},x_{10}} &= -9997, & Q_{x_{11},x_{11}} &= -9996, \nonumber \\
+Q_{x_{00},x_{10}} &= 10000, & Q_{x_{01},x_{11}} &= 10000, \nonumber \\
+Q_{x_{00},y_0} &= -10000, & Q_{x_{01},y_0} &= -10000, & Q_{x_{10},y_1} &= -10000, & Q_{x_{11},y_1} &= -10000, \nonumber \\
+c &= 20000.
+\end{align}
+Enumerating the feasible solutions reveals that opening facility $0$ and assigning both customers to it yields the minimum cost. The optimal assignment is $y_0=1, y_1=0, x_{00}=1, x_{01}=1, x_{10}=0, x_{11}=0$, with an optimal energy of $H^* = 13$.
+
+\end{document}

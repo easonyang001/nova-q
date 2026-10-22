@@ -1,0 +1,141 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 88.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 225.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 70.5
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1356.4,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: No blocks remain after excluding existing coverage.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 86, in load_data\nValueError: DATA GAP: No blocks remain after excluding existing coverage.\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Direct binary formulation with helper coverage indicators. ~30 candidates + ~150 valid blocks = ~180 variables. Fits easily within 1,500 variable threshold for CGA GPU annealer. Uses linear constraints for cardinality and coverage implication. Invalid blocks are removed in data generation to ensure every block has a variable.",
+ "schema": {
+  "sets": {
+   "candidates": {
+    "meaning": "LOR planning area center",
+    "source": "public"
+   },
+   "blocks": {
+    "meaning": "Street block (only those not already covered by existing playgrounds)",
+    "source": "public"
+   },
+   "existing_playgrounds": {
+    "meaning": "Existing playground locations",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat_c": {
+    "meaning": "Latitude of candidate",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_c": {
+    "meaning": "Longitude of candidate",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "lat_b": {
+    "meaning": "Latitude of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_b": {
+    "meaning": "Longitude of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Population of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat_e": {
+    "meaning": "Latitude of existing playground",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_e": {
+    "meaning": "Longitude of existing playground",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "Blockseiten_des_Regionalen_Bezugssystems_RBS_-_WFS_Blockseit.geojson",
+  "Daten_zum_Bericht_2021_die_neuen_LOR_.xlsx",
+  "Einwohnerdichte_2019_Umweltatlas_-_WFS_Einwohnerdichte_2019_.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 326675,
+  "solver_calls": null
+ },
+ "seconds": 1742.6
+}

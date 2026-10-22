@@ -1,0 +1,55 @@
+\section{Limitations and Open Work}
+\label{sec:limitations}
+
+We state plainly what the current evidence does and does not support.
+
+\begin{itemize}
+  \item \textbf{Real-data acceptance remains limited.} A specified-source UCI red-wine pilot reached a local SA
+        solution both through saved-model recovery and a fresh run, with independent case-specific checks.
+        Recovered wholesale-customer and real-network cases also delivered independently checked solutions.
+        A ten-case real-data acceptance catalog has been prepared but not fully executed. The new autonomous
+        batch suite uses Taipei chargers, YouBike routing and AED grouping (\cref{sec:autonomousprotocol});
+        it has development smoke tests but no completed frozen repeated comparison. Earlier Paris itinerary
+        and labour-law scheduling examples remain prospective. The preprocessing toolkit reproduces official
+        totals on real public data, which is narrower evidence than autonomous acquisition and modelling. In one run on real Taipei data, the local Data Adapter produced a valid instance but
+        ignored the toolkit, wrote its own transformations and added licence information that was not in the
+        sources; the provenance record must therefore be written by code, not by the model.
+  \item \textbf{Checker independence is limited.} Separate prompts and computations reduce direct reuse of
+        Adapter or model code, but the roles share a base LLM and schema and can share the same error.
+        Counts and totals do not establish per-entity data correctness, and sampled requirement checks do not
+        verify every feasible state. The external judge remains case-specific and can itself fail.
+  \item \textbf{Agent and retrieval effects remain hypotheses.} The direct baseline differs in tools,
+        acquisition limits and feedback, so it does not isolate agent count. The new modelling-pattern
+        retrieval ablation is implemented but has no completed repeated result. Earlier null results for
+        splitting tuning roles or retrieving tuning knowledge do not answer the modelling-stage question.
+  \item \textbf{Hardware evidence remains small.} Subsequent CGA and Leap Hybrid BQM comparisons use three repetitions per
+        condition. Hybrid service results are distinct from direct QPU sampling, and use a ten-second limit
+        versus the three-second CGA ceiling; the resource allocations do not establish hardware superiority.
+        Effects depend on the problem; Fujitsu DA rejected a submission due to its monthly
+        account limit. The earlier simulation advantage is small, and neither role splitting nor retrieval
+        helped there. Large-scale repeated hardware and held-out backend-transfer studies remain open.
+  \item \textbf{Functional coverage is not end-to-end reliability.} The integration checks in
+        \cref{sec:integrationchecks} exercise parameterized compilation, local search and recovery fixtures.
+        They do not establish success rates for live data acquisition, LLM diagnosis or model repair, and the
+        new penalty policies have an eight-instance repeated simulation comparison, in which defaults had the
+        lowest mean gap, plus small actual-CGA comparisons. A feasible
+        baseline gives a comparison point, not a guarantee of application-level quality.
+  \item \textbf{Recovery has a limited scope.} Checkpoint resume supports the four history-based penalty
+        policies on typed models, not the existing agent or joint Optuna state. Supported searches can resume
+        through the UI or command-line tool. An interrupted external solver call may
+        require inspection before resubmission. Requirement coverage and formula-change checks cannot prove
+        correctness of the original model, and a single-flip penalty floor cannot certify every global
+        optimum. Data substitutions and requirement changes still need user judgment.
+  \item \textbf{Small local model.} The local model fails as a modeller in recognisable ways (\cref{sec:mechanisms});
+        our checks catch structural failures but not every semantic one: a model may pass all checks and still
+        replace the requested objective with a weaker surrogate, which only the user's review catches. Data
+        interpretation is also fallible (a labour-law rule of two rest days per seven was simplified to one).
+  \item \textbf{Scale.} Brute-force verification is limited to about 26 variables; larger encodings are reported
+        as unverifiable. Routing on the GPU annealer degrades beyond about 30 stops; multi-vehicle routing
+        produced the weakest models of all categories, and connectivity constraints (network design) remain hard
+        to express.
+  \item \textbf{Benchmark scope.} The 100 benchmarks have tiny instances (median five variables), and our
+        12-category suite uses synthetic data. Neither measures real-world difficulty.
+  \item \textbf{Non-determinism.} Even at temperature zero, 27\% of benchmark outcomes changed between identical
+        runs; all comparisons in this paper therefore use repeated runs for local conditions.
+\end{itemize}

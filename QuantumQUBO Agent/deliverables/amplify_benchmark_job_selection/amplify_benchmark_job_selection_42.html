@@ -42,67 +42,76 @@
     <h2 class='subsection'>Benchmark Job Selection Problem</h2>
 
 <h3>Problem Statement</h3>
-Given a set of $N$ candidate benchmark jobs, each characterized by a coverage reward $v_i$, a runtime $t_i$, and pairwise redundancy penalties $p_{ij}$, select a subset of jobs to maximize the total coverage reward while penalizing redundant coverage, subject to a total compute-time budget $T$.
+Given a set of $N$ candidate benchmark jobs, each characterized by a coverage value $v_i$, a compute time $t_i$, and pairwise redundancy penalties $p_{ij}$, select a subset of jobs to maximize the total benchmark coverage value while penalizing redundant coverage, subject to a total compute-time budget $T$.
 
 <h3>Decision Variables</h3>
-For each candidate job $i \in \{0, 1, \dots, N-1\}$, introduce a binary decision variable $x_i \in \{0,1\}$, where $x_i = 1$ if job $i$ is selected, and $x_i = 0$ otherwise.
+For each candidate job $i \in \{0, \dots, N-1\}$, introduce a binary variable $x_i \in \{0,1\}$, where $x_i = 1$ if job $i$ is selected, and $x_i = 0$ otherwise.
 
 <h3>QUBO Derivation</h3>
-Step 1 --- The original objective is a maximization problem. Standard QUBO solvers minimize energy, so we negate the objective:
+<strong>Step 1.</strong> The original objective is a maximization problem. To cast it as a QUBO minimization, we negate the objective function:
 \begin{align}
-\min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} v_i x_i + \sum_{0 \le i < j \le N-1} p_{ij} x_i x_j \right).
+    \min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} v_i x_i + \sum_{0 \leq i < j \leq N-1} p_{ij} x_i x_j \right).
 \end{align}
 
-Step 2 --- The compute-time budget constraint is expressed as:
+<strong>Step 2.</strong> The compute-time budget is expressed as a linear inequality constraint:
 \begin{align}
-\sum_{i=0}^{N-1} t_i x_i \le T.
+    \sum_{i=0}^{N-1} t_i x_i \leq T.
 \end{align}
 
-Step 3 --- We convert the hard constraint into a quadratic penalty term. Following the standard QUBO convention, we add $\lambda \left( \sum_{i=0}^{N-1} t_i x_i - T \right)^2$ to the objective, where $\lambda > 0$ is a penalty weight. Expanding the square yields:
+<strong>Step 3.</strong> We enforce the constraint via a quadratic penalty term with weight $\lambda > 0$:
 \begin{align}
-\lambda \left( \sum_{i=0}^{N-1} t_i^2 x_i^2 - 2T \sum_{i=0}^{N-1} t_i x_i + T^2 + \sum_{0 \le i < j \le N-1} 2 t_i t_j x_i x_j \right).
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} t_i x_i - T \right)^2.
 \end{align}
-Using the idempotent property of binary variables, $x_i^2 = x_i$, the expression simplifies to:
+Expanding the square and applying the idempotent property $x_i^2 = x_i$ for binary variables yields:
 \begin{align}
-\lambda \sum_{i=0}^{N-1} (t_i^2 - 2T t_i) x_i + \lambda \sum_{0 \le i < j \le N-1} 2 t_i t_j x_i x_j + \lambda T^2.
+    P(x) &= \lambda \left( \sum_{i=0}^{N-1} t_i^2 x_i^2 + \sum_{i \neq j} t_i t_j x_i x_j - 2T \sum_{i=0}^{N-1} t_i x_i + T^2 \right) \\
+    &= \lambda \left( \sum_{i=0}^{N-1} (t_i^2 - 2T t_i) x_i + 2 \sum_{0 \leq i < j \leq N-1} t_i t_j x_i x_j + T^2 \right).
+\end{align}
+The general penalty contribution to the Hamiltonian is therefore:
+\begin{align}
+    P(x) = \sum_{i=0}^{N-1} \lambda (t_i^2 - 2T t_i) x_i + 2\lambda \sum_{0 \leq i < j \leq N-1} t_i t_j x_i x_j + \lambda T^2.
 \end{align}
 
-Step 4 --- Combining the negated objective and the expanded penalty term gives the full QUBO Hamiltonian $H(x)$:
+<strong>Step 4.</strong> Combining the negated objective and the penalty term gives the full QUBO Hamiltonian $H(x)$:
 \begin{align}
-H(x) = \sum_{i=0}^{N-1} \left[ -v_i + \lambda(t_i^2 - 2T t_i) \right] x_i + \sum_{0 \le i < j \le N-1} \left[ p_{ij} + 2\lambda t_i t_j \right] x_i x_j + \lambda T^2.
+    H(x) = \sum_{i=0}^{N-1} \left( -v_i + \lambda(t_i^2 - 2T t_i) \right) x_i + \sum_{0 \leq i < j \leq N-1} \left( p_{ij} + 2\lambda t_i t_j \right) x_i x_j + \lambda T^2.
 \end{align}
 
-Step 5 --- Reading off the Q matrix entries and the constant offset $c$ from $H(x)$ in general closed form:
+<strong>Step 5.</strong> Reading off the upper-triangular QUBO matrix entries $Q_{i,j}$ and the constant offset $c$ from $H(x) = \sum_{i \leq j} Q_{i,j} x_i x_j + c$, we obtain the closed-form expressions:
 \begin{align}
-Q_{i,i} &= -v_i + \lambda(t_i^2 - 2T t_i), \quad i \in \{0, \dots, N-1\}, \\
-Q_{i,j} &= p_{ij} + 2\lambda t_i t_j, \quad 0 \le i < j \le N-1, \\
-c &= \lambda T^2.
+    Q_{i,i} &= -v_i + \lambda(t_i^2 - 2T t_i), \quad i \in \{0, \dots, N-1\}, \\
+    Q_{i,j} &= p_{ij} + 2\lambda t_i t_j, \quad 0 \leq i < j \leq N-1, \\
+    Q_{i,j} &= 0, \quad i > j, \\
+    c &= \lambda T^2.
 \end{align}
 
 <h3>Penalty Weight Justification</h3>
-To guarantee that any budget violation is strictly penalized more than the maximum possible gain in the objective function, we require:
-\begin{align}
-\lambda > \frac{\sum_{i=0}^{N-1} v_i}{(\min_{i} t_i)^2}.
-\end{align}
-This condition ensures that the quadratic penalty incurred by exceeding the budget dominates the total reward achievable by any feasible subset, thereby enforcing feasibility at the global minimum.
+The penalty weight $\lambda$ must be chosen large enough so that the cost of violating the budget constraint strictly exceeds any possible gain in the benchmark coverage objective. Let $V_{\max} = \max_i v_i$. A sufficient condition is $\lambda > V_{\max}$ (or more conservatively $\lambda > \sum_i v_i$). This ensures that any assignment violating $\sum_i t_i x_i \leq T$ incurs a penalty larger than the maximum achievable objective value, thereby forcing the global minimum of $H(x)$ to lie within the feasible region.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution because (i) all feasible assignments satisfy $\sum_i t_i x_i \le T$, yielding a penalty term that evaluates to a constant offset $c$ (or zero relative slack), and (ii) any infeasible assignment violates the budget by at least $\min_i t_i$, incurring a penalty of at least $\lambda (\min_i t_i)^2$. By the choice of $\lambda$, this penalty strictly exceeds the maximum possible reduction in the objective function from any feasible configuration. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that optimally balances coverage rewards and redundancy penalties.
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution to the original problem. For any feasible assignment satisfying $\sum_i t_i x_i \leq T$, the penalty term $P(x)$ evaluates to zero, and $H(x)$ reduces exactly to the negated original objective. Thus, minimizing $H(x)$ over feasible points is equivalent to maximizing the original objective. For any infeasible assignment, $P(x)$ is strictly positive. By choosing $\lambda$ according to the justification above, the energy of every infeasible point exceeds the energy of the optimal feasible point. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that maximizes the original objective function.
 
 <h3>Illustrative Example</h3>
-Consider a concrete instance with $N=3$ jobs. Let the parameters be:
+Consider an instance with $N=3$ jobs. We instantiate the parameters as follows: coverage values $v_0=10, v_1=15, v_2=12$; redundancy penalties $p_{01}=2, p_{02}=3, p_{12}=2$; compute times $t_0=3, t_1=4, t_2=5$; budget $T=8$; and penalty weight $\lambda=100$. Substituting these values into the general closed-form expressions yields the concrete QUBO coefficients:
 \begin{align}
-v_0 = 10, \; v_1 = 8, \; v_2 = 12; \quad t_0 = 3, \; t_1 = 4, \; t_2 = 5; \quad T = 7; \quad p_{01} = 2, \; p_{02} = 3, \; p_{12} = 1.
+    Q_{0,0} &= -10 + 100(3^2 - 2\cdot8\cdot3) = -3910, \\
+    Q_{1,1} &= -15 + 100(4^2 - 2\cdot8\cdot4) = -4815, \\
+    Q_{2,2} &= -12 + 100(5^2 - 2\cdot8\cdot5) = -5512, \\
+    Q_{0,1} &= 2 + 2\cdot100\cdot3\cdot4 = 2402, \\
+    Q_{0,2} &= 3 + 2\cdot100\cdot3\cdot5 = 3003, \\
+    Q_{1,2} &= 2 + 2\cdot100\cdot4\cdot5 = 4002, \\
+    c &= 100 \cdot 8^2 = 6400.
 \end{align}
-Choose $\lambda = 10$. Substituting these values into the general formulas yields the concrete Hamiltonian:
+The resulting Hamiltonian is:
 \begin{align}
-H(x) &= -340 x_0 - 408 x_1 - 462 x_2 + 242 x_0 x_1 + 303 x_0 x_2 + 401 x_1 x_2 + 490.
+    H(x) = -3910 x_0 - 4815 x_1 - 5512 x_2 + 2402 x_0 x_1 + 3003 x_0 x_2 + 4002 x_1 x_2 + 6400.
 \end{align}
-Evaluating $H(x)$ over all feasible subsets ($\sum_i t_i x_i \le 7$):
+Evaluating $H(x)$ over all feasible assignments (those with $\sum_i t_i x_i \leq 8$) gives:
 \begin{align}
-H(\emptyset) &= 490, \quad H(\{0\}) = 150, \quad H(\{1\}) = 82, \quad H(\{2\}) = 28, \quad H(\{0,1\}) = -16.
+    H(0,0,0) &= 6400, \quad H(1,0,0) = 2490, \quad H(0,1,0) = 1585, \quad H(0,0,1) = 888, \\
+    H(1,1,0) &= -923, \quad H(1,0,1) = -19.
 \end{align}
-The global minimum is $H(\{0,1\}) = -16$, corresponding to the optimal selection of jobs $0$ and $1$, which yields a net coverage value of $v_0 + v_1 - p_{01} = 16$ while respecting the runtime budget $t_0 + t_1 = 7 \le T$.
+The assignment $x^* = (1,1,0)$ yields the minimum energy $H(x^*) = -923$, corresponding to selecting jobs $0$ and $1$. This matches the optimal benchmark coverage value of $v_0 + v_1 - p_{01} = 10 + 15 - 2 = 23$, confirming the formulation's correctness on this instance.
   </div>
 
   <div class="src-header">
@@ -114,67 +123,76 @@ The global minimum is $H(\{0,1\}) = -16$, corresponding to the optimal selection
 \subsection*{Benchmark Job Selection Problem}
 
 \paragraph{Problem Statement.}
-Given a set of $N$ candidate benchmark jobs, each characterized by a coverage reward $v_i$, a runtime $t_i$, and pairwise redundancy penalties $p_{ij}$, select a subset of jobs to maximize the total coverage reward while penalizing redundant coverage, subject to a total compute-time budget $T$.
+Given a set of $N$ candidate benchmark jobs, each characterized by a coverage value $v_i$, a compute time $t_i$, and pairwise redundancy penalties $p_{ij}$, select a subset of jobs to maximize the total benchmark coverage value while penalizing redundant coverage, subject to a total compute-time budget $T$.
 
 \paragraph{Decision Variables.}
-For each candidate job $i \in \{0, 1, \dots, N-1\}$, introduce a binary decision variable $x_i \in \{0,1\}$, where $x_i = 1$ if job $i$ is selected, and $x_i = 0$ otherwise.
+For each candidate job $i \in \{0, \dots, N-1\}$, introduce a binary variable $x_i \in \{0,1\}$, where $x_i = 1$ if job $i$ is selected, and $x_i = 0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-Step 1 --- The original objective is a maximization problem. Standard QUBO solvers minimize energy, so we negate the objective:
+\textbf{Step 1.} The original objective is a maximization problem. To cast it as a QUBO minimization, we negate the objective function:
 \begin{align}
-\min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} v_i x_i + \sum_{0 \le i &lt; j \le N-1} p_{ij} x_i x_j \right).
+    \min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} v_i x_i + \sum_{0 \leq i &lt; j \leq N-1} p_{ij} x_i x_j \right).
 \end{align}
 
-Step 2 --- The compute-time budget constraint is expressed as:
+\textbf{Step 2.} The compute-time budget is expressed as a linear inequality constraint:
 \begin{align}
-\sum_{i=0}^{N-1} t_i x_i \le T.
+    \sum_{i=0}^{N-1} t_i x_i \leq T.
 \end{align}
 
-Step 3 --- We convert the hard constraint into a quadratic penalty term. Following the standard QUBO convention, we add $\lambda \left( \sum_{i=0}^{N-1} t_i x_i - T \right)^2$ to the objective, where $\lambda &gt; 0$ is a penalty weight. Expanding the square yields:
+\textbf{Step 3.} We enforce the constraint via a quadratic penalty term with weight $\lambda &gt; 0$:
 \begin{align}
-\lambda \left( \sum_{i=0}^{N-1} t_i^2 x_i^2 - 2T \sum_{i=0}^{N-1} t_i x_i + T^2 + \sum_{0 \le i &lt; j \le N-1} 2 t_i t_j x_i x_j \right).
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} t_i x_i - T \right)^2.
 \end{align}
-Using the idempotent property of binary variables, $x_i^2 = x_i$, the expression simplifies to:
+Expanding the square and applying the idempotent property $x_i^2 = x_i$ for binary variables yields:
 \begin{align}
-\lambda \sum_{i=0}^{N-1} (t_i^2 - 2T t_i) x_i + \lambda \sum_{0 \le i &lt; j \le N-1} 2 t_i t_j x_i x_j + \lambda T^2.
+    P(x) &amp;= \lambda \left( \sum_{i=0}^{N-1} t_i^2 x_i^2 + \sum_{i \neq j} t_i t_j x_i x_j - 2T \sum_{i=0}^{N-1} t_i x_i + T^2 \right) \\
+    &amp;= \lambda \left( \sum_{i=0}^{N-1} (t_i^2 - 2T t_i) x_i + 2 \sum_{0 \leq i &lt; j \leq N-1} t_i t_j x_i x_j + T^2 \right).
+\end{align}
+The general penalty contribution to the Hamiltonian is therefore:
+\begin{align}
+    P(x) = \sum_{i=0}^{N-1} \lambda (t_i^2 - 2T t_i) x_i + 2\lambda \sum_{0 \leq i &lt; j \leq N-1} t_i t_j x_i x_j + \lambda T^2.
 \end{align}
 
-Step 4 --- Combining the negated objective and the expanded penalty term gives the full QUBO Hamiltonian $H(x)$:
+\textbf{Step 4.} Combining the negated objective and the penalty term gives the full QUBO Hamiltonian $H(x)$:
 \begin{align}
-H(x) = \sum_{i=0}^{N-1} \left[ -v_i + \lambda(t_i^2 - 2T t_i) \right] x_i + \sum_{0 \le i &lt; j \le N-1} \left[ p_{ij} + 2\lambda t_i t_j \right] x_i x_j + \lambda T^2.
+    H(x) = \sum_{i=0}^{N-1} \left( -v_i + \lambda(t_i^2 - 2T t_i) \right) x_i + \sum_{0 \leq i &lt; j \leq N-1} \left( p_{ij} + 2\lambda t_i t_j \right) x_i x_j + \lambda T^2.
 \end{align}
 
-Step 5 --- Reading off the Q matrix entries and the constant offset $c$ from $H(x)$ in general closed form:
+\textbf{Step 5.} Reading off the upper-triangular QUBO matrix entries $Q_{i,j}$ and the constant offset $c$ from $H(x) = \sum_{i \leq j} Q_{i,j} x_i x_j + c$, we obtain the closed-form expressions:
 \begin{align}
-Q_{i,i} &amp;= -v_i + \lambda(t_i^2 - 2T t_i), \quad i \in \{0, \dots, N-1\}, \\
-Q_{i,j} &amp;= p_{ij} + 2\lambda t_i t_j, \quad 0 \le i &lt; j \le N-1, \\
-c &amp;= \lambda T^2.
+    Q_{i,i} &amp;= -v_i + \lambda(t_i^2 - 2T t_i), \quad i \in \{0, \dots, N-1\}, \\
+    Q_{i,j} &amp;= p_{ij} + 2\lambda t_i t_j, \quad 0 \leq i &lt; j \leq N-1, \\
+    Q_{i,j} &amp;= 0, \quad i &gt; j, \\
+    c &amp;= \lambda T^2.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-To guarantee that any budget violation is strictly penalized more than the maximum possible gain in the objective function, we require:
-\begin{align}
-\lambda &gt; \frac{\sum_{i=0}^{N-1} v_i}{(\min_{i} t_i)^2}.
-\end{align}
-This condition ensures that the quadratic penalty incurred by exceeding the budget dominates the total reward achievable by any feasible subset, thereby enforcing feasibility at the global minimum.
+The penalty weight $\lambda$ must be chosen large enough so that the cost of violating the budget constraint strictly exceeds any possible gain in the benchmark coverage objective. Let $V_{\max} = \max_i v_i$. A sufficient condition is $\lambda &gt; V_{\max}$ (or more conservatively $\lambda &gt; \sum_i v_i$). This ensures that any assignment violating $\sum_i t_i x_i \leq T$ incurs a penalty larger than the maximum achievable objective value, thereby forcing the global minimum of $H(x)$ to lie within the feasible region.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution because (i) all feasible assignments satisfy $\sum_i t_i x_i \le T$, yielding a penalty term that evaluates to a constant offset $c$ (or zero relative slack), and (ii) any infeasible assignment violates the budget by at least $\min_i t_i$, incurring a penalty of at least $\lambda (\min_i t_i)^2$. By the choice of $\lambda$, this penalty strictly exceeds the maximum possible reduction in the objective function from any feasible configuration. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that optimally balances coverage rewards and redundancy penalties.
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution to the original problem. For any feasible assignment satisfying $\sum_i t_i x_i \leq T$, the penalty term $P(x)$ evaluates to zero, and $H(x)$ reduces exactly to the negated original objective. Thus, minimizing $H(x)$ over feasible points is equivalent to maximizing the original objective. For any infeasible assignment, $P(x)$ is strictly positive. By choosing $\lambda$ according to the justification above, the energy of every infeasible point exceeds the energy of the optimal feasible point. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that maximizes the original objective function.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=3$ jobs. Let the parameters be:
+Consider an instance with $N=3$ jobs. We instantiate the parameters as follows: coverage values $v_0=10, v_1=15, v_2=12$; redundancy penalties $p_{01}=2, p_{02}=3, p_{12}=2$; compute times $t_0=3, t_1=4, t_2=5$; budget $T=8$; and penalty weight $\lambda=100$. Substituting these values into the general closed-form expressions yields the concrete QUBO coefficients:
 \begin{align}
-v_0 = 10, \; v_1 = 8, \; v_2 = 12; \quad t_0 = 3, \; t_1 = 4, \; t_2 = 5; \quad T = 7; \quad p_{01} = 2, \; p_{02} = 3, \; p_{12} = 1.
+    Q_{0,0} &amp;= -10 + 100(3^2 - 2\cdot8\cdot3) = -3910, \\
+    Q_{1,1} &amp;= -15 + 100(4^2 - 2\cdot8\cdot4) = -4815, \\
+    Q_{2,2} &amp;= -12 + 100(5^2 - 2\cdot8\cdot5) = -5512, \\
+    Q_{0,1} &amp;= 2 + 2\cdot100\cdot3\cdot4 = 2402, \\
+    Q_{0,2} &amp;= 3 + 2\cdot100\cdot3\cdot5 = 3003, \\
+    Q_{1,2} &amp;= 2 + 2\cdot100\cdot4\cdot5 = 4002, \\
+    c &amp;= 100 \cdot 8^2 = 6400.
 \end{align}
-Choose $\lambda = 10$. Substituting these values into the general formulas yields the concrete Hamiltonian:
+The resulting Hamiltonian is:
 \begin{align}
-H(x) &amp;= -340 x_0 - 408 x_1 - 462 x_2 + 242 x_0 x_1 + 303 x_0 x_2 + 401 x_1 x_2 + 490.
+    H(x) = -3910 x_0 - 4815 x_1 - 5512 x_2 + 2402 x_0 x_1 + 3003 x_0 x_2 + 4002 x_1 x_2 + 6400.
 \end{align}
-Evaluating $H(x)$ over all feasible subsets ($\sum_i t_i x_i \le 7$):
+Evaluating $H(x)$ over all feasible assignments (those with $\sum_i t_i x_i \leq 8$) gives:
 \begin{align}
-H(\emptyset) &amp;= 490, \quad H(\{0\}) = 150, \quad H(\{1\}) = 82, \quad H(\{2\}) = 28, \quad H(\{0,1\}) = -16.
+    H(0,0,0) &amp;= 6400, \quad H(1,0,0) = 2490, \quad H(0,1,0) = 1585, \quad H(0,0,1) = 888, \\
+    H(1,1,0) &amp;= -923, \quad H(1,0,1) = -19.
 \end{align}
-The global minimum is $H(\{0,1\}) = -16$, corresponding to the optimal selection of jobs $0$ and $1$, which yields a net coverage value of $v_0 + v_1 - p_{01} = 16$ while respecting the runtime budget $t_0 + t_1 = 7 \le T$.</pre>
+The assignment $x^* = (1,1,0)$ yields the minimum energy $H(x^*) = -923$, corresponding to selecting jobs $0$ and $1$. This matches the optimal benchmark coverage value of $v_0 + v_1 - p_{01} = 10 + 15 - 2 = 23$, confirming the formulation&#x27;s correctness on this instance.</pre>
 
   <script>
     function copyLatex(btn) {

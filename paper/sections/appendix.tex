@@ -1,0 +1,50 @@
+\section{Reproducibility settings}
+\label{app:details}
+This appendix records the settings needed to interpret the experiments. Full per-condition tables,
+bootstrap intervals, timing audits and development records are retained in the supplementary experiment report.
+
+\paragraph{Frozen-model comparisons.}
+Models, data, objectives and original constraints were held fixed before comparing solver policies.
+Table~\ref{tab:solverprotocol} gives per-call settings; limits are ceilings and early stopping can reduce actual
+calls. External repetitions are new submissions rather than controlled hardware seeds. SA sweeps, CGA search
+seconds and Hybrid service seconds are different resources and do not support a hardware-superiority claim.
+
+\begin{table}[h]
+\centering\small
+\caption{Settings of the frozen-model comparisons.}
+\label{tab:solverprotocol}
+\begin{tabular}{@{}lp{5.6cm}ll@{}}
+\toprule
+Comparison & Per-call setting & Call ceiling & Repetitions \\
+\midrule
+Extended SA penalty & 60 reads, 300 sweeps & 6 & 10 seeds \\
+SA backend comparison & 60 reads, 300 sweeps & 3 & 3 \\
+CGA backend comparison & 3-second search limit & 3 & 3 \\
+Leap Hybrid BQM & Explicit 10-second service limit & 3 & 3 \\
+40-station routing, SA & 30 reads, 300 sweeps & 3 & 3 \\
+40-station routing, CGA & 3-second search limit & 3 & 3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Statistics and references.}
+The extended penalty comparison uses eight instances, eight policies and ten seeds (640 runs). Hierarchical
+bootstrap intervals use 10,000 draws, resampling instances and then seeds within instances. Paired Wilcoxon
+tests use eight per-instance seed-averaged differences, with Holm correction for the four penalty-policy
+comparisons against defaults. Exact references are used for the three small frozen models and the two encoding
+instances; the 40-station routing reference is a feasible 20-restart 2-opt tour, not an optimum.
+
+\paragraph{Ancillary solver checks.}
+The encoding ablation covers two knapsack instances, three encodings, 60 SA conditions and 18 CGA conditions.
+All returned feasible results, but unbalanced encoding missed the 12-item CGA optimum (gap 0.0387).
+A separate hand-written 40-station routing model uses 1,600 decision variables; 17 of 18 runs returned feasible
+tours, whose mean distances exceeded the 7.695977-km heuristic reference. These checks characterize solving,
+not autonomous data preparation or LLM modelling.
+
+\paragraph{Functional validation.}
+\label{sec:integrationchecks}
+The current offline suite passes 146 tests covering compilation, data interfaces, checker fixtures, bounded
+recovery, artifact versions and checkpoint resume. Supported penalty-only policies reproduce uninterrupted
+search histories after resume; changed models and unresolved external calls are rejected. Generated-code
+execution has process timeouts. These fixture-based checks establish implementation behaviour, not live
+acquisition success, LLM semantic correctness or autonomous repair rates.

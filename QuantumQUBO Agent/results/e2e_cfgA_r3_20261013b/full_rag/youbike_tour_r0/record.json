@@ -1,0 +1,294 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 103.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 238.1
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 117.7
+  },
+  "data": {
+   "ok": true,
+   "seconds": 924.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 768.3
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "model 修復完成"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position encoding TSP (N^2 variables). Fits backend because N~20-40 gives 400-1600 variables, within the 1000-1500 optimal range for CGA. Guarantees single tour without MTZ/subtour constraints.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike station ID",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Tour position index (0 to N-1)",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "center_lat": {
+    "meaning": "Reference latitude (Da'an Station)",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 25.033,
+    "unit": "deg_lat"
+   },
+   "center_lon": {
+    "meaning": "Reference longitude (Da'an Station)",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 121.5436,
+    "unit": "deg_lon"
+   },
+   "radius": {
+    "meaning": "Search radius in meters",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 500,
+    "unit": "m"
+   }
+  }
+ },
+ "data_found": [
+  "臺北市YouBike見位率統計_見位率.csv",
+  "臺北市YouBike見車率統計_見車率.csv",
+  "臺北市資料大平臺.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "within_radius"
+  ],
+  "notes": "Used '臺北市資料大平臺' for YouBike station locations. Filtered to 500m radius around Da'an MRT Station (25.0330, 121.5436). Included all operational statuses as per spec. Dropped redundant tables. Positions are sequential indices 0..N-1.",
+  "prep_log": "**資料來源**\n\n- 臺北市YouBike見位率統計 — 見位率（政府資料開放平台） <https://data.gov.tw/dataset/174976>，授權：待確認，取得 2026-10-13T04:52:50.068898+00:00\n- 臺北市YouBike見車率統計 — 見車率（政府資料開放平台） <https://data.gov.tw/dataset/166491>，授權：待確認，取得 2026-10-13T04:52:52.098018+00:00\n- 臺北市資料大平臺（data.taipei） <https://data.taipei/dataset/detail?id=c6bc8aed-557d-41d5-bfb1-8da24f78f2fb>，授權：待確認，取得 2026-10-13T04:52:48.551779+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| drop_invalid_coords | 1819 | 1819 | Dropped rows with NaN lat/lon |\n| 只保留距離 (25.033, 121.5436) 500 公尺內的資料 | 1819 | 18 |  |",
+  "flags": [],
+  "review_required": [
+   "sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "positions: ['Generated sequentially']",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "center_lat: ['Confirmed spec value']",
+   "center_lon: ['Confirmed spec value']",
+   "radius: ['Confirmed spec value']"
+  ],
+  "sources": [
+   {
+    "title": "臺北市YouBike見位率統計 — 見位率",
+    "url": "https://data.gov.tw/dataset/174976",
+    "resource_url": "https://data.taipei/api/dataset/65f4c67c-56c8-4b52-abda-5b58946dfecd/resource/d969e222-7fb3-49f1-95f7-3894a8b9f2bb/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T04:52:50.068898+00:00",
+    "sha256": "cc06f53f01d102bf8437db0d85faca5476541224490202467b0feafae543d08e",
+    "bytes": 147256
+   },
+   {
+    "title": "臺北市YouBike見車率統計 — 見車率",
+    "url": "https://data.gov.tw/dataset/166491",
+    "resource_url": "https://data.taipei/api/dataset/ba0dafae-043c-4730-b97e-2defd7af766c/resource/55a1ce30-7c99-497c-bdcd-bb88b848c803/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T04:52:52.098018+00:00",
+    "sha256": "4865f65b2d6267de184640abb05e5adf2f3c886710e3fa935ec67508b255dc75",
+    "bytes": 147256
+   },
+   {
+    "title": "臺北市資料大平臺",
+    "url": "https://data.taipei/dataset/detail?id=c6bc8aed-557d-41d5-bfb1-8da24f78f2fb",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "data.taipei",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T04:52:48.551779+00:00",
+    "sha256": "82068cb16399545bf44e699ae458d62e010784a048e2eabd83423ad2bdc23c54",
+    "bytes": 952858
+   }
+  ],
+  "n_variables": 324,
+  "n_constraints": 36,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 18
+    },
+    "totals": {
+     "lat": 450.59679,
+     "lon": 2187.79061
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "issues",
+   "version": "3b07206af26dc9a85b014465",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation 0.03 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 58,
+    "invalid": 58,
+    "not_comparable": 0,
+    "rank_agreement": 0.033
+   }
+  },
+  {
+   "status": "ok",
+   "version": "c2fd759521efa4ad7074a9e4",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 58,
+    "invalid": 58,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "c2fd759521efa4ad7074a9e4",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:repaired",
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.5785858820301467,
+  "objective": 3417.0709555637955,
+  "baseline_objective": 8108.58205706398
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (臺北市資料大平臺.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 18,
+    "mapped": 18,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 18,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 3417.0711754159815,
+    "reference_quality": 3504.645699100399,
+    "gap_vs_reference": -0.025
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 243689,
+  "solver_calls": 3
+ },
+ "seconds": 2151.8
+}

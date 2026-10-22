@@ -1,0 +1,228 @@
+{
+ "case": "aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 258.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 317.7
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 55.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 460.9
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 512.1
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "Direct one-hot assignment with linear balance constraints. 3N binary variables. Fits CGA backend (300-600 vars) with dense QUBO quadratic terms for intra-team distances.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location node after filtering (Daan District, excluded categories removed, duplicates merged)",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "Inspection team identifier",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site (WGS84)",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site (WGS84)",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k_teams": {
+    "meaning": "Number of inspection teams (confirmed as 3)",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "in_area"
+  ],
+  "notes": "Filtered AED locations to Daan District using area names via prep.in_area (without code_column to avoid code mapping issues), excluded '學校、大型集會場所' and '其他', merged duplicate locations by exact coordinate match to align with expected entity definition, and prepared sites/coordinates for 3 teams.",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-13T08:21:24.444123+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依實際邊界保留區域 ['大安區, 台北市'] | 2729 | 327 | 各區點數 {'大安區, 台北市': 327} |\n| Filter Daan District | 2729 | 327 | Used prep.in_area with area names, no code_column |\n| Filter excluded categories | 327 | 57 | Removed categories: ['學校、大型集會場所', '其他'] |\n| Merge duplicate locations | 57 | 51 | Grouped by lat/lon to merge duplicates |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：k_teams, lat, lon, sites, teams"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T08:21:24.444123+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 153,
+  "n_constraints": 54,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 51
+    },
+    "totals": {
+     "lat": 1276.6496115,
+     "lon": 6198.6451723
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "3d35a8bd880ee0ae7a923096",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 41,
+    "invalid": 41,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "3d35a8bd880ee0ae7a923096",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.36200837165822636,
+  "objective": 435.4990283138048,
+  "baseline_objective": 682.6093148678542
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match + coordinates within 60 m",
+    "entity_set_declared": true,
+    "instance_entities": 51,
+    "mapped": 49,
+    "duplicates": [
+     "臺北捷運忠孝新生站O07"
+    ],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [
+     "臺北捷運台電大樓站G08",
+     "忠初我有限公司"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "structure": "51 decision entities but only 49 map to real ones: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 51,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 370657.2329274105
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 146410,
+  "solver_calls": 3
+ },
+ "seconds": 1604.7
+}

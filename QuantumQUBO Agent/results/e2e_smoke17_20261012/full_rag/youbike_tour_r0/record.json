@@ -1,0 +1,248 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 98.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 262.4
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 32.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 207.5
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 99.4
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position Encoding TSP on M nodes (M = N_bike + 1). Variables: M^2 binary variables x[i,t] indicating node i is at position t. This formulation guarantees a single closed tour visiting every node exactly once, satisfying visit_each_once, return_to_start, and single_route constraints inherently. No auxiliary variables or subtour elimination constraints are needed. For N_bike=40, M=41, variables=1681. This fits the CGA backend capability (up to ~3600 vars) and aligns with the spec's estimate of 800-1600 vars for typical instances.",
+ "schema": {
+  "sets": {
+   "nodes": {
+    "meaning": "Set of all nodes in the tour, including the reference point and all YouBike stations within 500m",
+    "source": "user"
+   },
+   "positions": {
+    "meaning": "Sequence positions in the tour, from 0 to M-1",
+    "source": "user"
+   }
+  },
+  "params": {
+   "coord_lat": {
+    "meaning": "Latitude of each node in degrees",
+    "index": [
+     "nodes"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "coord_lon": {
+    "meaning": "Longitude of each node in degrees",
+    "index": [
+     "nodes"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "is_ref": {
+    "meaning": "Binary indicator: 1 if the node is the Da'an Station reference point, 0 otherwise",
+    "index": [
+     "nodes"
+    ],
+    "type": "binary",
+    "source": "user"
+   },
+   "distance": {
+    "meaning": "Euclidean straight-line distance between nodes in meters",
+    "index": [
+     "nodes",
+     "nodes"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "raw:coord_lat",
+      "raw:coord_lon"
+     ],
+     "how": "Compute pairwise Euclidean distance from lat/lon coordinates"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "政府資料開放平臺.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 500m of Da'an MRT Station (25.0330, 121.5436). Added reference point 'ref'. Computed pairwise Haversine distances. Used sno as station IDs. Dropped duplicates if any.",
+  "prep_log": "**資料來源**\n\n- 政府資料開放平臺（data.gov.tw） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-12T12:21:32.945717+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (25.033, 121.5436) 500 公尺內的資料 | 1815 | 18 |  |",
+  "flags": [],
+  "review_required": [
+   "coord_lat: 尚未聲明 unit，需求為 deg_lat",
+   "coord_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "coord_lon: 尚未聲明 unit，需求為 deg_lon",
+   "coord_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "distance: 尚未聲明 unit，需求為 m",
+   "distance: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：coord_lat, coord_lon, distance, is_ref, nodes, positions"
+  ],
+  "sources": [
+   {
+    "title": "政府資料開放平臺",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T12:21:32.945717+00:00",
+    "sha256": "0716bdc35f79541e4b27160335c156e3dc90581a0c0780b35517805440adcb73",
+    "bytes": 950691
+   }
+  ],
+  "n_variables": 361,
+  "n_constraints": 38,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "nodes": 19
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "cb01e3c739939234742dd217",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 20,
+    "invalid": 20,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_issues",
+   "version": "cb01e3c739939234742dd217",
+   "issues": [
+    "the delivered solution breaks the confirmed requirements: Start node is '500101206', expected 'ref'"
+   ],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_issues",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "已有可行方案，達到簡單基準的品質；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "annealer",
+  "quality_gap": -0.5902918279059101,
+  "objective": 3418.709011216335,
+  "baseline_objective": 8344.253895993133
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (政府資料開放平臺.json)",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "nodes",
+    "mapping": "id / name match + coordinates within 30 m",
+    "entity_set_declared": true,
+    "instance_entities": 19,
+    "mapped": 19,
+    "duplicates": [
+     "YouBike2.0_捷運大安站(5號出口)"
+    ],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "nodes",
+      "positions"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.997,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 19,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 3417.0711754159815,
+    "reference_quality": 3504.645699100399,
+    "gap_vs_reference": -0.025
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 129614,
+  "solver_calls": 3
+ },
+ "seconds": 700.8
+}

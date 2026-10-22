@@ -1,0 +1,36 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 88.5
+  },
+  "model": {
+   "ok": false,
+   "seconds": 636.8,
+   "error": "ValueError: model validation failed: RuntimeError: KeyError: 'variable_names'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 68, in _generated\n    return ns[function](*args, **(kwargs or {}))\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<model>\", line 290, in describe_solution\nKeyError: 'variable_names'\n\n    in describe_solution(), line 290: idx = data[\"variable_names\"].index(name) # This is O(V) per lookup, slow but fine for small N"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment"
+ ],
+ "cost": {
+  "llm_tokens": 110696,
+  "solver_calls": null
+ },
+ "seconds": 725.3
+}

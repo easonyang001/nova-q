@@ -1,0 +1,234 @@
+{
+ "case": "aed_groups_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 143.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 155.0
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 61.4
+  },
+  "data": {
+   "ok": true,
+   "seconds": 395.1
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.4
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 693.8
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.2
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "修正未通過檢查，保留先前版本：目前模型的限制互相衝突，獨立可行性檢查確認無解；先回查資料與模型，不再盲目調 penalty。系統不會自行刪除已確認的需求"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "One-hot assignment with balanced group size constraints. 4N variables. Fits CGA for N<=900.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location index",
+    "source": "public"
+   },
+   "groups": {
+    "meaning": "Inspection group index",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "num_groups": {
+    "meaning": "Number of inspection groups",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 4
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "in_area"
+  ],
+  "notes": "Filtered AED locations to Songshan, Xinyi, Da'an, and Zhongshan districts using prep.in_area with code_column='區域代碼' as required by system detection. Excluded categories '學校、大型集會場所' and '其他'. Removed exact duplicate rows to ensure unique entities. Output contains unique site IDs, coordinates, group indices, and group count. The area code filtering may yield a different count than name-only filtering; the count reflects the code-based mapping.",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-13T08:43:02.833005+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依實際邊界保留區域 ['松山區, 臺北市', '信義區, 臺北市', '大安區, 臺北市', '中山區, 臺北市'] | 2729 | 1151 | 各區點數 {'松山區, 臺北市': 231, '信義區, 臺北市': 280, '大安區, 臺北市': 327, '中山區, 臺北市': 317}；對應的區域代碼 {'松山區, 臺北市': 63000010, '信義區, 臺北市': 63000020, '大安區, 臺北市': 63000030, '中山區, 臺北市': 63000040}（以發布者代碼篩選） |\n| Filter by area (Songshan, Xinyi, Da'an, Zhongshan) using area codes | 2729 | 1151 |  |\n| Filter by category (exclude schools, large gatherings, other) | 405 | 405 |  |\n| Remove duplicate rows | 385 | 385 |  |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：groups, lat, lon, num_groups, sites",
+   "獨立資料核對不一致：set 'sites' has 385 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 389. Check which rows you keep and whether duplicates of the same place are merged",
+   "獨立資料核對不一致：parameter 'lat' sums to 9,643.8, but an independent computation from the raw tables expects 9,743.99. Rows may be missing, duplicated, from the wrong period or include totals of a higher level",
+   "獨立資料核對不一致：parameter 'lon' sums to 46,797.4, but an independent computation from the raw tables expects 47,283.5. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T08:43:02.833005+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 1540,
+  "n_constraints": 389,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 389
+    },
+    "totals": {
+     "lat": 9743.99223891,
+     "lon": 47283.522473599995
+    }
+   },
+   "issues": [
+    "set 'sites' has 385 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 389. Check which rows you keep and whether duplicates of the same place are merged",
+    "parameter 'lat' sums to 9,643.8, but an independent computation from the raw tables expects 9,743.99. Rows may be missing, duplicated, from the wrong period or include totals of a higher level",
+    "parameter 'lon' sums to 46,797.4, but an independent computation from the raw tables expects 47,283.5. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+   ]
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:infeasible",
+  "diagnosis:diagnose",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "delivery:needs_input"
+ ],
+ "delivery": {
+  "status": "no_solution",
+  "message": "資料／模型檢查未通過，未消耗退火機額度",
+  "solution_source": null,
+  "quality_gap": null,
+  "objective": null,
+  "baseline_objective": null
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "coordinates within 60 m",
+    "entity_set_declared": true,
+    "instance_entities": 385,
+    "mapped": 385,
+    "duplicates": [
+     "DREAM PLAZA",
+     "Hotel Indigo Taipei North 台北大直英迪格酒店",
+     "JR東日本大飯店 台北",
+     "Marriott Taipei 台北萬豪酒店",
+     "中山國中星耀樓",
+     "交通部民用航空局臺北國際航空站(松山機場)",
+     "台北中山雅樂軒酒店",
+     "台北文華東方酒店",
+     "台北遠東香格里拉/Shangri-La Far Eastern Taipei (鼎鼎大飯店股份有限公司)",
+     "台北金融大樓股份有限公司(觀景台)",
+     "台北金融大樓股份有限公司(購物中心)",
+     "台灣虎航股份有限公司",
+     "吸引力生活事業股份有限公司 ATT 4 FUN",
+     "和苑三井花園飯店 台北忠孝",
+     "國營臺灣鐵路股份有限公司北區營運處臺北運務段松山站",
+     "國立國父紀念館",
+     "外貿協會台北國際會議中心",
+     "宜家家居股份有限公司台北城市店小巨蛋分公司",
+     "寒居酒店",
+     "微風置地股份有限公司信義分公司"
+    ],
+    "missing_real_entities": 2,
+    "missing_examples": [
+     "欣欣秀泰影城",
+     "華信航空股份有限公司"
+    ],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 185,
+    "group_set": "groups"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "groups",
+      "sites"
+     ]
+    ],
+    "structure": "the instance has 385 mapped places instead of 200: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "solution": "none delivered"
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 206854,
+  "solver_calls": 0
+ },
+ "seconds": 1449.4
+}

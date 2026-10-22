@@ -10,78 +10,61 @@
 \subsection*{Traffic Route Assignment Problem}
 
 \paragraph{Problem Statement.}
-Given a set of $N$ cars and a set of candidate routes for each car, the goal is to assign exactly one route to each car. Each route consists of a subset of road segments from a global set $S$. When multiple assigned routes share a road segment, a congestion cost is incurred. The objective is to minimize the total congestion cost, defined as the sum over all road segments of the number of pairs of selected routes that traverse that segment.
+Given a set of $N$ cars and a set of candidate routes for each car, assign exactly one route to each car so as to minimize the total congestion cost. The congestion cost is defined as the total number of pairs of selected routes that share at least one common road segment.
 
 \paragraph{Decision Variables.}
-Let $x_{c,r} \in \{0,1\}$ be a binary variable for each car $c \in \{0, \dots, N-1\}$ and each candidate route $r \in \{0, \dots, R_c-1\}$, where $x_{c,r} = 1$ if car $c$ is assigned route $r$, and $0$ otherwise.
+Let $x_{ij} \in \{0,1\}$ denote the binary decision variable for car $i \in \{0, \dots, N-1\}$ and candidate route $j \in \{0, \dots, M_i-1\}$, where $x_{ij} = 1$ if car $i$ is assigned route $j$, and $x_{ij} = 0$ otherwise. Let $y_{js} \in \{0,1\}$ be a known parameter indicating whether route $j$ traverses road segment $s \in \mathcal{S}$, where $\mathcal{S}$ is the set of all road segments.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1.} The original objective is to minimize the total overlap cost:
+Step 1 --- Objective formulation. Let $C_s$ be the number of selected routes that use segment $s$. This is given by $C_s = \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} y_{js} x_{ij}$. The total overlap cost counts each pair of selected routes sharing segment $s$ exactly once, which is $\frac{1}{2} C_s (C_s - 1)$. Summing over all segments, the objective to minimize is
 \begin{align}
-  \min \quad \sum_{s \in S} \sum_{(c,r) \in I_s} \sum_{(c',r') \in I_s, (c,r) < (c',r')} x_{c,r} x_{c',r'},
-\end{align}
-where $I_s$ denotes the set of car-route pairs that use road segment $s$, and the ordering $(c,r) < (c',r')$ prevents double-counting.
-
-\textbf{Step 2.} The assignment constraints require that each car selects exactly one route:
-\begin{align}
-  \sum_{r=0}^{R_c-1} x_{c,r} = 1, \quad \forall c \in \{0, \dots, N-1\}.
+H_{\text{obj}}(\mathbf{x}) = \sum_{s \in \mathcal{S}} \frac{1}{2} C_s (C_s - 1) = \frac{1}{2} \sum_{s \in \mathcal{S}} \left( \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} \sum_{i'=0}^{N-1} \sum_{j'=0}^{M_i-1} y_{js} y_{j's} x_{ij} x_{i'j'} - \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} y_{js} x_{ij} \right).
 \end{align}
 
-\textbf{Step 3.} Each constraint is converted to a quadratic penalty term with weight $\lambda > 0$. For a fixed car $c$, the penalty is:
+Step 2 --- Constraint formulation. Each car must be assigned exactly one route. For every car $i \in \{0, \dots, N-1\}$, this is expressed as
 \begin{align}
-  P_c(x) &= \lambda \left( \sum_{r=0}^{R_c-1} x_{c,r} - 1 \right)^2.
-\end{align}
-Expanding the square yields:
-\begin{align}
-  P_c(x) &= \lambda \left( \sum_{r=0}^{R_c-1} x_{c,r}^2 + 2 \sum_{0 \le r < r' \le R_c-1} x_{c,r} x_{c,r'} - 2 \sum_{r=0}^{R_c-1} x_{c,r} + 1 \right).
-\end{align}
-Applying the idempotent property $x_{c,r}^2 = x_{c,r}$ for binary variables simplifies the expression to:
-\begin{align}
-  P_c(x) &= \lambda \left( 1 - \sum_{r=0}^{R_c-1} x_{c,r} + 2 \sum_{0 \le r < r' \le R_c-1} x_{c,r} x_{c,r'} \right).
-\end{align}
-This is the general penalty contribution for car $c$.
-
-\textbf{Step 4.} Combining the objective and all penalty terms gives the QUBO Hamiltonian $H(x)$:
-\begin{align}
-  H(x) &= \sum_{s \in S} \sum_{(c,r) \in I_s} \sum_{(c',r') \in I_s, (c,r) < (c',r')} x_{c,r} x_{c',r'} + \lambda \sum_{c=0}^{N-1} \left( 1 - \sum_{r=0}^{R_c-1} x_{c,r} + 2 \sum_{0 \le r < r' \le R_c-1} x_{c,r} x_{c,r'} \right).
+\sum_{j=0}^{M_i-1} x_{ij} = 1.
 \end{align}
 
-\textbf{Step 5.} Reading off the coefficients from $H(x) = \sum_{i} Q_{i,i} x_i + \sum_{i < j} Q_{i,j} x_i x_j + c_0$, the Q-matrix entries and offset are given in closed form as:
+Step 3 --- Penalty term conversion. We enforce the constraints by adding a quadratic penalty for each car. Let $\lambda > 0$ be the penalty weight. The penalty for car $i$ is
 \begin{align}
-  Q_{(c,r),(c,r)} &= -\lambda, \quad \forall c, r, \\
-  Q_{(c,r),(c,r')} &= 2\lambda, \quad \forall c, \, r \neq r', \\
-  Q_{(c,r),(c',r')} &= \begin{cases} 
-    1 & \text{if } \exists s \in S \text{ such that } (c,r) \in I_s \text{ and } (c',r') \in I_s, \\
-    0 & \text{otherwise},
-  \end{cases} \\
-  c_0 &= \lambda N.
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{M_i-1} x_{ij} - 1 \right)^2.
 \end{align}
+Expanding the square and applying the idempotent property $x_{ij}^2 = x_{ij}$ for binary variables yields
+\begin{align}
+P_i(\mathbf{x}) &= \lambda \left( \sum_{j=0}^{M_i-1} x_{ij}^2 - 2 \sum_{j=0}^{M_i-1} x_{ij} + 1 + \sum_{j=0}^{M_i-1} \sum_{\substack{j'=0 \\ j' \neq j}}^{M_i-1} x_{ij} x_{ij'} \right) \\
+&= \lambda \left( 1 - \sum_{j=0}^{M_i-1} x_{ij} + \sum_{j=0}^{M_i-1} \sum_{\substack{j'=0 \\ j' \neq j}}^{M_i-1} x_{ij} x_{ij'} \right).
+\end{align}
+Summing over all cars gives the total penalty contribution to the Hamiltonian:
+\begin{align}
+H_{\text{pen}}(\mathbf{x}) = \sum_{i=0}^{N-1} P_i(\mathbf{x}) = \lambda N - \lambda \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} x_{ij} + \lambda \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} \sum_{\substack{j'=0 \\ j' \neq j}}^{M_i-1} x_{ij} x_{ij'}.
+\end{align}
+
+Step 4 --- Combined QUBO Hamiltonian. Adding the objective and penalty terms yields the full QUBO energy function $H(\mathbf{x}) = H_{\text{obj}}(\mathbf{x}) + H_{\text{pen}}(\mathbf{x})$:
+\begin{align}
+H(\mathbf{x}) &= \frac{1}{2} \sum_{s \in \mathcal{S}} \sum_{i,j} \sum_{i',j'} y_{js} y_{j's} x_{ij} x_{i'j'} - \frac{1}{2} \sum_{s \in \mathcal{S}} \sum_{i,j} y_{js} x_{ij} + \lambda \sum_{i} \sum_{j \neq j'} x_{ij} x_{ij'} - \lambda \sum_{i,j} x_{ij} + \lambda N.
+\end{align}
+
+Step 5 --- Q matrix entries and offset. Grouping quadratic terms $x_{ij} x_{i'j'}$ and linear terms $x_{ij}$, and noting that $y_{js} \in \{0,1\}$ implies $y_{js}^2 = y_{js}$, we read off the QUBO coefficients. The diagonal entries receive contributions from the objective's quadratic self-interaction and the penalty's linear term. The off-diagonal entries receive contributions from the objective's cross-interaction and the penalty's same-car interaction. The resulting closed-form expressions are:
+\begin{align}
+Q_{(ij),(i'j')} &= \frac{1}{2} \sum_{s \in \mathcal{S}} y_{js} y_{j's} + \lambda \, \delta_{ii'} (1 - \delta_{jj'}), \\
+Q_{(ij),(ij)} &= -\lambda, \\
+c &= \lambda N,
+\end{align}
+where $\delta_{ab}$ is the Kronecker delta, and indices $(ij)$ and $(i'j')$ range over all valid car-route pairs.
 
 \paragraph{Penalty Weight Justification.}
-Let $W_{\max}$ denote the maximum possible value of the objective function over all feasible assignments. Since each pairwise term in the objective is bounded by 1 and there are at most $\binom{N}{2}|S|$ such terms, $W_{\max} \le \binom{N}{2}|S|$. To guarantee that any infeasible assignment incurs a strictly higher energy than the optimal feasible assignment, the penalty weight must satisfy $\lambda > W_{\max}$. This ensures that the energy penalty for violating a single constraint strictly dominates any potential reduction in the objective cost. In the specific instance provided, the maximum pairwise coefficient is 1 and the maximum possible objective value is 1, so $\lambda > 1$ suffices.
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any infeasible assignment (violating the exactly-one-route constraint) has a strictly higher energy than any feasible assignment. The maximum possible reduction in the objective cost achievable by violating a single constraint is bounded by the maximum possible overlap cost, which is at most the total number of route pairs times the maximum number of shared segments between any two routes. Let $W_{\max}$ denote this upper bound on the objective function over the entire hypercube $\{0,1\}^n$. Choosing $\lambda > W_{\max}$ guarantees that the energy penalty for violating any constraint dominates any potential decrease in the objective function. Consequently, the global minimum of $H(\mathbf{x})$ is guaranteed to lie within the feasible subspace.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^M$ recovers the optimal route assignment because any feasible solution satisfies all constraints, yielding zero penalty energy. Consequently, the energy of a feasible solution equals its original objective cost. Any infeasible solution violates at least one constraint, incurring a penalty of at least $\lambda$. Since $\lambda$ is chosen to strictly exceed $W_{\max}$, the energy of any infeasible solution is strictly greater than the energy of the optimal feasible solution. Therefore, the global minimum of $H(x)$ must correspond to a feasible assignment that minimizes the original congestion cost.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal route assignment because $H(\mathbf{x})$ is constructed as the sum of the original objective and non-negative penalty terms. For any feasible $\mathbf{x}$, the constraint terms vanish, so $H(\mathbf{x}) = H_{\text{obj}}(\mathbf{x})$. For any infeasible $\mathbf{x}$, at least one penalty term is strictly positive. By choosing $\lambda$ strictly greater than the maximum possible objective value, the energy increase from constraint violation strictly exceeds any possible decrease in the objective function. Consequently, the global minimum of $H(\mathbf{x})$ must occur at a feasible point that minimizes $H_{\text{obj}}$, which corresponds exactly to the optimal solution of the original combinatorial problem.
 
 \paragraph{Illustrative Example.}
-Consider an instance with $N=2$ cars and $R_0=R_1=2$ candidate routes per car. Let the route-segment mapping be defined such that segment $s_1$ is shared by routes $(0,0)$ and $(1,0)$, and segment $s_2$ is shared by routes $(0,1)$ and $(1,1)$. Thus, $I_{s_1} = \{(0,0), (1,0)\}$ and $I_{s_2} = \{(0,1), (1,1)\}$. Using the general formulas with $\lambda = 10$:
-
-The concrete objective is:
+Consider a concrete instance with $N=2$ cars and $M=3$ candidate routes per car, yielding $n = N \times M = 6$ binary variables. Let the road segments be $\mathcal{S} = \{1, 2\}$. Define the route-segment incidence such that route $j$ for any car uses segment $j$ if $j \le 2$, and segment $2$ additionally for route $1$. Specifically, $y_{01}=1, y_{11}=1, y_{12}=1, y_{22}=1$ for both cars. Setting $\lambda = 100$, the general formulas instantiate as follows. The concrete objective quadratic coefficients become $\frac{1}{2} \sum_{s=1}^2 y_{js} y_{j's}$, yielding $0.5$ for overlapping routes and $0$ otherwise. The penalty terms contribute $-100$ to all diagonal entries and $+100$ to all off-diagonal entries sharing the same car index. The resulting QUBO Hamiltonian is
 \begin{align}
-  \text{Objective}(x) = x_{0,0} x_{1,0} + x_{0,1} x_{1,1}.
+H(\mathbf{x}) &= 0.5 x_{00}x_{10} + 0.5 x_{01}x_{11} + 0.5 x_{01}x_{12} + 0.5 x_{02}x_{11} + 0.5 x_{02}x_{12} \\
+&\quad + 100(x_{00}x_{01} + x_{00}x_{02} + x_{01}x_{02} + x_{10}x_{11} + x_{10}x_{12} + x_{11}x_{12}) \\
+&\quad - 100(x_{00} + x_{01} + x_{02} + x_{10} + x_{11} + x_{12}) + 200.
 \end{align}
-
-The concrete penalty terms (one per car) expand to:
-\begin{align}
-  P_0(x) &= 10 \left( 1 - x_{0,0} - x_{0,1} + 2 x_{0,0} x_{0,1} \right), \\
-  P_1(x) &= 10 \left( 1 - x_{1,0} - x_{1,1} + 2 x_{1,0} x_{1,1} \right).
-\end{align}
-
-Substituting these into the general Hamiltonian yields the concrete QUBO:
-\begin{align}
-  H(x) &= 20 - 10 x_{0,0} - 10 x_{0,1} - 10 x_{1,0} - 10 x_{1,1} + 20 x_{0,0} x_{0,1} + 20 x_{1,0} x_{1,1} + x_{0,0} x_{1,0} + x_{0,1} x_{1,1}.
-\end{align}
-
-Enumerating the feasible assignments reveals two optimal solutions. For $x_{0,0}=1, x_{1,1}=1$ (all other variables $0$), the objective cost is $0$ and the energy is $H(x) = 20 - 10 - 10 = 0$. Similarly, $x_{0,1}=1, x_{1,0}=1$ yields energy $0$. Any assignment violating the constraint (e.g., $x_{0,0}=1, x_{0,1}=1$) incurs an energy of at least $10$, confirming the optimality of the feasible assignments.
-
+The optimal feasible assignment selects route $0$ for car $0$ and route $2$ for car $1$ (or vice versa), yielding $\mathbf{x}^* = (1,0,0,0,0,1)$. Substituting $\mathbf{x}^*$ into $H(\mathbf{x})$ gives an energy of $H(\mathbf{x}^*) = 0.5(0) + 0 + 0 - 100(2) + 200 = 0$, which is the minimum possible energy, confirming the formulation correctly identifies the optimal route assignment with zero congestion.
 \end{document}

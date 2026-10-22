@@ -1,0 +1,66 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: N-Queens Exact-Cover Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{N-Queens Exact-Cover Problem}
+
+\paragraph{Problem Statement.}
+Given an $N \times N$ chessboard, place $N$ queens such that no two queens attack each other. This requirement is equivalent to an exact-cover formulation where exactly one queen must occupy each row, exactly one queen must occupy each column, and at most one queen may occupy each diagonal (both main and anti-diagonals). The goal is to find a feasible placement that satisfies all constraints simultaneously.
+
+\paragraph{Decision Variables.}
+Let $x_{i,j} \in \{0,1\}$ for $i,j \in \{0,\dots,N-1\}$ be binary decision variables. The variable $x_{i,j}$ equals $1$ if and only if a queen is placed at row $i$ and column $j$, and $0$ otherwise. There are $N^2$ variables in total, indexed by the board coordinates.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1.} The problem is feasibility-driven, so we minimize the total number of violated constraints. This is achieved by minimizing the sum of squared constraint violations:
+\begin{align}
+H(x) = \sum_{i=0}^{N-1} \left(\sum_{j=0}^{N-1} x_{i,j} - 1\right)^2 + \sum_{j=0}^{N-1} \left(\sum_{i=0}^{N-1} x_{i,j} - 1\right)^2 + \sum_{d} \left(\sum_{(i,j) \in d} x_{i,j}\right)^2,
+\end{align}
+where the first sum enforces row constraints, the second enforces column constraints, and the third enforces diagonal constraints.
+
+\textbf{Step 2.} The original algebraic constraints are:
+\begin{align}
+\sum_{j=0}^{N-1} x_{i,j} &= 1, \quad \forall i \in \{0,\dots,N-1\}, \\
+\sum_{i=0}^{N-1} x_{i,j} &= 1, \quad \forall j \in \{0,\dots,N-1\}, \\
+\sum_{(i,j) \in d} x_{i,j} &\le 1, \quad \forall \text{ diagonals } d.
+\end{align}
+
+\textbf{Step 3.} We convert each constraint to a quadratic penalty term. For a fixed row $i$, the squared penalty expands as:
+\begin{align}
+\left(\sum_{j=0}^{N-1} x_{i,j} - 1\right)^2 &= \sum_{j=0}^{N-1} x_{i,j}^2 - 2\sum_{j=0}^{N-1} x_{i,j} + 1.
+\end{align}
+Applying the idempotent property $x_{i,j}^2 = x_{i,j}$ for binary variables, this simplifies to $1 - \sum_{j=0}^{N-1} x_{i,j}$. By identical reasoning, the column penalty for a fixed $j$ simplifies to $1 - \sum_{i=0}^{N-1} x_{i,j}$. For the diagonal penalty, expanding the square yields:
+\begin{align}
+\left(\sum_{(i,j) \in d} x_{i,j}\right)^2 &= \sum_{(i,j) \in d} x_{i,j}^2 + \sum_{\substack{(i,j),(k,l) \in d \\ (i,j) \neq (k,l)}} x_{i,j} x_{k,l} = \sum_{(i,j) \in d} x_{i,j} + \sum_{\substack{(i,j),(k,l) \in d \\ (i,j) \neq (k,l)}} x_{i,j} x_{k,l}.
+\end{align}
+Summing the linear terms across all row, column, and diagonal penalties gives:
+\begin{align}
+\sum_{i=0}^{N-1} \left(-\sum_{j=0}^{N-1} x_{i,j}\right) + \sum_{j=0}^{N-1} \left(-\sum_{i=0}^{N-1} x_{i,j}\right) + \sum_{d} \sum_{(i,j) \in d} x_{i,j}.
+\end{align}
+Each cell $(i,j)$ belongs to exactly two diagonals (one main and one anti-diagonal), so the diagonal linear sum equals $2\sum_{i,j} x_{i,j}$. The total linear coefficient for every $x_{i,j}$ is therefore $-1 -1 + 2 = 0$, meaning all linear terms cancel exactly. The constant terms sum to $\sum_{i} 1 + \sum_{j} 1 = 2N$.
+
+\textbf{Step 4.} Combining the constant offset and the remaining quadratic terms, the complete QUBO Hamiltonian is:
+\begin{align}
+H(x) = 2N + \sum_{d} \sum_{\substack{(i,j),(k,l) \in d \\ (i,j) \neq (k,l)}} 2 x_{i,j} x_{k,l}.
+\end{align}
+
+\textbf{Step 5.} Reading off the QUBO parameters from the general closed form:
+\begin{align}
+Q_{(i,j),(i,j)} &= 0, \quad \forall i,j \in \{0,\dots,N-1\}, \\
+Q_{(i,j),(k,l)} &= \begin{cases} 2 & \text{if } (i,j) \text{ and } (k,l) \text{ share a diagonal}, \\ 0 & \text{otherwise}, \end{cases} \\
+c &= 2N.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The formulation employs a unit penalty weight absorbed directly into the squared constraint terms. Because the linear terms identically cancel, the energy landscape is determined solely by the quadratic diagonal interactions. Any violation of a row, column, or diagonal constraint increases the energy by at least $2$. Since the objective is strictly feasibility-driven, a penalty weight of $1$ (yielding quadratic coefficients of $2$) is sufficient to ensure that infeasible configurations always possess strictly higher energy than feasible ones, regardless of $N$.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^{N^2}$ recovers the optimal solution because feasible placements incur zero penalty from the constraint terms, yielding a constant energy $H(x) = 2N$. Any infeasible placement violates at least one constraint, resulting in a strictly positive penalty contribution and thus $H(x) > 2N$. Consequently, the global minimum of $H(x)$ corresponds exactly to a valid, non-attacking queen configuration, and the minimum energy value directly indicates the number of violated constraints (zero for feasible solutions).
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N=4$. The board contains $16$ cells, indexed by $k = 4i + j$ for $i,j \in \{0,1,2,3\}$. The Hamiltonian becomes $H(x) = 8 + \sum_{d} \sum_{(i,j)\neq(k,l)\in d} 2 x_{i,j} x_{k,l}$. The constant offset is $c=8$. A valid configuration places queens at coordinates $(0,1)$, $(1,3)$, $(2,0)$, and $(3,2)$, corresponding to binary variables $x_1, x_7, x_8, x_{14}$ set to $1$, and all others to $0$. Since no two selected cells share a row, column, or diagonal, all quadratic penalty terms vanish. The minimum energy is $H(x^*) = 8.0$, confirming a feasible solution with zero violations.
+\end{document}

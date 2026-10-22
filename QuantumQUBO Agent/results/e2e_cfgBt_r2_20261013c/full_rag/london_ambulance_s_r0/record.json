@@ -1,0 +1,249 @@
+{
+ "case": "london_ambulance_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 472.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 650.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 272.0
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1305.6
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 12175.7
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "資料修復失敗：預處理失敗：TokenBudgetExceeded: Token budget of 500000 exceeded (used 507032)"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Standard p-median formulation. Decision variables: x_j (whether MSOA j is a station) and y_ij (whether MSOA i is served by station j). For a realistic instance of 30 MSOAs, total variables = 30 + 30^2 = 930, which fits well within the CGA backend limit of 3,600.",
+ "schema": {
+  "sets": {
+   "msoas": {
+    "meaning": "MSOA (Middle Layer Super Output Area) in Camden",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Resident population of the MSOA",
+    "index": [
+     "msoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "people"
+   },
+   "lat": {
+    "meaning": "Latitude of the MSOA population-weighted centroid",
+    "index": [
+     "msoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the MSOA population-weighted centroid",
+    "index": [
+     "msoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between MSOA centroids",
+    "index": [
+     "msoas",
+     "msoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Straight-line distance between centroids"
+    }
+   },
+   "p": {
+    "meaning": "Number of ambulance stations to open",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "Middle_layer_Super_Output_Areas_December_2021_EW_Population_.csv",
+  "TS001_-_Number_of_usual_residents_in_households_and_communal.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "in_area",
+   "keep_category",
+   "match",
+   "to_wgs84"
+  ],
+  "notes": "The plan first prepares the population data by filtering for total usual residents and converts the centroid coordinates from British National Grid (EPSG:27700) to WGS84. It then joins the population and centroid data, filters for the Camden area using spatial boundaries, and removes any incomplete records to provide the final set of MSOAs, their populations, and coordinates for the p-median model.",
+  "prep_log": "**資料來源**\n\n- Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — CSV（CKAN data.gov.uk） <https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2>，授權：待確認，取得 2026-10-13T14:16:34.433799+00:00\n- TS001 - Number of usual residents in households and communal establishments — 2021 super output areas - middle layer（Nomis (ONS official statistics)） <https://www.nomisweb.co.uk/datasets/nm_2021_1>，授權：待確認，取得 2026-10-13T14:16:23.553782+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 座標轉換 EPSG:27700 → WGS84 | 7264 | 7264 |  |\n| 只保留 C2021_RESTYPE_3_NAME=Total: All usual residents | 14400 | 4800 |  |\n| 合併（MSOA21CD ↔ GEOGRAPHY_CODE） | 7264 | 7264 | 完全對上 4800、模糊對上 2440、對不上 24（例：W02000338、W02000322、W02000109、W02000330、W02000325） |\n| 依實際邊界保留區域 ['Camden, London'] | 7264 | 1 | 各區點數 {'Camden, London': 27}；對應的區域代碼 {'Camden, London': 'E02000166'}（以發布者代碼篩選） |\n| drop_missing {\"columns\": [\"lat\", \"lon\", \"OBS_VALUE\"]} | 1 | 1 |  |",
+  "flags": [],
+  "review_required": [
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: ['Euclidean distance calculated via haversine formula as a proxy for straight-line distance']",
+   "adapter 沒有聲明這些欄位的來源與單位：p"
+  ],
+  "sources": [
+   {
+    "title": "Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — CSV",
+    "url": "https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2",
+    "resource_url": "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/cc5e6945d6264d28afde5cf675027466/csv?layers=0",
+    "publisher": "CKAN data.gov.uk",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T14:16:34.433799+00:00",
+    "sha256": "9040b3209abde0e7e552872fcd8cfa837f1ed45df2aabf14063aa8ec95f47390",
+    "bytes": 835922
+   },
+   {
+    "title": "TS001 - Number of usual residents in households and communal establishments — 2021 super output areas - middle layer",
+    "url": "https://www.nomisweb.co.uk/datasets/nm_2021_1",
+    "resource_url": "https://www.nomisweb.co.uk/api/v01/dataset/NM_2021_1.data.csv?date=latest&geography=TYPE152&measures=20100",
+    "publisher": "Nomis (ONS official statistics)",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T14:16:23.553782+00:00",
+    "sha256": "90c57ec0517fc48f25beed20ca63a582e5607e2795a4d2e526e516b61d66ea5b",
+    "bytes": 5243601
+   }
+  ],
+  "n_variables": 2,
+  "n_constraints": 3,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: KeyError: 'latitude'\nTraceback (most recent call last):\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/indexes/base.py\", line 3641, in get_loc\n    return self._engine.get_loc(casted_key)\n           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^\n  File \"pandas/_libs/index.pyx\", line 168, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/index.pyx\", line 197, in pandas._libs.index.IndexEngine.get_loc\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7668, in pandas._libs.hashtable.PyObjectHashTable.get_item\n  File \"pandas/_libs/hashtable_class_helper.pxi\", line 7676, in pandas._libs.hashtable.PyObjectHashTable.get_item\nKeyError: 'latitude'\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/datacheck.py\", line 34, in _expected\n    out = ns[\"expected\"]({k: v.copy() for k, v in tables.items()})\n  File \"<data_checker>\", line 14, in expected\n"
+   ]
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:infeasible",
+  "diagnosis:diagnose",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "delivery:needs_input"
+ ],
+ "delivery": {
+  "status": "no_solution",
+  "message": "資料／模型檢查未通過，未消耗退火機額度",
+  "solution_source": null,
+  "quality_gap": null,
+  "objective": null,
+  "baseline_objective": null
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "msoas",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 1,
+    "mapped": 1,
+    "duplicates": [],
+    "missing_real_entities": 26,
+    "missing_examples": [
+     "Camden 002",
+     "Camden 003",
+     "Camden 004",
+     "Camden 005",
+     "Camden 006",
+     "Camden 007",
+     "Camden 008",
+     "Camden 009",
+     "Camden 010",
+     "Camden 011"
+    ],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "population",
+    "population_exact_matches": 1,
+    "population_total": 7745.0,
+    "population_truth_total": 210140
+   }
+  },
+  "model": {
+   "ok": false,
+   "checks": {
+    "decision_sets": [
+     [
+      "msoas"
+     ]
+    ]
+   }
+  },
+  "delivery": {
+   "ok": null,
+   "checks": {}
+  },
+  "judge_error": "ValueError: Sample larger than population or is negative | Traceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/acceptance/judge.py\", line 377, in judge\n    return _judge(case_id, truth, ds, data, raw_ir, solution, requirements, partial)\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/acceptance/judge.py\", line 534, in _judge\n    pick = rng.sample(mapped_ids, case.k)\n  File \"/home/var/miniconda3/lib/python3.13/random.py\", line 434, in sample\n    raise ValueError(\"Sample larger than population or is negative\")\nValueError: Sample larger than population or is negative\n"
+ },
+ "cost": {
+  "llm_tokens": 507032,
+  "solver_calls": 0
+ },
+ "seconds": 14876.3
+}

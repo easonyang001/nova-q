@@ -1,0 +1,97 @@
+{
+ "case": "london_ambulance_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 158.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 390.6
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 44.0
+  },
+  "data": {
+   "ok": false,
+   "seconds": 432.4,
+   "error": "ValueError: data preparation failed: 預處理失敗：PromptTooLong: step 'data_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 21904 output tokens and your prompt contains at least 10865 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Standard p-median with assignment variables. N=25 MSOAs -> 25 x + 625 y = 650 variables. Fits CGA backend (<3600 vars) exactly without approximation.",
+ "schema": {
+  "sets": {
+   "msoa": {
+    "meaning": "Middle Super Output Area in Camden",
+    "source": "public"
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "Population of each MSOA",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "x_coord": {
+    "meaning": "Longitude of MSOA centroid",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "y_coord": {
+    "meaning": "Latitude of MSOA centroid",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "num_stations": {
+    "meaning": "Number of ambulance stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "2021_Middle_layer_Super_Output_Area_Population_Weighted_Cent.geojson",
+  "MSOA_Atlas_Current_MSOA_boundaries_post_2011.xls",
+  "Middle_layer_Super_Output_Areas_December_2021_Boundaries_EW_.csv",
+  "Middle_layer_Super_Output_Areas_December_2021_Boundaries_EW__8df699c643.csv"
+ ],
+ "cost": {
+  "llm_tokens": 89201,
+  "solver_calls": null
+ },
+ "seconds": 1025.3
+}

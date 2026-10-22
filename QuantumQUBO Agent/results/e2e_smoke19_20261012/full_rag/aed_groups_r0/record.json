@@ -1,0 +1,290 @@
+{
+ "case": "aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 70.7
+  },
+  "model": {
+   "ok": true,
+   "seconds": 100.0
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 28.9
+  },
+  "data": {
+   "ok": true,
+   "seconds": 304.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1029.5
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "model 修復完成"
+  },
+  {
+   "workflow": "model 修復完成"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "One-hot assignment with cardinality constraints. 3*N variables. Fits backend for N<=1200.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location after filtering (Daan District, excluding schools/large gatherings/other)",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "Inspection team identifier",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "distance": {
+    "meaning": "Pairwise straight-line distance between sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "raw:lat",
+      "raw:lon"
+     ],
+     "how": "Compute Haversine distance matrix from coordinates"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "in_area",
+   "merge_same_place"
+  ],
+  "notes": "Filtered AED locations to Daan District, excluded '學校、大型集會場所' and '其他', merged duplicate locations at the same place, and computed pairwise Haversine distances.",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-12T15:28:48.878213+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依實際邊界保留區域 ['大安區, 臺北市'] | 2729 | 320 | 各區點數 {'大安區, 臺北市': 327}；對應的區域代碼 {'大安區, 臺北市': 63000030}（以發布者代碼篩選） |\n| Filter Daan District | 2729 | 320 |  |\n| Exclude categories | 54 | 54 |  |\n| 合併同名且相距 150 m 內的同一地點 | 54 | 48 | 合併 6 筆 |\n| Merge duplicate locations | 48 | 48 |  |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "distance: 尚未聲明 unit，需求為 m",
+   "distance: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：distance, lat, lon, sites, teams"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T15:28:48.878213+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 144,
+  "n_constraints": 51,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: IndexError: DataFrame indexer is not allowed for .iloc\nConsider using .loc for automatic alignment.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/datacheck.py\", line 34, in _expected\n    out = ns[\"expected\"]({k: v.copy() for k, v in tables.items()})\n  File \"<data_checker>\", line 5, in expected\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/indexing.py\", line 1207, in __getitem__\n    return self._getitem_axis(maybe_callable, axis=axis)\n           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/indexing.py\", line 1744, in _getitem_axis\n    raise IndexError(\n    ...<2 lines>...\n    )\nIndexError: DataFrame indexer is not allowed for .iloc\nConsider using .loc for automatic alignment.\n"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "issues",
+   "version": "2a3f956dd81e9d75ebdcf2be",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.07 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 36,
+    "invalid": 36,
+    "not_comparable": 0,
+    "rank_agreement": -0.071
+   }
+  },
+  {
+   "status": "issues",
+   "version": "680a6a62530130af971938dd",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.07 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 36,
+    "invalid": 36,
+    "not_comparable": 0,
+    "rank_agreement": -0.071
+   }
+  },
+  {
+   "status": "issues",
+   "version": "f9d753ae58701245a3f217c9",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.07 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 36,
+    "invalid": 36,
+    "not_comparable": 0,
+    "rank_agreement": -0.071
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "f9d753ae58701245a3f217c9",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:repaired",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:repaired",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "已有可行方案，達到簡單基準的品質；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "annealer",
+  "quality_gap": -0.3787129982307867,
+  "objective": 368673.31646189303,
+  "baseline_objective": 593402.5907705091
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 48,
+    "mapped": 48,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 48,
+    "meets_original_requirements": true,
+    "true_quality": 368673.31646189303,
+    "reference_quality": 370657.2329274105,
+    "gap_vs_reference": -0.0054
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 312678,
+  "solver_calls": 3
+ },
+ "seconds": 1533.9
+}

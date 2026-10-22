@@ -1,0 +1,38 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 137.3
+  },
+  "model": {
+   "ok": false,
+   "seconds": 182.6,
+   "error": "ValueError: model validation failed: hard requirement '選址數量限制' has no REQUIREMENT_MAP entry; map it to the IR constraint names that enforce it, or to [\"implied: <how the variables guarantee it>\"] when the variable design itself makes it true (e.g. position encoding gives a single closed tour) | hard requirement '覆蓋邏輯關聯' has no REQUIREMENT_MAP entry; map it to the IR constraint names that enforce it, or to [\"implied: <how the variables guarantee it>\"] when the variable design itself makes it true (e.g. position encoding gives a single closed tour) | hard requirement '既有覆蓋排除' has no REQUIREMENT_MAP entry; map it to the IR constraint names that enforce it, or to [\"implied: <how the variables guarantee it>\"] when the variable design itself makes it true (e.g. position encoding gives a single closed tour)"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "cost": {
+  "llm_tokens": 70590,
+  "solver_calls": null
+ },
+ "seconds": 320.0
+}

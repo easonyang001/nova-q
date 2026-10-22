@@ -5,11 +5,64 @@ import os
 import time
 from pathlib import Path
 
-from openai import OpenAI, RateLimitError
+import itertools
+import re
+
+from openai import BadRequestError, OpenAI, RateLimitError
 
 
 class TokenBudgetExceeded(Exception):
     pass
+
+
+class PromptTooLong(Exception):
+    """A prompt that cannot fit the model's context: a bug in how that step builds its prompt."""
+
+
+MAX_COMPLETION_TOKENS = int(os.environ.get("LLM_MAX_COMPLETION_TOKENS", "32768"))   # thinking + answer, per call
+_SEQ = itertools.count()      # unique transcript names: two calls of one step within a second used to overwrite
+
+
+def estimate_tokens(text: str) -> int:
+    """Cheap upper-ish estimate: CJK characters ~1 token each, other text ~3.5 characters per token."""
+    cjk = len(re.findall(r"[\u3000-\u9fff\uff00-\uffef]", text))
+    return cjk + int((len(text) - cjk) / 3.5) + 1
+
+
+def split_model(model: str) -> tuple[str | None, str]:
+    """'provider:model' -> (provider, model); a bare name -> (None, name) = the default provider (LLM_PROVIDER).
+    Lets each agent use a different model or company, e.g. 'openrouter:<vendor>/<model>' for a hard step."""
+    head, sep, tail = model.partition(":")
+    if sep and head.lower() in _PROVIDERS:
+        return head.lower(), tail
+    return None, model
+
+
+# provider -> (default base_url, env var holding the API key; None = no real key needed)
+_PROVIDERS: dict[str, tuple[str, str | None]] = {
+    "openrouter": ("https://openrouter.ai/api/v1", "OPENROUTER_API_KEY"),
+    "openai": ("https://api.openai.com/v1", "OPENAI_API_KEY"),
+    "local": ("http://localhost:8000/v1", None),  # vLLM / any OpenAI-compatible server
+    "local2": ("http://localhost:8001/v1", None),  # a second local server (the independent checkers' model)
+}
+
+
+def resolve_endpoint(provider: str | None = None) -> tuple[str, str, str]:
+    """Return (provider, base_url, api_key). Without `provider`: LLM_PROVIDER / LLM_BASE_URL / LLM_API_KEY
+    (defaults to OpenRouter so the original behaviour is unchanged). With an explicit provider (from a
+    'provider:model' name): that provider's URL and key; LLM_BASE_URL / LLM_API_KEY apply only to the default."""
+    default = os.environ.get("LLM_PROVIDER", "openrouter").strip().lower()
+    provider = (provider or default).lower()
+    if provider not in _PROVIDERS:
+        raise ValueError(f"Unknown LLM provider {provider!r}; expected one of {sorted(_PROVIDERS)}")
+    default_url, key_env = _PROVIDERS[provider]
+    is_default = provider == default
+    base_url = (os.environ.get("LLM_BASE_URL") if is_default else None) or default_url
+    api_key = ((os.environ.get("LLM_API_KEY") if is_default else None)
+               or (os.environ.get(key_env, "") if key_env else "EMPTY"))
+    if key_env and not api_key:
+        raise ValueError(f"provider {provider!r} needs {key_env} in .env")
+    return provider, base_url, api_key
 
 
 def _no_think(model: str, prompt: str) -> str:
@@ -21,10 +74,11 @@ def _no_think(model: str, prompt: str) -> str:
 
 class LLMClient:
     def __init__(self, transcript_dir: Path, run_id: str, max_tokens: int = 200_000, use_cache: bool = True):
-        self.client = OpenAI(
-            base_url="https://openrouter.ai/api/v1",
-            api_key=os.environ["OPENROUTER_API_KEY"],
-        )
+        self.provider, base_url, api_key = resolve_endpoint()
+        self.request_timeout = float(os.environ.get("LLM_REQUEST_TIMEOUT_S", "180"))
+        self.client = OpenAI(base_url=base_url, api_key=api_key, timeout=self.request_timeout, max_retries=0)
+        self._clients: dict[str, OpenAI] = {self.provider: self.client}
+        self._context: dict[str, int | None] = {}
         self.transcript_dir = transcript_dir / run_id
         self.transcript_dir.mkdir(parents=True, exist_ok=True)
         self.max_tokens = max_tokens
@@ -34,6 +88,26 @@ class LLMClient:
         self._cache: dict[str, str] = {}
         if use_cache:
             self._load_cache()
+
+    def _client_for(self, provider: str) -> OpenAI:
+        if provider not in self._clients:
+            _, base_url, api_key = resolve_endpoint(provider)
+            self._clients[provider] = OpenAI(base_url=base_url, api_key=api_key, timeout=self.request_timeout, max_retries=0)
+        return self._clients[provider]
+
+    def context_length(self, provider: str, model: str) -> int | None:
+        """The served context window (vLLM reports max_model_len); None when the server does not say."""
+        key = f"{provider}:{model}"
+        if key not in self._context:
+            n = None
+            try:
+                for m in self._client_for(provider).models.list().data:
+                    if m.id == model:
+                        n = getattr(m, "max_model_len", None) or (m.model_extra or {}).get("max_model_len")
+            except Exception:
+                pass
+            self._context[key] = int(n) if n else None
+        return self._context[key]
 
     def _cache_path(self) -> Path:
         return self.transcript_dir.parent / ".llm_cache.json"
@@ -61,8 +135,20 @@ class LLMClient:
         temperature: float = 0.0,
         step_name: str = "step",
         json_mode: bool = False,
+        max_tokens: int | None = None,
     ) -> str:
+        explicit, model = split_model(model)
+        provider = explicit or self.provider
+        if provider == "local" and not explicit and os.environ.get("LLM_MODEL"):
+            # The local server serves one model: map remote names (e.g. "qwen/qwen3.6-35b-a3b") onto it.
+            model = os.environ["LLM_MODEL"]
+        client = self._client_for(provider)
         prompt = _no_think(model, prompt)
+        limit = self.context_length(provider, model)
+        need = estimate_tokens(prompt)
+        if limit and need > limit - 2048:
+            raise PromptTooLong(f"step '{step_name}': prompt is ~{need} tokens but {model} accepts {limit}. "
+                                f"The step must summarise its inputs instead of pasting them")
 
         cache_key = self._cache_key(model, prompt)
         if self.use_cache and temperature == 0.0 and cache_key in self._cache:
@@ -80,27 +166,47 @@ class LLMClient:
             "messages": [{"role": "user", "content": prompt}],
             "temperature": temperature,
         }
+        if limit:
+            # the estimate runs low on code and JSON: leave a quarter of it as margin (a 32k-context server refused
+            # 29511 output tokens on a prompt estimated at ~2.6k, 2026-10-12)
+            kwargs["max_tokens"] = max(1024, min(max_tokens or MAX_COMPLETION_TOKENS, limit - int(need * 1.25) - 1024))
+        elif max_tokens:
+            kwargs["max_tokens"] = max_tokens
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
+        if provider in ("local", "local2"):
+            # Qwen3.6 ignores the /no_think prefix and reasons by default (as it did via OpenRouter
+            # in the original runs); LLM_ENABLE_THINKING=false turns it off. vLLM's --reasoning-parser
+            # keeps the reasoning out of `content`. Templates without this variable ignore it.
+            # The second server (local2) has its own switch, default off: LLM_ENABLE_THINKING_LOCAL2.
+            var, default = ("LLM_ENABLE_THINKING", "true") if provider == "local" else ("LLM_ENABLE_THINKING_LOCAL2", "false")
+            thinking = os.environ.get(var, default).strip().lower() not in ("0", "false", "no")
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": thinking}}
 
-        # Retry on 429 with exponential backoff (free-tier rate limits)
-        for attempt in range(5):
-            try:
-                resp = self.client.chat.completions.create(**kwargs)
-                break
-            except RateLimitError:
-                if attempt == 4:
-                    raise
-                wait = 30 * (2 ** attempt)  # 30, 60, 120, 240 s
-                print(f"  [rate limit] waiting {wait}s before retry {attempt+2}/5...", flush=True)
-                time.sleep(wait)
-
+        try:
+            resp = self._create(client, kwargs, step_name)
+        except Exception as e:
+            # a thinking model that is still reasoning when the request times out (Gemma, model step, 4 x 15 min,
+            # Melbourne 2026-10-21): answer once without thinking, like the exhausted-budget case below
+            thinking_on = (kwargs.get("extra_body") or {}).get("chat_template_kwargs", {}).get("enable_thinking")
+            if "Timeout" not in type(e).__name__ or provider not in ("local", "local2") or not thinking_on:
+                raise
+            self._log(step_name + "_timeout", model, temperature, prompt, "", None)
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
+            resp = self._create(client, kwargs, step_name)
+            step_name += "_nothink"
         content = resp.choices[0].message.content or ""
-
+        self._count(resp.usage)
+        if not content.strip() and resp.choices[0].finish_reason == "length" and provider in ("local", "local2") \
+                and (kwargs.get("extra_body") or {}).get("chat_template_kwargs", {}).get("enable_thinking"):
+            # spent the whole budget thinking and wrote nothing: log it, then answer once without thinking
+            self._log(step_name + "_exhausted", model, temperature, prompt, "", resp.usage)
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
+            resp = self._create(client, kwargs, step_name)
+            content = resp.choices[0].message.content or ""
+            self._count(resp.usage)
+            step_name += "_nothink"
         usage = resp.usage
-        if usage:
-            self.tokens_used += usage.total_tokens
-            self.cost_used += float(getattr(usage, "cost", 0.0) or 0.0)
 
         if self.use_cache and temperature == 0.0:
             self._cache[cache_key] = content
@@ -108,6 +214,42 @@ class LLMClient:
 
         self._log(step_name, model, temperature, prompt, content, usage)
         return content
+
+    def _create(self, client: OpenAI, kwargs: dict, step_name: str):
+        # Retry on 429 with exponential backoff (free-tier rate limits)
+        for attempt in range(5):
+            try:
+                return client.chat.completions.create(**kwargs)
+            except RateLimitError:
+                if attempt == 4:
+                    raise
+                wait = 30 * (2 ** attempt)  # 30, 60, 120, 240 s
+                print(f"  [rate limit] waiting {wait}s before retry {attempt+2}/5...", flush=True)
+                time.sleep(wait)
+            except BadRequestError as e:
+                msg = str(e)
+                if "context length" in msg or "maximum context" in msg:
+                    # the token estimate runs low on some prompts (4223 real vs ~2560 estimated, Gemma, 2026-10-21):
+                    # the server states both numbers, so shrink max_tokens to fit and retry once
+                    lim = re.search(r"maximum context length is (\d+)", msg)
+                    got = re.search(r"prompt contains at least (\d+)", msg)
+                    if lim and got and kwargs.get("max_tokens"):
+                        room = int(lim.group(1)) - int(got.group(1)) - 512
+                        if room >= 1024:
+                            kwargs = {**kwargs, "max_tokens": room}
+                            print(f"  [{step_name}] prompt longer than estimated: retrying with max_tokens={room}",
+                                  flush=True)
+                            try:
+                                return client.chat.completions.create(**kwargs)
+                            except BadRequestError as e2:
+                                raise PromptTooLong(f"step '{step_name}': {str(e2)[:300]}") from e2
+                    raise PromptTooLong(f"step '{step_name}': {msg[:300]}") from e
+                raise
+
+    def _count(self, usage) -> None:
+        if usage:
+            self.tokens_used += usage.total_tokens
+            self.cost_used += float(getattr(usage, "cost", 0.0) or 0.0)
 
     def _log(
         self,
@@ -120,7 +262,7 @@ class LLMClient:
         from_cache: bool = False,
     ) -> None:
         ts = int(time.time())
-        log_path = self.transcript_dir / f"{step_name}_{ts}.json"
+        log_path = self.transcript_dir / f"{step_name}_{ts}_{next(_SEQ):04d}.json"
         payload = {
             "model": model,
             "temperature": temperature,

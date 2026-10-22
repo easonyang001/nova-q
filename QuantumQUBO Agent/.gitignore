@@ -37,3 +37,28 @@ results/failure_modes.json
 # OS
 .DS_Store
 Thumbs.db
+# Annealing execution log (spec P0) and backend credentials
+results/annealing_runs.jsonl
+secrets.json
+results/loop_runs.jsonl
+results/experience.jsonl
+results/hardware_ledger.jsonl
+
+# Experiment raw logs are large (100+ MB); keep runs.csv / summary.md / config / experience only
+results/experiments/*/backend/
+results/experiments/*/loops/
+results/experiments/*/stdout.log
+results/experiments/smoke/
+results/fujitsu_orphan_jobs.jsonl
+deliverables/
+
+# Large run outputs stay local (downloaded open data, LLM transcripts, caches; 7.9 GB, files over 100 MB).
+# Kept in git: settings notes, reference answers, per-run judge records, solver-comparison data and figures.
+results/**
+!results/**/
+!results/*.md
+!results/acceptance_truth/truth_*.json
+!results/e2e_*/full_rag/*/record.json
+!results/experiments/qaoa_cudaq_20261020/*.jsonl
+!results/experiments/qaoa_cudaq_20261020/summary.json
+!results/experiments/qaoa_cudaq_20261020/figures/*

@@ -1,0 +1,293 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 175.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 263.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 42.1
+  },
+  "data": {
+   "ok": true,
+   "seconds": 623.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 300.1
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.2
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "Maximum Covering Location Problem (MCLP). Variables: x_i (station at site i) and y_j (village j covered). For 450 villages, total variables = 900. This fits the CGA backend (up to 3,600 variables) and correctly handles the 'count each population once' requirement.",
+ "schema": {
+  "sets": {
+   "villages": {
+    "meaning": "Village (里) in Taipei City",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Total population of the village",
+    "index": [
+     "villages"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "person"
+   },
+   "lat": {
+    "meaning": "Latitude of village centroid",
+    "index": [
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of village centroid",
+    "index": [
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of charging stations to place",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "coverage_radius": {
+    "meaning": "Coverage distance threshold",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1000,
+    "unit": "m"
+   },
+   "coverage_matrix": {
+    "meaning": "Binary indicator if site i covers village j",
+    "index": [
+     "villages",
+     "villages"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "dist <= coverage_radius"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "台北市村里界.geojson",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "prep": {
+  "tools_used": [
+   "attach_parent",
+   "haversine_matrix",
+   "keep_category",
+   "keep_level",
+   "latest_period",
+   "match",
+   "to_number",
+   "to_wgs84"
+  ],
+  "notes": "\n1. Population Data: Processed '臺北市各里人口數按年齡分' by keeping the latest period (year/month), the 'Total' (計) gender category, and filtering for 'Village' (里) level.\n2. Geometry Data: Used '臺北市里界圖' as the primary source for village centroids. Applied prep.to_wgs84 to convert TWD97 projected coordinates (x, y) to WGS84 (lon, lat).\n3. Matching: Joined population and geometry data using a composite key of [District, Village Name] via prep.match to avoid ambiguity (since village names repeat across districts).\n4. Coverage: Generated a binary sparse matrix based on a 1km Haversine distance threshold.\n5. Constants: k=5 and coverage_radius=1000 as per specification.\n",
+  "prep_log": "**資料來源**\n\n- 台北市村里界（ArcGIS Hub） <https://hub.arcgis.com/datasets/9fde017cda1a4fa3a5c2cc484cf07318_0>，授權：待確認，取得 2026-10-13T02:13:18.934142+00:00\n- 臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分（政府資料開放平台） <https://data.gov.tw/dataset/136896>，授權：待確認，取得 2026-10-13T02:13:15.441675+00:00\n- 臺北市里界圖（catalogue data.gov.tw） <https://data.gov.tw/dataset/121163>，授權：待確認，取得 2026-10-13T02:13:17.088600+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只取最新一期 {'年份': 115, '月份': 9} | 63315 | 1407 |  |\n| 只保留 性別=計 | 1407 | 469 |  |\n| 補上上層行政區（區） | 469 | 469 | 1 列找不到上層 |\n| 只保留行政層級「里」 | 469 | 456 | 移除 13 列上層彙總 |\n| Population filtering | 63315 | 456 | Filtered for latest period, total gender, and village level |\n| 座標轉換 EPSG:3826 → WGS84 | 456 | 456 |  |\n| 合併（TNAME+VNAME ↔ 區+區域別） | 456 | 456 | 完全對上 455、模糊對上 1、對不上 0 |\n| Final join and cleanup | 456 | 456 | Joined population and centroids on [District, Village], dropped NaNs |",
+  "flags": [],
+  "review_required": [
+   "coverage_radius: 尚未聲明 unit，需求為 m",
+   "coverage_matrix: 缺少實際來源對應，不能確認為公開真實資料",
+   "coverage_matrix: ['Straight-line distance used']",
+   "adapter 沒有聲明這些欄位的來源與單位：coverage_radius, k"
+  ],
+  "sources": [
+   {
+    "title": "台北市村里界",
+    "url": "https://hub.arcgis.com/datasets/9fde017cda1a4fa3a5c2cc484cf07318_0",
+    "resource_url": "https://services2.arcgis.com/hzR6Lo9ndYxYgIxv/arcgis/rest/services/%E5%8F%B0%E5%8C%97%E5%B8%82%E6%9D%91%E9%87%8C%E7%95%8C/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+    "publisher": "ArcGIS Hub",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:13:18.934142+00:00",
+    "sha256": "08e9a5c39266649c9f8fe32dc0950c1ea7dc9392006468378f4d17ade1b86eee",
+    "bytes": 1209827
+   },
+   {
+    "title": "臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分",
+    "url": "https://data.gov.tw/dataset/136896",
+    "resource_url": "https://data.taipei/api/dataset/a6394e3f-3514-4542-87bd-de4310a40db3/resource/c8f5b53d-ef3d-4321-ae8e-58cd2a5ee73c/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:13:15.441675+00:00",
+    "sha256": "a478cb4d3cdf509eec3453285bf0c1c542b7f53268608348ced4bafa7150bed3",
+    "bytes": 20821765
+   },
+   {
+    "title": "臺北市里界圖",
+    "url": "https://data.gov.tw/dataset/121163",
+    "resource_url": "https://data.taipei/api/dataset/6b17b31d-4e16-495e-95b1-9fd1f47c80d8/resource/145e30da-58f3-45db-a125-8adc3fde2620/download",
+    "publisher": "catalogue data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:13:17.088600+00:00",
+    "sha256": "acff9aebcaa04c26d1fd8beceff1e7a3b95a2d35177ec0bafef08499e1e276ac",
+    "bytes": 521114
+   }
+  ],
+  "n_variables": 912,
+  "n_constraints": 457,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "villages": 456
+    },
+    "totals": {
+     "population": 2418872.0
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "3712b9ac6fe13e98806b21b1",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "3712b9ac6fe13e98806b21b1",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:solve",
+  "delivery:limited",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": 588231.0,
+  "baseline_objective": 588231.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "villages",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 456,
+    "mapped": 456,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "population",
+    "population_exact_matches": 456,
+    "population_total": 2418872.0,
+    "population_truth_total": 2418872
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "villages"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.992,
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "helper variables optimised"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 5,
+    "meets_original_requirements": true,
+    "true_quality": 547963.0,
+    "reference_quality": 565910,
+    "gap_vs_reference": 0.0317
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 99431,
+  "solver_calls": 3
+ },
+ "seconds": 1405.5
+}

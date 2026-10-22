@@ -1,0 +1,18 @@
+\begin{abstract}
+Turning a natural-language request into an annealing result requires more than a valid quadratic unconstrained
+binary optimization (QUBO) formula. Public data must be acquired and interpreted, the model must preserve the
+confirmed requirements, and the delivered decision must be checked independently of its QUBO energy.
+We present a human-in-the-loop workflow in which locally served language-model agents clarify requirements,
+generate a binary model, acquire and preprocess data, and submit QUBOs to interchangeable classical,
+quantum-inspired and hybrid backends. Typed data interfaces, separate data and requirement checkers, and bounded
+cross-stage repair provide executable feedback. We also replace reference-bitstring verification with a
+problem-level protocol that checks every decoded ground state against a benchmark-anchored evaluator.
+An audit found incorrect generated test cases in at least seven of twelve shape failures. Across three runs on
+100 benchmarks, problem-level verification yielded 69, 72 and 70 successes; 27 benchmarks changed outcome.
+A synthetic 12-category suite produced valid models in all 36 runs. Fixed-model comparisons returned feasible
+solutions in all 54 simulated-annealing/GPU conditions and all 27 D-Wave Leap Hybrid conditions, with an explicit
+ten-second Hybrid limit. Specified-source real-data pilots establish narrower integration capabilities;
+autonomous public-data acquisition and the incremental effects of checkers, repair and retrieval remain to be
+evaluated under a frozen repeated protocol. The contribution is a data-grounded workflow and evaluation methodology that distinguishes data and modelling
+errors from solver limitations.
+\end{abstract}

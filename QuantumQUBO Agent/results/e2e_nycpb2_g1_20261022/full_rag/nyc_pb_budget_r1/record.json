@@ -1,0 +1,232 @@
+{
+ "case": "nyc_pb_budget",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 269.3
+  },
+  "model": {
+   "ok": true,
+   "seconds": 201.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 86.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 624.2
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1.4
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-capacity"
+ ],
+ "model_choice": "0/1 Knapsack formulation. Decision variables are binary indicators for each proposal. For a realistic instance of 20-100 proposals, this results in 20-100 binary variables, which fits easily within the simulated annealing (sa) backend.",
+ "schema": {
+  "sets": {
+   "proposals": {
+    "meaning": "The set of all participatory budget proposals for District 3 in 2017",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "votes"
+    }
+   }
+  },
+  "params": {
+   "votes": {
+    "meaning": "Number of votes received by the proposal",
+    "index": [
+     "proposals"
+    ],
+    "type": "int",
+    "source": "public"
+   },
+   "cost": {
+    "meaning": "Budget amount requested by the proposal",
+    "index": [
+     "proposals"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "USD"
+   },
+   "budget_limit": {
+    "meaning": "Total budget available for allocation",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "unit": "USD",
+    "value": 1000000
+   },
+   "proposal_name": {
+    "meaning": "The descriptive name or ID of the proposal",
+    "index": [
+     "proposals"
+    ],
+    "type": "text",
+    "source": "public"
+   }
+  }
+ },
+ "data_found": [
+  "Participatory_Budgeting_Projects.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "dedupe",
+   "normalize_text"
+  ],
+  "notes": "The plan filters the dataset for the year 2017 and Council District 3, removes proposals with missing votes or costs, and ensures uniqueness of the proposal set using the project title. The budget limit is set to 1,000,000 USD as per the specification.",
+  "prep_log": "**資料來源**\n\n- Participatory Budgeting Projects（Socrata data.cityofnewyork.us） <https://data.cityofnewyork.us/d/wwhr-5ven>，授權：待確認，取得 2026-10-22T03:36:17.265917+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| keep {\"column\": \"Vote Year\", \"values\": [2017]} | 1491 | 394 |  |\n| keep {\"column\": \"Council District\", \"values\": [\"3\"]} | 394 | 15 |  |\n| drop_missing {\"columns\": [\"Votes\", \"Cost\"]} | 15 | 15 |  |\n| 依 ['Title'] 去除重複 | 15 | 15 |  |",
+  "flags": [],
+  "review_required": [],
+  "sources": [
+   {
+    "title": "Participatory Budgeting Projects",
+    "url": "https://data.cityofnewyork.us/d/wwhr-5ven",
+    "resource_url": "https://data.cityofnewyork.us/api/views/wwhr-5ven/rows.csv?accessType=DOWNLOAD",
+    "publisher": "Socrata data.cityofnewyork.us",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-22T03:36:17.265917+00:00",
+    "sha256": "5a54a1b2608446a8f90150e1da027420098bc8b66fc10fce93a4e5a0170eebeb",
+    "bytes": 422195
+   }
+  ],
+  "n_variables": 15,
+  "n_constraints": 1,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "proposals": 15
+    },
+    "totals": {
+     "votes": 15055.0,
+     "cost": 4105000.0
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "ffe208f67ce744a175653a9f",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 13,
+    "invalid": 13,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "ffe208f67ce744a175653a9f",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 7103.0,
+  "baseline_objective": 7103.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "proposals",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 15,
+    "mapped": 15,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "votes_param": "votes",
+    "cost_param": "cost",
+    "budget_value_found": true
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "proposals"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 7,
+    "true_cost": 980000.0,
+    "meets_original_requirements": true,
+    "true_quality": 7103.0,
+    "reference_quality": 7103.0,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 66648,
+  "solver_calls": 1
+ },
+ "seconds": 1183.1
+}

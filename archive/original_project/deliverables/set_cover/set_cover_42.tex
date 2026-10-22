@@ -1,0 +1,91 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Weighted Set Cover Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Weighted Set Cover Problem}
+
+\paragraph{Problem Statement.}
+Given a universe of $N$ elements $\mathcal{U} = \{1, 2, \dots, N\}$ and a collection of $M$ subsets $\mathcal{S} = \{S_1, S_2, \dots, S_M\}$ where each $S_j \subseteq \mathcal{U}$, and each subset $S_j$ is associated with a non-negative cost $c_j$. The goal is to select a subcollection of subsets such that every element in $\mathcal{U}$ is contained in at least one selected subset, while minimizing the total cost of the selected subsets.
+
+\paragraph{Decision Variables.}
+For each subset $S_j$ with $j \in \{1, \dots, M\}$, introduce a binary decision variable $x_j \in \{0, 1\}$. The variable $x_j = 1$ indicates that subset $S_j$ is selected, and $x_j = 0$ indicates it is not.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 --- Objective Function.} The original optimization problem is to minimize the total cost of selected subsets:
+\begin{align}
+\min_{x \in \{0,1\}^M} \sum_{j=1}^M c_j x_j.
+\end{align}
+
+\textbf{Step 2 --- Coverage Constraints.} Every element $i \in \mathcal{U}$ must be covered by at least one selected subset. This yields $N$ inequality constraints:
+\begin{align}
+\sum_{j: i \in S_j} x_j \ge 1, \quad \forall i \in \{1, \dots, N\}.
+\end{align}
+
+\textbf{Step 3 --- Penalty Term Conversion.} Since $x_j \in \{0,1\}$, the sum $\sum_{j: i \in S_j} x_j$ is an integer. The constraint is violated if and only if the sum equals $0$. We enforce each constraint via a quadratic penalty term with weight $\lambda > 0$:
+\begin{align}
+P_i(x) = \lambda \left( \sum_{j: i \in S_j} x_j - 1 \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_j^2 = x_j$ for binary variables:
+\begin{align}
+\left( \sum_{j: i \in S_j} x_j - 1 \right)^2 &= \sum_{j: i \in S_j} x_j^2 + \sum_{\substack{j,k: i \in S_j \\ j \neq k}} x_j x_k - 2 \sum_{j: i \in S_j} x_j + 1 \nonumber \\
+&= \sum_{j: i \in S_j} x_j + \sum_{\substack{j,k: i \in S_j \\ j \neq k}} x_j x_k - 2 \sum_{j: i \in S_j} x_j + 1 \nonumber \\
+&= \sum_{\substack{j,k: i \in S_j \\ j \neq k}} x_j x_k - \sum_{j: i \in S_j} x_j + 1.
+\end{align}
+To express the quadratic part in standard QUBO form $\sum_{j < k} Q_{jk} x_j x_k$, we use the identity $\sum_{j \neq k} x_j x_k = 2 \sum_{j < k} x_j x_k$:
+\begin{align}
+P_i(x) = 2 \sum_{\substack{j,k: i \in S_j \\ j < k}} x_j x_k - \sum_{j: i \in S_j} x_j + 1.
+\end{align}
+
+\textbf{Step 4 --- Combined Hamiltonian.} Summing the objective and all penalty terms yields the total QUBO Hamiltonian:
+\begin{align}
+H(x) = \sum_{j=1}^M c_j x_j + \sum_{i=1}^N \lambda \left( 2 \sum_{\substack{j,k: i \in S_j \\ j < k}} x_j x_k - \sum_{j: i \in S_j} x_j + 1 \right).
+\end{align}
+
+\textbf{Step 5 --- Q Matrix and Offset.} Collecting coefficients for $x_j$ and $x_j x_k$ ($j < k$) gives the QUBO parameters:
+\begin{align}
+Q_{jj} &= c_j - \lambda \sum_{i=1}^N \mathbb{I}(i \in S_j), \quad j \in \{1, \dots, M\}, \nonumber \\
+Q_{jk} &= 2\lambda \sum_{i=1}^N \mathbb{I}(i \in S_j \cap S_k), \quad 1 \le j < k \le M, \nonumber \\
+c &= N \lambda,
+\end{align}
+where $\mathbb{I}(\cdot)$ is the indicator function. The Hamiltonian is then $H(x) = \sum_{j=1}^M Q_{jj} x_j + \sum_{1 \le j < k \le M} Q_{jk} x_j x_k + c$.
+
+\paragraph{Penalty Weight Justification.}
+The penalty coefficient $\lambda$ must be chosen sufficiently large to ensure that any infeasible solution has a strictly higher energy than the optimal feasible solution. The maximum possible reduction in the objective cost by omitting any single subset is bounded by $\max_{j} c_j$. If a coverage constraint is violated, the corresponding penalty term contributes at least $\lambda$ (since the sum is $0$, $(0-1)^2 = 1$). Therefore, choosing $\lambda > \max_{j} c_j$ guarantees that the energy increase from violating a single coverage constraint outweighs any potential decrease in the objective function. This ensures that the optimizer will never prefer an infeasible configuration over a feasible one.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $x \in \{0,1\}^M$ recovers the optimal weighted set cover because the penalty terms are non-negative and vanish exactly when all coverage constraints are satisfied. For any feasible solution, $H(x)$ reduces to the original objective function $\sum_{j=1}^M c_j x_j$. For any infeasible solution, at least one penalty term $P_i(x)$ is strictly positive (specifically, at least $\lambda$), making $H(x)$ strictly greater than the energy of the corresponding feasible solution obtained by adding the missing subsets. Since adding subsets only increases the objective cost but eliminates penalties, the global minimum of $H(x)$ must occur at a feasible point that minimizes the original cost, i.e., the optimal weighted set cover.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N=2$ elements and $M=3$ subsets. Let the subsets be $S_0 = \{0\}$, $S_1 = \{1\}$, and $S_2 = \{0, 1\}$. The binary variables are $x_0, x_1, x_2 \in \{0,1\}$. The costs are $c_0, c_1, c_2$, and we set $\lambda > \max\{c_0, c_1, c_2\}$.
+
+The coverage constraints are:
+\begin{align}
+x_0 + x_2 \ge 1, \quad x_1 + x_2 \ge 1.
+\end{align}
+Applying the general derivation, the penalty terms become:
+\begin{align}
+P_0(x) &= \lambda(2x_0 x_2 - x_0 - x_2 + 1), \\
+P_1(x) &= \lambda(2x_1 x_2 - x_1 - x_2 + 1).
+\end{align}
+The total Hamiltonian is:
+\begin{align}
+H(x) &= c_0 x_0 + c_1 x_1 + c_2 x_2 + \lambda(2x_0 x_2 - x_0 - x_2 + 1) + \lambda(2x_1 x_2 - x_1 - x_2 + 1) \nonumber \\
+&= (c_0 - \lambda)x_0 + (c_1 - \lambda)x_1 + (c_2 - 2\lambda)x_2 + 2\lambda x_0 x_2 + 2\lambda x_1 x_2 + 2\lambda.
+\end{align}
+The Q matrix entries and offset are:
+\begin{align}
+Q_{00} &= c_0 - \lambda, \quad Q_{11} = c_1 - \lambda, \quad Q_{22} = c_2 - 2\lambda, \nonumber \\
+Q_{02} &= 2\lambda, \quad Q_{12} = 2\lambda, \quad Q_{01} = 0, \nonumber \\
+c &= 2\lambda.
+\end{align}
+Assume $c_0 = 3, c_1 = 3, c_2 = 4$, and $\lambda = 5$. The feasible solutions are $(0,0,1)$ with cost $4$, $(1,0,0)$ with cost $3$ (infeasible), $(0,1,0)$ with cost $3$ (infeasible), and $(1,1,0)$ with cost $6$. Evaluating $H(x)$:
+\begin{align}
+H(0,0,1) &= 4, \quad H(1,1,0) = 6, \quad H(1,0,0) = 3 + 5 = 8, \quad H(0,1,0) = 3 + 5 = 8.
+\end{align}
+The global minimum is $x^* = (0,0,1)$ with energy $4$, correctly selecting subset $S_2$ as the minimum-cost cover.
+\end{document}

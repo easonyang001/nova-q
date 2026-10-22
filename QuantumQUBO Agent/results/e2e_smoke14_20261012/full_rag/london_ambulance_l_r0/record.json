@@ -1,0 +1,116 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 125.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 241.6
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 45.4
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1040.3,
+   "error": "ValueError: data preparation failed: StageTimeout: _execute_adapter 超過 30 秒；已停止這次工作，可重試或回到前一步"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-p-median",
+  "mp-avoid-double-counting"
+ ],
+ "model_choice": "Standard P-median with assignment variables. Variables: x_i (open station at site i), y_ji (assign demand j to site i). Size: N + N^2. For N=45, size ~2070, fits CGA limit 3600. This formulation is exact, linear objective, linear constraints, and avoids quadratic objective terms which can be harder to optimize. The assignment variables implicitly handle the nearest facility logic via constraints.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "LSOA centroid locations serving as candidate sites",
+    "source": "public"
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Population of each LSOA",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons",
+    "min": 0
+   },
+   "distance_matrix": {
+    "meaning": "Euclidean distance between all pairs of LSOA centroids",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "sparse": false,
+    "derived": {
+     "tool": "code",
+     "from": [
+      "raw:lat",
+      "raw:lon"
+     ],
+     "how": "Compute pairwise Euclidean distances from coordinates"
+    }
+   },
+   "k": {
+    "meaning": "Number of ambulance stations to establish",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   },
+   "lat": {
+    "meaning": "Latitude of each LSOA centroid",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each LSOA centroid",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   }
+  }
+ },
+ "data_found": [
+  "LSOA_2021.geojson",
+  "LSOA_Atlas_Current_LSOA_boundaries_post-2011.csv",
+  "United_Kingdom_Population_and_Population_Density_2021.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 250044,
+  "solver_calls": null
+ },
+ "seconds": 1453.8
+}

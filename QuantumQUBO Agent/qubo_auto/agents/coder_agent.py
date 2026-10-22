@@ -11,6 +11,9 @@ from ..schemas import QUBOFormulation, StructuredSpec
 
 _PROMPT_PATH = Path(__file__).parent.parent / "prompts" / "coder_agent.txt"
 _PROMPT_TEMPLATE = _PROMPT_PATH.read_text(encoding="utf-8")
+# problem-level verification has its own template: appending its rules to the bitstring one contradicted it
+# ("same binary string" vs "any layout"), and the contradiction sent the reasoning model into 64k-token loops
+_PROBLEM_LEVEL_TEMPLATE = (Path(__file__).parent.parent / "prompts" / "coder_agent_problem_level.txt").read_text(encoding="utf-8")
 
 
 def _fill(template: str, **kwargs: str) -> str:
@@ -28,7 +31,9 @@ def generate_code(
     temperature: float,
     previous_error: str | None = None,
     sample_instance: dict | None = None,
+    solution_format: str | None = None,
 ) -> str:
+    """solution_format given = problem-level verification: the Coder must also write decode()."""
     spec_json = spec.model_dump_json(indent=2)
     formulation_json = formulation.model_dump_json(indent=2)
 
@@ -42,7 +47,21 @@ def generate_code(
         )
 
     feedback = ""
-    if previous_error:
+    if previous_error and solution_format:
+        feedback = (
+            "PREVIOUS ATTEMPT FAILED — fix ALL issues before writing new code:\n"
+            f"{previous_error.strip()}\n\n"
+            "The test enumerates ALL 2^n binary strings, takes EVERY x that minimises x^T Q x + offset, "
+            "decodes it with your decode() and checks the decoded solution with an independent checker: "
+            "every ground state must be a feasible, optimal solution of the original problem.\n"
+            "Common fixes:\n"
+            "- Use exact keys from the SAMPLE INSTANCE above\n"
+            "- Penalty weights large enough that no infeasible x ties with or beats a feasible one\n"
+            "- Objective sign: QUBO minimises, so a maximisation objective enters Q negated\n"
+            "- decode() must read the same variable indices build_qubo() uses, and return the solution format exactly\n"
+            "- Q must be UPPER TRIANGULAR: off-diagonal [i,j] → write FULL coeff to Q[min(i,j), max(i,j)]"
+        )
+    elif previous_error:
         feedback = (
             "PREVIOUS ATTEMPT FAILED — fix ALL issues before writing new code:\n"
             f"{previous_error.strip()}\n\n"
@@ -58,10 +77,11 @@ def generate_code(
         )
 
     prompt = _fill(
-        _PROMPT_TEMPLATE,
+        _PROBLEM_LEVEL_TEMPLATE if solution_format else _PROMPT_TEMPLATE,
         spec_json=spec_json,
         formulation_json=formulation_json,
         sample_instance=sample_block,
+        solution_format=(solution_format or "").strip(),
         previous_feedback=feedback,
     )
 
@@ -77,6 +97,15 @@ def _extract_code(raw: str) -> str:
     if "def build_qubo" in cleaned:
         return cleaned
     raise ValueError(f"Could not extract Python code from coder response:\n{raw[:500]}")
+
+
+def compile_functions(code: str) -> tuple[Callable, Callable | None]:
+    """(build_qubo, decode) from the Coder's code; decode is None when the code does not define it."""
+    namespace: dict = {}
+    exec(compile(code, "<build_qubo>", "exec"), namespace)  # noqa: S102
+    if "build_qubo" not in namespace:
+        raise ValueError("Coder did not define `build_qubo` function")
+    return namespace["build_qubo"], namespace.get("decode")
 
 
 def compile_build_qubo(code: str) -> callable:

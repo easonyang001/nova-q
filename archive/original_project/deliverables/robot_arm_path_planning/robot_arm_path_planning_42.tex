@@ -1,0 +1,147 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Robot Arm Path Planning}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Robot Arm Path Planning}
+
+\paragraph{Problem Statement.}
+Consider a robot arm whose configuration is discretized into a sequence of time steps $t \in \{0, 1, \dots, T-1\}$. Let $S_t$ denote the finite set of available discrete states at time step $t$. Each state $s \in S_t$ is associated with an obstacle cost $C_{\text{obs}}(t,s) \geq 0$. Transitions between consecutive time steps incur motion costs: for any $s \in S_t$ and $s' \in S_{t+1}$, the cost of transitioning from $s$ to $s'$ is denoted by $C_{\text{mot}}(t,s,s') \geq 0$. A subset of transitions is designated as invalid and must be forbidden. The problem requires selecting exactly one state $s_t \in S_t$ for each time step $t$ such that $s_0$ is a fixed start state, $s_{T-1}$ is a fixed goal state, and all selected transitions $(s_t, s_{t+1})$ are valid, while minimizing the sum of obstacle costs and motion costs over the entire path.
+
+\paragraph{Decision Variables.}
+We introduce binary decision variables $x_{t,s} \in \{0,1\}$ for each time step $t \in \{0, 1, \dots, T-1\}$ and each state $s \in S_t$. The variable $x_{t,s}$ takes the value $1$ if and only if state $s$ is selected at time step $t$, and $0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+
+\textbf{Step 1: Objective Function.}
+The original optimization problem is to minimize the total cost:
+\begin{equation}
+\min_{x} \left( \sum_{t=0}^{T-1} \sum_{s \in S_t} C_{\text{obs}}(t,s) x_{t,s} + \sum_{t=0}^{T-2} \sum_{s \in S_t} \sum_{s' \in S_{t+1}} C_{\text{mot}}(t,s,s') x_{t,s} x_{t+1,s'} \right).
+\end{equation}
+Since the QUBO formulation seeks to minimize a quadratic Hamiltonian $H(x)$, we identify the objective function directly as the quadratic part of $H(x)$:
+\begin{equation}
+H_{\text{obj}}(x) = \sum_{t=0}^{T-1} \sum_{s \in S_t} C_{\text{obs}}(t,s) x_{t,s} + \sum_{t=0}^{T-2} \sum_{s \in S_t} \sum_{s' \in S_{t+1}} C_{\text{mot}}(t,s,s') x_{t,s} x_{t+1,s'}.
+\end{equation}
+
+\textbf{Step 2: Constraints.}
+The problem is subject to the following constraints:
+\begin{enumerate}
+    \item \textit{Exactly one state per step:} For each $t \in \{0, \dots, T-1\}$,
+    \begin{equation}
+    \sum_{s \in S_t} x_{t,s} = 1.
+    \end{equation}
+    \item \textit{Fixed start state:}
+    \begin{equation}
+    x_{0, \text{start}} = 1.
+    \end{equation}
+    \item \textit{Fixed goal state:}
+    \begin{equation}
+    x_{T-1, \text{goal}} = 1.
+    \end{equation}
+    \item \textit{Forbidden transitions:} For all invalid transitions $(s, s')$ where $s \in S_t$ and $s' \in S_{t+1}$,
+    \begin{equation}
+    x_{t,s} + x_{t+1,s'} \leq 1.
+    \end{equation}
+\end{enumerate}
+
+\textbf{Step 3: Penalty Terms.}
+We convert constraints to penalty terms using a penalty weight $\lambda > 0$. For binary variables, the idempotent property $x_k^2 = x_k$ holds.
+
+\textit{Exactly one state per step:}
+For each $t$, the constraint $\sum_{s \in S_t} x_{t,s} = 1$ is penalized as:
+\begin{align}
+P_t(x) &= \lambda \left( \sum_{s \in S_t} x_{t,s} - 1 \right)^2 \\
+&= \lambda \left( \sum_{s \in S_t} x_{t,s}^2 - 2 \sum_{s \in S_t} x_{t,s} + 1 \right) \\
+&= \lambda \left( \sum_{s \in S_t} x_{t,s} - 2 \sum_{s \in S_t} x_{t,s} + 1 \right) \\
+&= \lambda \left( 1 - \sum_{s \in S_t} x_{t,s} \right).
+\end{align}
+The contribution to the Hamiltonian is $\lambda - \lambda \sum_{s \in S_t} x_{t,s}$.
+
+\textit{Fixed start state:}
+The constraint $x_{0, \text{start}} = 1$ is penalized as:
+\begin{equation}
+P_{\text{start}}(x) = \lambda (x_{0, \text{start}} - 1)^2 = \lambda (x_{0, \text{start}} - 2x_{0, \text{start}} + 1) = \lambda (1 - x_{0, \text{start}}).
+\end{equation}
+
+\textit{Fixed goal state:}
+The constraint $x_{T-1, \text{goal}} = 1$ is penalized as:
+\begin{equation}
+P_{\text{goal}}(x) = \lambda (x_{T-1, \text{goal}} - 1)^2 = \lambda (1 - x_{T-1, \text{goal}}).
+\end{equation}
+
+\textit{Forbidden transitions:}
+The inequality $x_{t,s} + x_{t+1,s'} \leq 1$ is equivalent to $x_{t,s} x_{t+1,s'} = 0$ for binary variables. Thus, we penalize the product:
+\begin{equation}
+P_{\text{trans}}(x) = \lambda \sum_{(t,s,s') \in \mathcal{I}} x_{t,s} x_{t+1,s'},
+\end{equation}
+where $\mathcal{I}$ is the set of indices corresponding to invalid transitions.
+
+\textbf{Step 4: Combined Hamiltonian.}
+The total QUBO Hamiltonian $H(x)$ is the sum of the objective and all penalty terms:
+\begin{align}
+H(x) &= H_{\text{obj}}(x) + \sum_{t=0}^{T-1} P_t(x) + P_{\text{start}}(x) + P_{\text{goal}}(x) + P_{\text{trans}}(x) \\
+&= \sum_{t=0}^{T-1} \sum_{s \in S_t} C_{\text{obs}}(t,s) x_{t,s} + \sum_{t=0}^{T-2} \sum_{s \in S_t} \sum_{s' \in S_{t+1}} C_{\text{mot}}(t,s,s') x_{t,s} x_{t+1,s'} \\
+&\quad + \sum_{t=0}^{T-1} \left( \lambda - \lambda \sum_{s \in S_t} x_{t,s} \right) + \lambda (1 - x_{0, \text{start}}) + \lambda (1 - x_{T-1, \text{goal}}) \\
+&\quad + \lambda \sum_{(t,s,s') \in \mathcal{I}} x_{t,s} x_{t+1,s'}.
+\end{align}
+
+\textbf{Step 5: Q Matrix and Offset.}
+Collecting linear and quadratic terms, we obtain the QUBO form $H(x) = \sum_{i} Q_{i,i} x_i + \sum_{i<j} Q_{i,j} x_i x_j + c$.
+Let the variables be indexed by a global index $k$ corresponding to $(t,s)$.
+The linear coefficients $Q_{(t,s),(t,s)}$ are:
+\begin{equation}
+Q_{(t,s),(t,s)} = C_{\text{obs}}(t,s) - \lambda \quad \text{for all } t, s,
+\end{equation}
+with the additional modification for the start and goal states:
+\begin{equation}
+Q_{(0,\text{start}),(0,\text{start})} = C_{\text{obs}}(0,\text{start}) - 2\lambda, \quad
+Q_{(T-1,\text{goal}),(T-1,\text{goal})} = C_{\text{obs}}(T-1,\text{goal}) - 2\lambda.
+\end{equation}
+The quadratic coefficients $Q_{(t,s),(t',s')}$ for $t < t'$ are:
+\begin{equation}
+Q_{(t,s),(t+1,s')} = C_{\text{mot}}(t,s,s') + \lambda \quad \text{if } (t,s,s') \in \mathcal{I},
+\end{equation}
+and $Q_{(t,s),(t+1,s')} = C_{\text{mot}}(t,s,s')$ otherwise. All other off-diagonal entries are zero.
+The constant offset $c$ is:
+\begin{equation}
+c = \lambda T + 2\lambda.
+\end{equation}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large such that any violation of a constraint results in an energy increase exceeding the maximum possible reduction in the objective function achievable by an infeasible assignment. A sufficient condition is $\lambda > \max_{t,s,s'} \{ |C_{\text{obs}}(t,s)|, |C_{\text{mot}}(t,s,s')| \}$. This ensures that the penalty contribution for any constraint violation dominates the magnitude of any individual cost term in the Hamiltonian, guaranteeing that the energy of any infeasible solution exceeds that of the optimal feasible solution.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $x \in \{0,1\}^N$ recovers the optimal path. For any feasible solution, all constraints are satisfied, so all penalty terms vanish and $H(x) = J(x)$, where $J(x)$ is the original objective. For any infeasible solution, at least one constraint is violated, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, the penalty energy strictly exceeds the maximum possible gain in the objective function from any infeasible assignment. Consequently, the global minimum of $H(x)$ must occur at a feasible assignment, and among feasible assignments, $H(x)$ coincides with $J(x)$, ensuring the minimizer is the optimal path.
+
+\paragraph{Illustrative Example.}
+Consider an instance with $T=3$ time steps and $M=2$ states per step, so $S_t = \{0, 1\}$ for all $t$. The total number of variables is $N=6$. We map variables via $x_{t,s} \to x_{2t+s}$, yielding indices $0,1$ for $t=0$, $2,3$ for $t=1$, and $4,5$ for $t=2$. Let the start state be $s=0$ at $t=0$ (variable $x_0$) and the goal state be $s=1$ at $t=2$ (variable $x_5$). Assume there is one invalid transition: from state $s=0$ at $t=0$ to state $s=1$ at $t=1$, corresponding to variables $x_0$ and $x_3$. Let the costs be denoted by $C_{\text{obs}}(t,s)$ and $C_{\text{mot}}(t,s,s')$, and let $\lambda = 1000$.
+
+The objective terms are:
+\begin{align}
+H_{\text{obj}}(x) &= \sum_{t=0}^{2} \sum_{s=0}^{1} C_{\text{obs}}(t,s) x_{2t+s} + \sum_{t=0}^{1} \sum_{s=0}^{1} \sum_{s'=0}^{1} C_{\text{mot}}(t,s,s') x_{2t+s} x_{2(t+1)+s'}.
+\end{align}
+
+The penalty terms are:
+\begin{align}
+P_0(x) &= \lambda(1 - x_0 - x_1), \\
+P_1(x) &= \lambda(1 - x_2 - x_3), \\
+P_2(x) &= \lambda(1 - x_4 - x_5), \\
+P_{\text{start}}(x) &= \lambda(1 - x_0), \\
+P_{\text{goal}}(x) &= \lambda(1 - x_5), \\
+P_{\text{trans}}(x) &= \lambda x_0 x_3.
+\end{align}
+
+The resulting Hamiltonian $H(x)$ has the following Q matrix entries and offset:
+\begin{align}
+Q_{0,0} &= C_{\text{obs}}(0,0) - 2\lambda, & Q_{0,1} &= -\lambda, & Q_{0,3} &= C_{\text{mot}}(0,0,1,1) + \lambda, \\
+Q_{1,1} &= C_{\text{obs}}(0,1) - \lambda, & Q_{1,2} &= -\lambda, & Q_{1,3} &= -\lambda, \\
+Q_{2,2} &= C_{\text{obs}}(1,0) - \lambda, & Q_{2,3} &= -\lambda, & Q_{2,4} &= C_{\text{mot}}(1,0,2,0), \\
+Q_{3,3} &= C_{\text{obs}}(1,1) - \lambda, & Q_{3,4} &= C_{\text{mot}}(1,1,2,0), & Q_{3,5} &= C_{\text{mot}}(1,1,2,1), \\
+Q_{4,4} &= C_{\text{obs}}(2,0) - \lambda, & Q_{4,5} &= -\lambda, & Q_{5,5} &= C_{\text{obs}}(2,1) - 2\lambda,
+\end{align}
+with all other off-diagonal entries zero. The constant offset is $c = 5\lambda = 5000$. The optimal solution minimizes $H(x)$ subject to $x \in \{0,1\}^6$.
+\end{document}

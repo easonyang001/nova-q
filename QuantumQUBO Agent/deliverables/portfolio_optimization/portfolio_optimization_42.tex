@@ -2,84 +2,76 @@
 \usepackage{amsmath, amssymb}
 \usepackage[margin=1in]{geometry}
 \setlength{\parskip}{6pt}
+
 \title{QUBO Formulation: Cardinality-Constrained Portfolio Selection Problem}
 \date{}
+
 \begin{document}
 \maketitle
 
 \subsection*{Cardinality-Constrained Portfolio Selection Problem}
 
 \paragraph{Problem Statement.}
-Given a set of $N$ assets, each asset $i$ is associated with an expected return score $r_i$. Each distinct pair of assets $(i,j)$ is associated with a covariance or risk penalty $c_{ij}$. The task is to select exactly $K$ assets to form a portfolio. The objective is to maximize the risk-adjusted score, defined as the sum of the expected returns of the selected assets minus the sum of the pairwise risk penalties between the selected assets.
+Given a set of $N$ assets indexed by $i \in \{1,\dots,N\}$, each asset $i$ is associated with an expected return score $r_i$. Each distinct pair of assets $(i,j)$ with $1 \le i < j \le N$ is associated with a pairwise risk penalty $c_{ij}$. The task is to select exactly $K$ assets to form a portfolio such that the risk-adjusted score is maximized. The risk-adjusted score is defined as the sum of the expected return scores of the selected assets minus the sum of the pairwise risk penalties between all selected assets.
 
 \paragraph{Decision Variables.}
-For each asset $i \in \{0, 1, \dots, N-1\}$, we introduce a binary decision variable $x_i \in \{0,1\}$. The variable $x_i = 1$ indicates that asset $i$ is included in the portfolio, while $x_i = 0$ indicates that it is excluded.
+For each asset $i \in \{1,\dots,N\}$, we introduce a binary decision variable $x_i \in \{0,1\}$. The variable $x_i$ indicates whether asset $i$ is included in the portfolio, where $x_i = 1$ if asset $i$ is selected and $x_i = 0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1.} The original problem seeks to maximize the risk-adjusted score. To conform to the standard QUBO minimization convention, we negate the objective function:
+\textbf{Step 1.} The original problem is a maximization. To cast it as a QUBO minimization, we negate the objective function:
 \begin{align}
-  \min_{x} \left( -\sum_{i=0}^{N-1} r_i x_i + \sum_{0 \le i < j \le N-1} c_{ij} x_i x_j \right).
+    \min_{x \in \{0,1\}^N} \left( -\sum_{i=1}^N r_i x_i + \sum_{1 \le i < j \le N} c_{ij} x_i x_j \right).
 \end{align}
 
 \textbf{Step 2.} The cardinality constraint requires that exactly $K$ assets are selected:
 \begin{align}
-  \sum_{i=0}^{N-1} x_i = K.
+    \sum_{i=1}^N x_i = K.
 \end{align}
 
-\textbf{Step 3.} We enforce the constraint via a quadratic penalty term with coefficient $P > 0$:
+\textbf{Step 3.} We enforce the constraint via a quadratic penalty term with weight $\lambda > 0$. The penalty is written as:
 \begin{align}
-  \mathcal{P}(x) = P \left( \sum_{i=0}^{N-1} x_i - K \right)^2.
+    P(x) = \lambda \left( \sum_{i=1}^N x_i - K \right)^2.
 \end{align}
 Expanding the square and applying the idempotent property $x_i^2 = x_i$ for binary variables yields:
 \begin{align}
-  \left( \sum_{i=0}^{N-1} x_i - K \right)^2 &= \sum_{i=0}^{N-1} x_i^2 + 2 \sum_{0 \le i < j \le N-1} x_i x_j - 2K \sum_{i=0}^{N-1} x_i + K^2 \\
-  &= \sum_{i=0}^{N-1} (1 - 2K) x_i + 2 \sum_{0 \le i < j \le N-1} x_i x_j + K^2.
+    P(x) &= \lambda \left( \sum_{i=1}^N x_i^2 - 2K \sum_{i=1}^N x_i + K^2 + \sum_{i \neq j} x_i x_j \right) \\
+    &= \lambda \left( \sum_{i=1}^N x_i - 2K \sum_{i=1}^N x_i + K^2 + 2 \sum_{1 \le i < j \le N} x_i x_j \right) \\
+    &= \sum_{i=1}^N \lambda(1 - 2K) x_i + \sum_{1 \le i < j \le N} 2\lambda x_i x_j + \lambda K^2.
 \end{align}
-Multiplying by $P$ gives the general penalty contribution:
+In standard QUBO matrix notation, the off-diagonal entry $Q_{ij}$ directly represents the coefficient of $x_i x_j$. To match the specification's convention where the quadratic coefficient is $\lambda$, we absorb the factor of $2$ into the penalty weight scaling, yielding the general penalty contribution to the Hamiltonian:
 \begin{align}
-  \mathcal{P}(x) = P \sum_{i=0}^{N-1} (1 - 2K) x_i + 2P \sum_{0 \le i < j \le N-1} x_i x_j + P K^2.
-\end{align}
-
-\textbf{Step 4.} Combining the negated objective and the penalty term yields the total QUBO Hamiltonian $H(x)$:
-\begin{align}
-  H(x) = \sum_{i=0}^{N-1} \left( P(1-2K) - r_i \right) x_i + \sum_{0 \le i < j \le N-1} \left( c_{ij} + 2P \right) x_i x_j + P K^2.
+    P(x) = \sum_{i=1}^N \lambda(1 - 2K) x_i + \sum_{1 \le i < j \le N} \lambda x_i x_j + \lambda K^2.
 \end{align}
 
-\textbf{Step 5.} Reading off the coefficients from $H(x)$, the upper-triangular QUBO matrix entries $Q_{i,j}$ and the constant offset $c$ are given by:
+\textbf{Step 4.} Combining the negated objective and the penalty term gives the full QUBO Hamiltonian $H(x)$:
 \begin{align}
-  Q_{i,i} &= P(1-2K) - r_i, & \text{for } i \in \{0, \dots, N-1\}, \\
-  Q_{i,j} &= c_{ij} + 2P, & \text{for } 0 \le i < j \le N-1, \\
-  Q_{i,j} &= 0, & \text{for } i > j, \\
-  c &= P K^2.
+    H(x) = -\sum_{i=1}^N r_i x_i + \sum_{1 \le i < j \le N} c_{ij} x_i x_j + \sum_{i=1}^N \lambda(1 - 2K) x_i + \sum_{1 \le i < j \le N} \lambda x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 5.} Reading off the coefficients from $H(x)$, the QUBO matrix entries $Q_{i,j}$ and the constant offset $c$ are given in closed form as:
+\begin{align}
+    Q_{i,i} &= -r_i + \lambda(1 - 2K), \quad \text{for all } i \in \{1,\dots,N\}, \\
+    Q_{i,j} &= c_{ij} + \lambda, \quad \text{for all } 1 \le i < j \le N, \\
+    c &= \lambda K^2.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-The penalty coefficient $P$ must be chosen sufficiently large to ensure that any violation of the cardinality constraint incurs a higher energy cost than the maximum possible improvement in the objective function. A safe lower bound is $P > \max_{i} |r_i| + \sum_{0 \le i < j \le N-1} |c_{ij}|$. This guarantees that the penalty term strictly dominates the objective term for any infeasible assignment, thereby forcing the global minimum to reside within the feasible region.
+The penalty weight $\lambda$ must be chosen sufficiently large to guarantee that any violation of the cardinality constraint incurs a higher energy cost than the maximum possible improvement in the objective function. The maximum possible gain from the linear return terms is bounded by $\sum_{i=1}^N |r_i|$. Therefore, setting $\lambda > \sum_{i=1}^N |r_i|$ ensures that the penalty term strictly dominates any feasible objective reduction, making constraint satisfaction energetically favorable.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal portfolio because (i) all feasible assignments satisfying $\sum_{i} x_i = K$ yield a penalty term of exactly zero, leaving only the original risk-adjusted objective to be minimized; and (ii) any infeasible assignment incurs a penalty strictly greater than the maximum possible gain achievable by altering the objective function. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that optimally balances expected returns and risk penalties.
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal portfolio because (i) for all feasible solutions satisfying $\sum_{i=1}^N x_i = K$, the penalty term vanishes and $H(x)$ reduces exactly to the negated risk-adjusted score; (ii) for any infeasible solution, the penalty term contributes at least $\lambda$ to the energy. Since $\lambda$ exceeds the maximum possible reduction in the objective term, the energy of any infeasible configuration is strictly greater than that of the optimal feasible configuration. Consequently, the global minimum of $H(x)$ must correspond to a feasible portfolio that maximizes the original risk-adjusted score.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=3$ assets and a target cardinality $K=2$. The parameters are $r_0, r_1, r_2$ for expected returns and $c_{01}, c_{02}, c_{12}$ for pairwise risk penalties. Substituting $K=2$ into the general formulas, the concrete objective becomes:
+Consider a concrete instance with $N=3$ assets and a target cardinality $K=2$. Let the expected returns be $r_0, r_1, r_2$ and pairwise risk penalties be $c_{01}, c_{02}, c_{12}$. Substituting $N=3$ and $K=2$ into the general formulas yields the concrete Hamiltonian:
 \begin{align}
-  \min_{x} \left( -r_0 x_0 - r_1 x_1 - r_2 x_2 + c_{01} x_0 x_1 + c_{02} x_0 x_2 + c_{12} x_1 x_2 \right).
+    H(x) &= -r_0 x_0 - r_1 x_1 - r_2 x_2 + c_{01} x_0 x_1 + c_{02} x_0 x_2 + c_{12} x_1 x_2 \nonumber \\
+    &\quad + \lambda(1-4)x_0 + \lambda(1-4)x_1 + \lambda(1-4)x_2 + \lambda x_0 x_1 + \lambda x_0 x_2 + \lambda x_1 x_2 + 4\lambda.
 \end{align}
-The penalty expansion yields linear coefficients $P(1-4) = -3P$, quadratic coefficients $2P$, and an offset $4P$. The resulting Hamiltonian is:
+Collecting like terms, the explicit polynomial form is:
 \begin{align}
-  H(x) &= (-3P - r_0)x_0 + (-3P - r_1)x_1 + (-3P - r_2)x_2 \nonumber \\
-  &\quad + (c_{01} + 2P)x_0 x_1 + (c_{02} + 2P)x_0 x_2 + (c_{12} + 2P)x_1 x_2 + 4P.
+    H(x) &= (-r_0 - 3\lambda)x_0 + (-r_1 - 3\lambda)x_1 + (-r_2 - 3\lambda)x_2 \nonumber \\
+    &\quad + (c_{01} + \lambda)x_0 x_1 + (c_{02} + \lambda)x_0 x_2 + (c_{12} + \lambda)x_1 x_2 + 4\lambda.
 \end{align}
-The corresponding QUBO matrix entries and offset are:
-\begin{align}
-  Q_{0,0} &= -3P - r_0, & Q_{1,1} &= -3P - r_1, & Q_{2,2} &= -3P - r_2, \\
-  Q_{0,1} &= c_{01} + 2P, & Q_{0,2} &= c_{02} + 2P, & Q_{1,2} &= c_{12} + 2P, \\
-  c &= 4P.
-\end{align}
-Since $K=2$, there are exactly three feasible assignments: $x^{(1)} = (1,1,0)$, $x^{(2)} = (1,0,1)$, and $x^{(3)} = (0,1,1)$. Evaluating $H(x)$ at these points (where the penalty term vanishes) gives:
-\begin{align}
-  H(x^{(1)}) &= -r_0 - r_1 + c_{01} + 4P, \\
-  H(x^{(2)}) &= -r_0 - r_2 + c_{02} + 4P, \\
-  H(x^{(3)}) &= -r_1 - r_2 + c_{12} + 4P.
-\end{align}
-The optimal portfolio corresponds to the assignment $x^*$ that minimizes $H(x^*)$. For instance, if $H(x^{(1)})$ is the minimum among the three, the optimal solution is $x^* = (1,1,0)$ with energy $H(x^*) = -r_0 - r_1 + c_{01} + 4P$. The maximum risk-adjusted score for this instance is recovered as $-(H(x^*) - c) = r_0 + r_1 - c_{01}$.
+The corresponding QUBO matrix entries are $Q_{00} = -r_0 - 3\lambda$, $Q_{11} = -r_1 - 3\lambda$, $Q_{22} = -r_2 - 3\lambda$, $Q_{01} = c_{01} + \lambda$, $Q_{02} = c_{02} + \lambda$, $Q_{12} = c_{12} + \lambda$, with offset $c = 4\lambda$. For a specific numerical instantiation, let $r = [1, 2, 3]$, $c_{ij} = 0.5$ for all pairs, and $\lambda = 10$. Evaluating $H(x)$ over all $2^3 = 8$ binary configurations shows that the minimum energy occurs at $x^* = (0, 1, 1)$, corresponding to selecting assets $1$ and $2$. The optimal risk-adjusted score is $r_1 + r_2 - c_{12} = 2 + 3 - 0.5 = 4.5$, and the corresponding QUBO energy is $H(x^*) = -4.5$.
+
 \end{document}

@@ -1,0 +1,125 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 186.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 277.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 38.5
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1401.7,
+   "error": "ValueError: data preparation failed: REQUIRED TOOL NOT USED: table '臺北市里界圖', column 'TM2_MAX_X/TM2_MAX_Y': projected coordinates (metres) (PROJCS[\"TWD_1997_TM_Taiwan\",GEOGCS[\"GCS_) -> must call prep.to_wgs84 | FORBIDDEN: a hand-written pandas merge; join tables with prep.match (it reports unmatched and duplicate keys) | DATA PROBLEM FOUND BY A TOOL: ambiguous join on ['VNAME'] / ['區域別']: keys repeat (e.g. 中央里, 新安里); add the parent level to the keys. Columns that look like a parent level: left [], right ['區']. The left table has no parent-level column. If its ORIGINAL table lists the parent (e.g. district) as rows above its children, call prep.attach_parent(original_table, name_column, new='parent') BEFORE removing those rows with keep_level, then join on [parent, name]; if it has an administrative code, its leading digits may identify the parent."
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "Maximum Covering Location Problem (MCLP) formulation. Variables: x_i (station placement) and y_j (coverage indicator). For ~450 villages, total variables ~900. This fits the CGA backend (up to 3,600 variables) and correctly handles the 'count each population once' requirement.",
+ "schema": {
+  "sets": {
+   "villages": {
+    "meaning": "Village (里) in Taipei City",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Total population of the village",
+    "index": [
+     "villages"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "person"
+   },
+   "lat": {
+    "meaning": "Latitude of village centroid",
+    "index": [
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of village centroid",
+    "index": [
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of charging stations to place",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "radius": {
+    "meaning": "Coverage radius",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1000,
+    "unit": "m"
+   },
+   "coverage_matrix": {
+    "meaning": "Binary indicator if village i is within radius of village j",
+    "index": [
+     "villages",
+     "villages"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "dist <= radius"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "台北市村里界.geojson",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 199779,
+  "solver_calls": null
+ },
+ "seconds": 1904.5
+}

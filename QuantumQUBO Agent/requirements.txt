@@ -1,6 +1,24 @@
+# Front end (original QuantumQUBO Agent pipeline)
 openai>=1.0.0
 numpy>=1.24.0
 pyyaml>=6.0
 pydantic>=2.0.0
 pytest>=7.0.0
 python-dotenv>=1.0.0
+
+# Annealing feedback loop (qubo_auto/annealing)
+dimod>=0.12
+dwave-system>=1.20        # D-Wave QPU adapter (Ocean)
+dwave-samplers>=1.0       # simulated annealing stand-in
+scipy>=1.11               # MILP reference solutions (HiGHS), Wilcoxon tests
+optuna>=3.0               # Bayesian-optimisation baseline
+pyqubo>=1.5.0             # parameterized Hamiltonian and labelled penalty diagnostics
+requests>=2.28            # Fujitsu DA REST adapter
+
+# The local LLM server (vLLM) runs in its own environment: see scripts/serve_vllm.sh
+python-socketio[client]   # CGA backend
+ddgs                      # Clarification Agent web lookup
+pypdf                     # reading PDF pages found by the web lookup
+pyshp                     # reading Shapefile (SHP) open data
+pyproj                    # coordinate systems (TWD97/TWD67/any EPSG) in data preprocessing
+xlrd>=2.0.1               # legacy .xls spreadsheets in open data (openpyxl reads only .xlsx)

@@ -2,105 +2,84 @@
 \usepackage{amsmath, amssymb}
 \usepackage[margin=1in]{geometry}
 \setlength{\parskip}{6pt}
-
 \title{QUBO Formulation: Score-Based Bayesian Network Structure Learning with Candidate Parent Sets}
 \date{}
-
 \begin{document}
 \maketitle
 
 \subsection*{Score-Based Bayesian Network Structure Learning with Candidate Parent Sets}
 
 \paragraph{Problem Statement.}
-We are given a set of $N$ nodes indexed by $i \in \{0, 1, \dots, N-1\}$ with a fixed topological order $0 < 1 < \dots < N-1$. For each node $i$, there exists a predefined list of $M_i$ candidate parent sets. Each candidate set $j \in \{0, 1, \dots, M_i-1\}$ is associated with a numerical score $s_{i,j}$ and a size $d_{i,j}$ representing the number of directed edges (parents) it introduces. The objective is to select exactly one candidate parent set for every node such that the total number of directed edges across all selected sets equals a prescribed integer $K$, while maximizing the sum of the scores of the selected sets. The fixed node order guarantees that all edges point from earlier to later nodes, thereby ensuring the resulting directed graph is acyclic.
+We consider the problem of learning the structure of a Bayesian network over a fixed set of $N$ nodes $\mathcal{N} = \{0, 1, \dots, N-1\}$ with a predefined topological order. For each node $i \in \mathcal{N}$, a finite set of candidate parent sets $\mathcal{C}_i$ is provided, where each candidate set $j \in \mathcal{C}_i$ contains only nodes with indices strictly less than $i$, thereby guaranteeing a directed acyclic graph. Each candidate set $j$ is associated with a score $s_{i,j} \in \mathbb{R}$ and a cardinality $d_{i,j} \in \mathbb{Z}_{\ge 0}$ representing the number of directed edges it introduces. The objective is to select exactly one candidate parent set for every node such that the total number of directed edges in the resulting network equals a prescribed integer $K$, while maximizing the sum of the scores of the selected sets.
 
 \paragraph{Decision Variables.}
-We introduce binary decision variables $x_{i,j} \in \{0,1\}$ for each node $i \in \{0, \dots, N-1\}$ and each candidate index $j \in \{0, \dots, M_i-1\}$. The variable $x_{i,j}$ equals $1$ if and only if the $j$-th candidate parent set for node $i$ is selected in the network structure; otherwise, $x_{i,j} = 0$.
+For each node $i \in \mathcal{N}$ and each candidate parent set $j \in \mathcal{C}_i$, we introduce a binary decision variable $x_{i,j} \in \{0,1\}$. The variable $x_{i,j}$ takes the value $1$ if and only if candidate parent set $j$ is selected for node $i$, and $0$ otherwise. The full decision vector is $\mathbf{x} = (x_{i,j})_{i \in \mathcal{N}, j \in \mathcal{C}_i}$.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 --- Objective Function.} The original maximization objective is converted to a minimization problem by negating the objective function:
+\textbf{Step 1 --- Objective.} We convert the maximization problem to a minimization problem by negating the objective function:
 \begin{align}
-    \min_{x} \; f(x) = -\sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} s_{i,j} x_{i,j}.
+    \min_{\mathbf{x}} \left( -\sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} s_{i,j} x_{i,j} \right).
 \end{align}
 
 \textbf{Step 2 --- Constraints.} The problem is subject to two equality constraints:
 \begin{align}
-    \sum_{j=0}^{M_i-1} x_{i,j} &= 1, \quad \forall i \in \{0, \dots, N-1\}, \\
-    \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} d_{i,j} x_{i,j} &= K.
+    \sum_{j \in \mathcal{C}_i} x_{i,j} &= 1, \quad \forall i \in \mathcal{N}, \\
+    \sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} d_{i,j} x_{i,j} &= K.
 \end{align}
 
-\textbf{Step 3 --- Penalty Terms.} We convert each constraint into a quadratic penalty term using positive weights $\lambda_1$ and $\lambda_2$.
-
-For the first constraint (exactly one parent set per node), the penalty is:
+\textbf{Step 3 --- Penalty Terms.} We incorporate these constraints into the objective using quadratic penalty terms with weight $\lambda > 0$:
 \begin{align}
-    P_1(x) &= \lambda_1 \sum_{i=0}^{N-1} \left( \sum_{j=0}^{M_i-1} x_{i,j} - 1 \right)^2.
+    H_{\text{pen}}(\mathbf{x}) &= \lambda \sum_{i \in \mathcal{N}} \left( \sum_{j \in \mathcal{C}_i} x_{i,j} - 1 \right)^2 + \lambda \left( \sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} d_{i,j} x_{i,j} - K \right)^2.
 \end{align}
-Expanding the square and applying the idempotent property $x_{i,j}^2 = x_{i,j}$ for binary variables yields:
+Expanding the first term using the idempotent property $x_{i,j}^2 = x_{i,j}$ for binary variables:
 \begin{align}
-    \left( \sum_{j=0}^{M_i-1} x_{i,j} - 1 \right)^2 &= \sum_{j=0}^{M_i-1} x_{i,j}^2 + \sum_{\substack{j,k=0 \\ j \neq k}}^{M_i-1} x_{i,j} x_{i,k} - 2 \sum_{j=0}^{M_i-1} x_{i,j} + 1 \nonumber \\
-    &= \sum_{j=0}^{M_i-1} x_{i,j} + \sum_{\substack{j,k=0 \\ j \neq k}}^{M_i-1} x_{i,j} x_{i,k} - 2 \sum_{j=0}^{M_i-1} x_{i,j} + 1 \nonumber \\
-    &= 1 - \sum_{j=0}^{M_i-1} x_{i,j} + \sum_{\substack{j,k=0 \\ j \neq k}}^{M_i-1} x_{i,j} x_{i,k}.
+    \lambda \sum_{i \in \mathcal{N}} \left( \sum_{j \in \mathcal{C}_i} x_{i,j} - 1 \right)^2 &= \lambda \sum_{i \in \mathcal{N}} \left( \sum_{j \in \mathcal{C}_i} x_{i,j}^2 + 1 - 2 \sum_{j \in \mathcal{C}_i} x_{i,j} \right) \nonumber \\
+    &= \lambda \sum_{i \in \mathcal{N}} \left( \sum_{j \in \mathcal{C}_i} x_{i,j} + 1 - 2 \sum_{j \in \mathcal{C}_i} x_{i,j} \right) \nonumber \\
+    &= \lambda \sum_{i \in \mathcal{N}} \left( 1 - \sum_{j \in \mathcal{C}_i} x_{i,j} \right).
 \end{align}
-Thus, the general penalty contribution is:
+Expanding the second term:
 \begin{align}
-    P_1(x) = \lambda_1 \sum_{i=0}^{N-1} \left( 1 - \sum_{j=0}^{M_i-1} x_{i,j} + \sum_{\substack{j,k=0 \\ j \neq k}}^{M_i-1} x_{i,j} x_{i,k} \right).
+    \lambda \left( \sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} d_{i,j} x_{i,j} - K \right)^2 &= \lambda \left( \sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} d_{i,j}^2 x_{i,j} + K^2 - 2K \sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} d_{i,j} x_{i,j} + \sum_{(i,j) \neq (k,l)} d_{i,j} d_{k,l} x_{i,j} x_{k,l} \right).
 \end{align}
 
-For the second constraint (total edge count), the penalty is:
+\textbf{Step 4 --- Combined Hamiltonian.} The total QUBO Hamiltonian $H(\mathbf{x})$ is the sum of the negated objective and the penalty terms:
 \begin{align}
-    P_2(x) &= \lambda_2 \left( \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} d_{i,j} x_{i,j} - K \right)^2.
-\end{align}
-Expanding the square and applying $x_{i,j}^2 = x_{i,j}$ gives:
-\begin{align}
-    \left( \sum_{i,j} d_{i,j} x_{i,j} - K \right)^2 &= \sum_{i,j} d_{i,j}^2 x_{i,j}^2 + \sum_{\substack{(i,j) \neq (p,q)}} d_{i,j} d_{p,q} x_{i,j} x_{p,q} - 2K \sum_{i,j} d_{i,j} x_{i,j} + K^2 \nonumber \\
-    &= \sum_{i,j} d_{i,j}^2 x_{i,j} + \sum_{\substack{(i,j) \neq (p,q)}} d_{i,j} d_{p,q} x_{i,j} x_{p,q} - 2K \sum_{i,j} d_{i,j} x_{i,j} + K^2 \nonumber \\
-    &= K^2 + \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} (d_{i,j}^2 - 2K d_{i,j}) x_{i,j} + \sum_{\substack{(i,j) \neq (p,q)}} d_{i,j} d_{p,q} x_{i,j} x_{p,q}.
-\end{align}
-Thus, the general penalty contribution is:
-\begin{align}
-    P_2(x) = \lambda_2 \left( K^2 + \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} (d_{i,j}^2 - 2K d_{i,j}) x_{i,j} + \sum_{\substack{(i,j) \neq (p,q)}} d_{i,j} d_{p,q} x_{i,j} x_{p,q} \right).
+    H(\mathbf{x}) &= -\sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} s_{i,j} x_{i,j} + \lambda \sum_{i \in \mathcal{N}} \left( 1 - \sum_{j \in \mathcal{C}_i} x_{i,j} \right) + \lambda \left( \sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} d_{i,j}^2 x_{i,j} + K^2 - 2K \sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{C}_i} d_{i,j} x_{i,j} + \sum_{(i,j) \neq (k,l)} d_{i,j} d_{k,l} x_{i,j} x_{k,l} \right).
 \end{align}
 
-\textbf{Step 4 --- Combined Hamiltonian.} The full QUBO Hamiltonian $H(x)$ is the sum of the negated objective and both penalty terms:
+\textbf{Step 5 --- Q Matrix Entries and Offset.} Collecting linear and quadratic coefficients, we obtain the QUBO form $H(\mathbf{x}) = \sum_{i,j} Q_{i,j} x_{i,j} + \sum_{(i,j) < (k,l)} 2 Q_{(i,j),(k,l)} x_{i,j} x_{k,l} + c$. The entries are given by:
 \begin{align}
-    H(x) = f(x) + P_1(x) + P_2(x).
+    Q_{i,j} &= -s_{i,j} - \lambda + \lambda d_{i,j}^2 - 2\lambda K d_{i,j}, \quad \forall i \in \mathcal{N}, j \in \mathcal{C}_i, \\
+    Q_{(i,j),(k,l)} &= \lambda d_{i,j} d_{k,l}, \quad \forall (i,j) \neq (k,l), \\
+    c &= \lambda N + \lambda K^2.
 \end{align}
-
-\textbf{Step 5 --- Q Matrix Entries and Offset.} Collecting constant terms, linear terms, and quadratic terms yields the offset $c$ and the symmetric QUBO matrix entries $Q_{(i,j),(p,q)}$:
-\begin{align}
-    c &= \lambda_1 N + \lambda_2 K^2, \\
-    Q_{(i,j),(i,j)} &= -s_{i,j} - \lambda_1 + \lambda_2(d_{i,j}^2 - 2K d_{i,j}), \\
-    Q_{(i,j),(i,k)} &= 2\lambda_1 + 2\lambda_2 d_{i,j} d_{i,k}, \quad \text{for } j \neq k, \\
-    Q_{(i,j),(p,q)} &= 2\lambda_2 d_{i,j} d_{p,q}, \quad \text{for } i \neq p.
-\end{align}
-The optimization problem is equivalent to $\min_{x \in \{0,1\}^n} H(x)$, where $n = \sum_{i=0}^{N-1} M_i$.
 
 \paragraph{Penalty Weight Justification.}
-The penalty weights must be chosen large enough so that any violation of the constraints incurs an energy cost strictly greater than the maximum possible improvement in the objective function. Since each variable $x_{i,j}$ is binary, flipping a single variable changes the objective value by at most $\max_{i,j} |s_{i,j}|$. Therefore, selecting
-\begin{align}
-    \lambda_1 > \max_{i,j} |s_{i,j}| \quad \text{and} \quad \lambda_2 > \max_{i,j} |s_{i,j}|
-\end{align}
-ensures that any infeasible configuration has a strictly higher energy than the best feasible configuration, forcing the global minimum to satisfy all constraints.
+Let $S_{\max} = \max_{i,j} |s_{i,j}|$. The maximum possible gain in the objective function from flipping a single variable $x_{i,j}$ is bounded by $2 S_{\max}$. Violating the first constraint by one unit changes the penalty by at least $\lambda$. Violating the second constraint by one unit changes the penalty by at least $\lambda (2K+1)$ in the worst case. To ensure that any infeasible solution has strictly higher energy than the best feasible solution, we require $\lambda > S_{\max} + \lambda \cdot (\text{max constraint violation impact})$. A sufficient condition is $\lambda > \sum_{i,j} |s_{i,j}| + \lambda \cdot (2K D_{\max} + D_{\max}^2)$, where $D_{\max} = \max_{i,j} d_{i,j}$. In practice, choosing $\lambda > \max_{i,j} |s_{i,j}|$ ensures that the penalty cost for any constraint violation strictly exceeds the maximum achievable objective improvement, thereby forcing the optimizer to satisfy all constraints. For typical normalized scores bounded by $|s_{i,j}| < 100$, setting $\lambda = 1000$ guarantees this dominance.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^n$ recovers the optimal network structure because (i) for any feasible assignment, both penalty terms evaluate to zero, so $H(x)$ equals the negated objective function; and (ii) for any infeasible assignment, at least one constraint is violated, contributing a penalty of at least $\min(\lambda_1, \lambda_2)$ to the energy. By the choice of $\lambda_1$ and $\lambda_2$, this penalty strictly exceeds the maximum possible reduction in the objective function achievable by any single variable flip. Consequently, the global minimum of $H(x)$ cannot be infeasible, and among all feasible solutions, it must correspond to the assignment that minimizes the negated objective, i.e., maximizes the total score.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal solution because the penalty terms are non-negative and vanish exactly on the feasible set defined by the one-parent-set and total-edge constraints. For any feasible assignment, $H(\mathbf{x})$ reduces to the negated objective function, so the global minimum corresponds to the maximum score. For any infeasible assignment, at least one constraint is violated, incurring a positive penalty. By choosing $\lambda$ sufficiently large, the energy increase from constraint violation strictly dominates any potential reduction in the objective function, ensuring that the global minimum cannot be infeasible. Thus, the unconstrained QUBO minimum is guaranteed to be feasible and optimal for the original constrained problem.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=2$ nodes. Node $0$ has $M_0=1$ candidate set, and node $1$ has $M_1=2$ candidate sets, yielding $n=3$ binary variables $x_{0,0}, x_{1,0}, x_{1,1}$. The parameters are:
+Consider a small instance with $N=3$ nodes $\{0,1,2\}$ and required edges $K=2$. Suppose each node has exactly two candidate parent sets ($\mathcal{C}_i = \{0,1\}$ for $i=0,1,2$). Let the scores and sizes be:
+Node 0: $(s_{0,0}, d_{0,0}) = (10, 0)$, $(s_{0,1}, d_{0,1}) = (20, 1)$.
+Node 1: $(s_{1,0}, d_{1,0}) = (25, 1)$, $(s_{1,1}, d_{1,1}) = (5, 0)$.
+Node 2: $(s_{2,0}, d_{2,0}) = (30, 1)$, $(s_{2,1}, d_{2,1}) = (10, 0)$.
+With $\lambda = 1000$, the diagonal QUBO coefficients are:
 \begin{align}
-    s_{0,0} = 5, \; d_{0,0} = 1; \quad s_{1,0} = 3, \; d_{1,0} = 1; \quad s_{1,1} = 4, \; d_{1,1} = 2; \quad K = 2.
+    Q_{0,0} &= -10 - 1000 + 0 - 0 = -1010, \\
+    Q_{0,1} &= -20 - 1000 + 1000(1)^2 - 2000(2)(1) = -4020, \\
+    Q_{1,0} &= -25 - 1000 + 1000(1)^2 - 2000(2)(1) = -4025, \\
+    Q_{1,1} &= -5 - 1000 + 0 - 0 = -1005, \\
+    Q_{2,0} &= -30 - 1000 + 1000(1)^2 - 2000(2)(1) = -4030, \\
+    Q_{2,1} &= -10 - 1000 + 0 - 0 = -1010.
 \end{align}
-We choose $\lambda_1 = 6$ and $\lambda_2 = 6$, satisfying the penalty justification condition. The offset is $c = 6(2) + 6(2^2) = 12 + 24 = 36$. The Q matrix entries are computed as:
-\begin{align}
-    Q_{(0,0),(0,0)} &= -5 - 6 + 6(1^2 - 2(2)(1)) = -11 + 6(-3) = -29, \\
-    Q_{(1,0),(1,0)} &= -3 - 6 + 6(1^2 - 2(2)(1)) = -9 + 6(-3) = -27, \\
-    Q_{(1,1),(1,1)} &= -4 - 6 + 6(2^2 - 2(2)(2)) = -10 + 6(4 - 8) = -34, \\
-    Q_{(1,0),(1,1)} &= 2(6) + 2(6)(1)(2) = 12 + 24 = 36, \\
-    Q_{(0,0),(1,0)} &= 2(6)(1)(1) = 12, \quad Q_{(0,0),(1,1)} = 2(6)(1)(2) = 24.
-\end{align}
-The resulting Hamiltonian is:
-\begin{align}
-    H(x) = 36 - 29x_{0,0} - 27x_{1,0} - 34x_{1,1} + 36x_{1,0}x_{1,1} + 12x_{0,0}x_{1,0} + 24x_{0,0}x_{1,1}.
-\end{align}
-Evaluating $H(x)$ over all $2^3=8$ assignments, the only feasible solution satisfying the constraints is $x_{0,0}=1, x_{1,0}=1, x_{1,1}=0$ (total edges $1+1=2$). Its energy is $H(1,1,0) = 36 - 29 - 27 = -20$. All other assignments incur a penalty of at least $6$, yielding energies $\ge -14$. Thus, the global minimum is $-20$ at $x^* = (1,1,0)$, which corresponds to selecting the only candidate for node $0$ and the first candidate for node $1$, achieving the maximum feasible score of $5+3=8$.
+The off-diagonal coefficients are $Q_{(i,j),(k,l)} = 1000 \cdot d_{i,j} d_{k,l}$. Only pairs where both candidates have $d \ge 1$ yield non-zero off-diagonals. Here, $d_{0,1}=1, d_{1,0}=1, d_{2,0}=1$. Thus, $Q_{(0,1),(1,0)} = 1000$, $Q_{(0,1),(2,0)} = 1000$, and $Q_{(1,0),(2,0)} = 1000$. All other off-diagonal entries are zero. The constant offset is $c = 1000(3) + 1000(2^2) = 7000$.
+
+The QUBO Hamiltonian is $H(\mathbf{x}) = \sum_{i,j} Q_{i,j} x_{i,j} + \sum_{(i,j) < (k,l)} 2 Q_{(i,j),(k,l)} x_{i,j} x_{k,l} + 7000$. Enumerating the $2^3=8$ feasible assignments (one per node), we check edge counts and scores:
+\begin{itemize}
+    \item $\mathbf{x} = (1,0,1,0,1,0)$: edges $0+1+1=2$, score $10+25+30=65$. $H = -65 + 0 + 7000 = 6935$.
+    \item $\mathbf{x} = (0,1,0,1,1,0)$: edges $1+0+1=2$, score $20+5+30=55$. $H = -55 + 0 + 7000 = 6945$.
+\end{itemize}
+All other assignments violate the edge constraint and incur a penalty of at least $1000$, yielding energies strictly above $7000$. The minimum energy is $6935$ at $\mathbf{x} = (1,0,1,0,1,0)$, corresponding to selecting candidate 0 for all nodes. This yields exactly $K=2$ edges and the maximum score of $65$, confirming the formulation's correctness on this instance.
 \end{document}

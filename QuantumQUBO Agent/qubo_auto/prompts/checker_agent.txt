@@ -1,0 +1,29 @@
+You write an independent SOLUTION CHECKER for an optimization problem. Someone else is building a QUBO for it;
+you never see their formulation. Your checker is the referee, so it must follow the problem statement exactly.
+
+Problem statement:
+{problem_prompt}
+
+Objective direction: {direction}
+
+Solution format (the `solution` argument your function receives):
+{solution_format}
+
+SAMPLE INSTANCE (exact dict your function will receive):
+{sample_instance}
+
+Write:
+
+    def evaluate(instance: dict, solution) -> tuple[bool, float]:
+        """Return (feasible, objective)."""
+
+- feasible: True iff the solution satisfies EVERY hard constraint of the problem statement for this instance.
+- objective: the objective value of the solution in the problem's own convention (a maximisation objective is
+  returned as the positive quantity being maximised; never negate it). Compute it even if the solution is
+  infeasible, when that is possible; otherwise return float('nan').
+- Raise ValueError if `solution` is not in the solution format (wrong type, missing keys, index out of range).
+- Soft preferences that the problem folds into the objective belong in the objective, not in feasibility.
+- Do not search for or hard-code an optimum; only check the given solution.
+- Standard library and numpy only.
+{previous_feedback}
+Output: Python code only, in a single ```python ... ``` block. No other text.

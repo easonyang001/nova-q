@@ -1,0 +1,121 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 126.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 174.0
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 172.7
+  },
+  "data": {
+   "ok": false,
+   "seconds": 2815.9,
+   "error": "ValueError: data preparation failed: 預處理失敗：PromptTooLong: step 'data_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 24892 output tokens and your prompt contains at least 7877 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested "
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [
+  {
+   "from": "data",
+   "to": "model",
+   "evidence": "- param 'pop': all 456 values are 0; a measured public value is never constant. If the tables do not contain it, report the data gap instead of a default\n- FORBIDDEN: a hand-written pandas merge; join tables with prep.match (it reports unmatched and duplicate keys)",
+   "ok": true
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact MCLP with auxiliary coverage indicators. N~280 -> 560 vars. Fits CGA backend (<3600 vars). Linear constraints for cardinality and coverage. No quadratic terms needed.",
+ "schema": {
+  "sets": {
+   "li": {
+    "meaning": "Taipei administrative 'li' (neighborhood) centroid",
+    "source": "public"
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "Population of each li",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat": {
+    "meaning": "Latitude of li centroid",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of li centroid",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of charging stations to open",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "coverage": {
+    "meaning": "Binary matrix: 1 if li j is within 1km of li i",
+    "index": [
+     "li",
+     "li"
+    ],
+    "type": "binary",
+    "source": "public",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "threshold 1000m"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "村里界圖.csv",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市各里人口數按年齡分_CSV.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 461953,
+  "solver_calls": null
+ },
+ "seconds": 3289.8
+}

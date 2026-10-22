@@ -1,0 +1,44 @@
+You write an independent REQUIREMENT CHECKER for a confirmed optimisation request. Another agent builds the
+binary model; you never see it. Your checker is the referee, so it must follow the confirmed specification
+exactly: every hard requirement, every confirmed number, and the objective as the user stated it.
+
+CONFIRMED SPECIFICATION:
+{spec}
+
+THE DATA (format declared by DATA_SCHEMA; sets are lists of ids, params are nested lists in set order):
+{schema}
+
+A SMALL EXAMPLE OF THE DATA (synthetic; real data has the same keys and shapes):
+{example}
+
+A DECISION is a dict naming set ids, for example {decision_example}. A solution is the list of decisions that
+were taken (e.g. the sites opened, or (nurse, day, shift) assignments made). Decisions use only these sets:
+{decision_sets}
+
+Write:
+
+    OBJECTIVE_SENSE = "maximize" or "minimize"      # the direction of the user's objective
+
+    def evaluate(data: dict, decisions: list[dict]) -> dict:
+        """{"feasible": bool, "violations": [str, ...], "objective": float}"""
+        # feasible: True iff EVERY hard requirement of the specification holds; list each broken one in violations,
+        #           with the numbers (e.g. "opened 6 sites, required exactly 5").
+        # objective: the objective as the user stated it, in its own direction (a quantity to maximise is returned
+        #            positive). Compute it from the data, e.g. count each covered item once if the spec says so.
+
+    def sample_decisions(data: dict, rng) -> list[dict]:
+        """One random solution that satisfies every hard requirement (rng is random.Random). It does not need to be
+        good, only valid and different each call."""
+
+- Distances: use the tested toolkit, never your own formula: prep.haversine_matrix(lat, lon) gives straight-line
+  distances in metres between all points; prep.distance_to(lat, lon, lat0, lon0) from every point to one point.
+- Use the confirmed numbers from the specification; if the data carries a confirmed setting, use the data's value.
+- Check the requirements, not a formulation: any variable notation or formula_sketch in the specification only
+  illustrates the problem. Decisions name real items (and positions or labels only where the decision set has them).
+- The order of a set is the order of its id list in the data (positions, days, slots): use the list index, never
+  re-sort the ids by number or text.
+- Never require what the specification leaves free (which stop is first, the order of equal items, the labels
+  of groups, ...). sample_decisions must use that freedom too (different starts, labels, orders).
+- Do not optimise and do not hard-code an answer. Standard library, numpy (np) and the toolkit (prep) only.
+{previous_feedback}
+Output: Python code only, in a single ```python ... ``` block.

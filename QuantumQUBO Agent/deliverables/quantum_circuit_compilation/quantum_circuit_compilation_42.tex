@@ -10,69 +10,92 @@
 \subsection*{Quantum Circuit Compilation Candidate Selection Problem}
 
 \paragraph{Problem Statement.}
-Given a fixed set of $N$ candidate compiled circuits, each associated with a precomputed scalar compilation cost $C_i \geq 0$ that aggregates depth, fidelity loss, and hardware constraint penalties, the task is to select exactly one candidate such that the total compilation cost is minimized.
+Given a set of $N$ candidate compiled circuits, the objective is to select exactly one candidate that minimizes the total compilation cost. Each candidate $i \in \{0, \dots, N-1\}$ is associated with a pre-computed scalar cost $c_i$, which aggregates depth, fidelity loss, and hardware constraint penalties. The problem requires choosing a single candidate such that the sum of the costs of the selected candidates is minimized, subject to the constraint that precisely one candidate is chosen.
 
 \paragraph{Decision Variables.}
-For each candidate $i \in \{0, 1, \dots, N-1\}$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ acts as an indicator: $x_i = 1$ if candidate $i$ is selected, and $x_i = 0$ otherwise.
+We introduce binary decision variables $x_i \in \{0, 1\}$ for each candidate $i \in \{0, \dots, N-1\}$. The variable $x_i$ takes the value $1$ if candidate $i$ is selected, and $0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 --- Original Objective.} The goal is to minimize the weighted sum of selected candidates:
-\begin{align}
-    \min \quad & \sum_{i=0}^{N-1} C_i x_i.
-\end{align}
+We formulate the problem as a Quadratic Unconstrained Binary Optimization (QUBO) by converting the constrained minimization into an unconstrained energy minimization.
 
-\textbf{Step 2 --- Constraint Formulation.} The requirement to select exactly one candidate is expressed as:
-\begin{align}
+\textbf{Step 1 --- Objective Function.}
+The original objective is to minimize the total cost:
+\begin{equation}
+    \min_{x} \; C(x) = \sum_{i=0}^{N-1} c_i x_i.
+\end{equation}
+Since QUBO minimization is equivalent to the original minimization, we retain this form.
+
+\textbf{Step 2 --- Constraint.}
+The requirement to select exactly one candidate is expressed as:
+\begin{equation}
     \sum_{i=0}^{N-1} x_i = 1.
-\end{align}
+\end{equation}
 
-\textbf{Step 3 --- Penalty Term Expansion.} We convert the equality constraint into a quadratic penalty term by introducing a positive weight $\lambda > 0$:
-\begin{align}
-    P(\mathbf{x}) = \lambda \left( \sum_{i=0}^{N-1} x_i - 1 \right)^2.
-\end{align}
+\textbf{Step 3 --- Penalty Term.}
+We enforce the constraint by adding a quadratic penalty term $P(x)$ with weight $\lambda > 0$:
+\begin{equation}
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} x_i - 1 \right)^2.
+\end{equation}
 Expanding the square yields:
+\begin{equation}
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} x_i^2 + \sum_{i \neq j} x_i x_j - 2 \sum_{i=0}^{N-1} x_i + 1 \right).
+\end{equation}
+Using the idempotent property of binary variables, $x_i^2 = x_i$, we simplify:
 \begin{align}
-    P(\mathbf{x}) = \lambda \left( \sum_{i=0}^{N-1} x_i^2 - 2 \sum_{0 \leq i < j \leq N-1} x_i x_j + 1 \right).
-\end{align}
-Applying the idempotent property of binary variables, $x_i^2 = x_i$, we collect the linear and quadratic terms:
-\begin{align}
-    P(\mathbf{x}) = \lambda \sum_{i=0}^{N-1} x_i - 2\lambda \sum_{0 \leq i < j \leq N-1} x_i x_j + \lambda.
-\end{align}
-
-\textbf{Step 4 --- Combined Hamiltonian.} Adding the objective and the penalty term gives the full QUBO Hamiltonian $H(\mathbf{x})$:
-\begin{align}
-    H(\mathbf{x}) = \sum_{i=0}^{N-1} C_i x_i + \lambda \sum_{i=0}^{N-1} x_i - 2\lambda \sum_{0 \leq i < j \leq N-1} x_i x_j + \lambda.
-\end{align}
-Grouping by variable products, we obtain:
-\begin{align}
-    H(\mathbf{x}) = \sum_{i=0}^{N-1} (C_i + \lambda) x_i - 2\lambda \sum_{0 \leq i < j \leq N-1} x_i x_j + \lambda.
+    P(x) &= \lambda \left( \sum_{i=0}^{N-1} x_i + \sum_{i \neq j} x_i x_j - 2 \sum_{i=0}^{N-1} x_i + 1 \right) \\
+    &= \lambda \left( -\sum_{i=0}^{N-1} x_i + \sum_{i \neq j} x_i x_j + 1 \right) \\
+    &= -\lambda \sum_{i=0}^{N-1} x_i + \lambda \sum_{i \neq j} x_i x_j + \lambda.
 \end{align}
 
-\textbf{Step 5 --- Q Matrix and Offset.} Matching $H(\mathbf{x})$ to the standard QUBO form $\sum_{i} Q_{i,i} x_i + \sum_{i < j} Q_{i,j} x_i x_j + c$, we read off the closed-form expressions for the Q matrix entries and the constant offset:
+\textbf{Step 4 --- Combined Hamiltonian.}
+The total QUBO Hamiltonian $H(x)$ is the sum of the objective and penalty terms:
 \begin{align}
-    Q_{i,i} &= C_i + \lambda, \quad \forall i \in \{0, \dots, N-1\}, \\
-    Q_{i,j} &= -2\lambda, \quad \forall 0 \leq i < j \leq N-1, \\
+    H(x) &= C(x) + P(x) \\
+    &= \sum_{i=0}^{N-1} c_i x_i - \lambda \sum_{i=0}^{N-1} x_i + \lambda \sum_{i \neq j} x_i x_j + \lambda \\
+    &= \sum_{i=0}^{N-1} (c_i - \lambda) x_i + \lambda \sum_{i \neq j} x_i x_j + \lambda.
+\end{align}
+
+\textbf{Step 5 --- Q Matrix and Offset.}
+The Hamiltonian is expressed in the standard QUBO form $H(x) = \sum_{i \le j} Q_{ij} x_i x_j + c$. Comparing terms, the matrix entries $Q_{ij}$ and offset $c$ are given by:
+\begin{align}
+    Q_{ii} &= c_i - \lambda, \quad \forall i \in \{0, \dots, N-1\}, \\
+    Q_{ij} &= \lambda, \quad \forall i, j \in \{0, \dots, N-1\}, \; i \neq j, \\
     c &= \lambda.
 \end{align}
+Note that the term $\lambda \sum_{i \neq j} x_i x_j$ corresponds to symmetric matrix entries $Q_{ij} = \lambda$ for $i \neq j$.
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that constraint violations are strictly penalized beyond any possible reduction in the objective function. Specifically, we require $\lambda > \max_{i} C_i$. This condition guarantees that the minimum penalty incurred by violating the constraint (which occurs when zero or multiple variables are set to 1) strictly exceeds the maximum possible gain achievable by altering the objective value, thereby forcing the optimizer to prioritize feasibility.
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any infeasible solution has strictly higher energy than any feasible solution. A sufficient condition is:
+\begin{equation}
+    \lambda > \max_{i \in \{0, \dots, N-1\}} c_i.
+\end{equation}
+This choice guarantees that the minimum penalty for a constraint violation (which occurs when zero candidates are selected, yielding penalty $\lambda$) exceeds the cost of any single candidate. For violations involving multiple selections ($k \ge 2$), the penalty grows quadratically as $\lambda(k-1)^2 \ge \lambda$, further increasing the energy. Thus, $\lambda > \max_i c_i$ ensures that the global minimum of $H(x)$ cannot occur at an infeasible point.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ recovers the optimal solution because feasible assignments (those satisfying $\sum_i x_i = 1$) incur zero penalty, so their Hamiltonian energy exactly equals the original compilation cost. Infeasible assignments violate the constraint and incur a penalty of at least $\lambda$. Since $\lambda$ exceeds the maximum possible objective value, any infeasible assignment has strictly higher energy than the best feasible assignment. Consequently, the global minimum of $H(\mathbf{x})$ must correspond to a feasible assignment with the minimal compilation cost.
+Minimizing $H(x)$ over $\{0, 1\}^N$ recovers the optimal compiled circuit candidate. For any feasible solution $x$ (where $\sum_i x_i = 1$), the penalty term vanishes, and $H(x) = C(x)$. For any infeasible solution, $H(x) = C(x) + P(x)$. Under the condition $\lambda > \max_i c_i$, the energy of any infeasible solution exceeds $\max_i c_i$, while the energy of any feasible solution is at most $\max_i c_i$. Consequently, the global minimum must be feasible. Among feasible solutions, $H(x)$ equals the objective $C(x)$, so the minimizer of $H(x)$ is the candidate with the minimum compilation cost.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=3$ candidates and compilation costs $C_0, C_1, C_2$. Setting the penalty weight to $\lambda = 1000$, the Hamiltonian becomes:
-\begin{align}
-    H(\mathbf{x}) &= (C_0 + 1000)x_0 + (C_1 + 1000)x_1 + (C_2 + 1000)x_2 \\
-    &\quad - 2000 x_0 x_1 - 2000 x_0 x_2 - 2000 x_1 x_2 + 1000.
-\end{align}
-The corresponding Q matrix entries and offset are explicitly:
-\begin{align}
-    Q_{0,0} &= C_0 + 1000, & Q_{1,1} &= C_1 + 1000, & Q_{2,2} &= C_2 + 1000, \\
-    Q_{0,1} &= -2000, & Q_{0,2} &= -2000, & Q_{1,2} &= -2000, \\
-    c &= 1000.
-\end{align}
-For any feasible assignment where exactly one variable equals 1 (e.g., $\mathbf{x} = (1,0,0)^\top$), the penalty terms vanish and $H(\mathbf{x}) = C_0 + 1000 - 1000 = C_0$. The optimal solution is the candidate $k$ that minimizes $C_k$, yielding the minimum energy $H(\mathbf{x}^*) = C_{\min}$.
+Consider an instance with $N=3$ candidates and costs $c_0 = 10$, $c_1 = 20$, $c_2 = 15$. We choose $\lambda = 21$, satisfying $\lambda > \max\{10, 20, 15\}$.
 
+The concrete QUBO parameters are:
+\begin{align}
+    Q_{00} &= 10 - 21 = -11, \\
+    Q_{11} &= 20 - 21 = -1, \\
+    Q_{22} &= 15 - 21 = -6, \\
+    Q_{ij} &= 21 \quad \text{for } i \neq j, \\
+    c &= 21.
+\end{align}
+The Hamiltonian is:
+\begin{equation}
+    H(x) = -11 x_0 - x_1 - 6 x_2 + 21(x_0 x_1 + x_0 x_2 + x_1 x_2) + 21.
+\end{equation}
+Evaluating $H(x)$ for candidate solutions:
+\begin{itemize}
+    \item $x = [1, 0, 0]$: $H = -11 + 21 = 10$.
+    \item $x = [0, 1, 0]$: $H = -1 + 21 = 20$.
+    \item $x = [0, 0, 1]$: $H = -6 + 21 = 15$.
+    \item $x = [0, 0, 0]$: $H = 21$.
+    \item $x = [1, 1, 0]$: $H = -11 - 1 + 21 + 21 = 30$.
+\end{itemize}
+The global minimum is $H = 10$ at $x = [1, 0, 0]$, corresponding to selecting candidate $0$ with minimum cost $10$.
 \end{document}

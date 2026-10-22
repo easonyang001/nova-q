@@ -1,0 +1,344 @@
+{
+ "sg_hawker_groups": {
+  "places": [
+   {
+    "name": "Newton Food Centre",
+    "lat": 1.3119155203922301,
+    "lon": 103.83956972873328,
+    "postal": "229495"
+   },
+   {
+    "name": "Toa Payoh Lorong 4 Blk 74 (Toa Payoh Vista Market)",
+    "lat": 1.3345507486923793,
+    "lon": 103.85200350902804,
+    "postal": "310074"
+   },
+   {
+    "name": "Toa Payoh Lorong 1 Blk 127 (Toa Payoh West Market and Food Court)",
+    "lat": 1.3381035143692974,
+    "lon": 103.84473272633905,
+    "postal": "310127"
+   },
+   {
+    "name": "Toa Payoh Lorong 4 Blk 93",
+    "lat": 1.3384746963913283,
+    "lon": 103.84951344899093,
+    "postal": "310093"
+   },
+   {
+    "name": "Toa Payoh Lorong 7 Blk 22 (Kim Keat Palm Market and Food Centre)",
+    "lat": 1.335382613078359,
+    "lon": 103.85700370906183,
+    "postal": "310022"
+   },
+   {
+    "name": "Toa Payoh Lorong 5 Blk 75",
+    "lat": 1.3360207676183897,
+    "lon": 103.85295698796516,
+    "postal": "310075"
+   },
+   {
+    "name": "Shunfu Road Blk 320 (Shunfu Mart)",
+    "lat": 1.3520255700711772,
+    "lon": 103.8369645086122,
+    "postal": "570320"
+   },
+   {
+    "name": "Bendemeer Road Blk 29 (Bendemeer Market and Food Centre)",
+    "lat": 1.31921667863285,
+    "lon": 103.86302092286022,
+    "postal": "330029"
+   },
+   {
+    "name": "Cambridge Road Blk 41A (Pek Kio Market and Food Centre)",
+    "lat": 1.3161312806032646,
+    "lon": 103.85023293507001,
+    "postal": "211041"
+   },
+   {
+    "name": "Toa Payoh Lorong 8 Blk 210",
+    "lat": 1.3402610465757185,
+    "lon": 103.85439575904685,
+    "postal": "310210"
+   },
+   {
+    "name": "Whampoa Drive Blk 90 (Whampoa Drive Makan Place/Whampoa Food Centre)",
+    "lat": 1.323064938171913,
+    "lon": 103.85499618356134,
+    "postal": "320090"
+   },
+   {
+    "name": "Whampoa Drive Blk 91/92 (Whampoa Drive Makan Place/Whampoa Market)",
+    "lat": 1.323428186962711,
+    "lon": 103.85406019787618,
+    "postal": "320091"
+   }
+  ],
+  "n_places": 12,
+  "groups": 3,
+  "group_size": 4,
+  "bbox": [
+   1.15,
+   103.6,
+   1.48,
+   104.1
+  ]
+ },
+ "paris_velib_tour": {
+  "centre": [
+   48.8443,
+   2.3744
+  ],
+  "radius_m": 600,
+  "stations": [
+   {
+    "sno": "12009",
+    "sna": "Charenton - Diderot",
+    "lat": 48.846171461187,
+    "lon": 2.3793068155646,
+    "dist_m": 415.0
+   },
+   {
+    "sno": "12101",
+    "sna": "Charenton - Prague",
+    "lat": 48.848175129981,
+    "lon": 2.3763584494312,
+    "dist_m": 454.1
+   },
+   {
+    "sno": "12106",
+    "sna": "Gare de Lyon - Roland Barthes",
+    "lat": 48.84395729494058,
+    "lon": 2.3790882155299187,
+    "dist_m": 345.2
+   },
+   {
+    "sno": "12007",
+    "sna": "Gare de Lyon - Chalon",
+    "lat": 48.845666194202,
+    "lon": 2.3741452395916,
+    "dist_m": 153.1
+   },
+   {
+    "sno": "12102",
+    "sna": "Bercy - Traversiére",
+    "lat": 48.846192642574,
+    "lon": 2.3703800886869,
+    "dist_m": 361.7
+   },
+   {
+    "sno": "12105",
+    "sna": "Bercy - Villot",
+    "lat": 48.841795009027,
+    "lon": 2.3767850184816,
+    "dist_m": 328.7
+   },
+   {
+    "sno": "12008",
+    "sna": "Hector Malot - Daumesnil",
+    "lat": 48.84693552991762,
+    "lon": 2.3770876228809357,
+    "dist_m": 352.9
+   },
+   {
+    "sno": "12151",
+    "sna": "Gare de Lyon - Place Louis Armand",
+    "lat": 48.845515089794,
+    "lon": 2.3726498446286,
+    "dist_m": 186.2
+   },
+   {
+    "sno": "13125",
+    "sna": "Gare d'Austerlitz - Pont Charles de Gaulle",
+    "lat": 48.842319830109,
+    "lon": 2.3670300096273,
+    "dist_m": 582.5
+   },
+   {
+    "sno": "12108",
+    "sna": "Bercy.",
+    "lat": 48.839966914994,
+    "lon": 2.3788625746965,
+    "dist_m": 582.1
+   }
+  ],
+  "optional": [
+   {
+    "sno": "12011",
+    "sna": "Charenton - Place du Col Bourgoin",
+    "lat": 48.844867319554,
+    "lon": 2.3825789350545,
+    "dist_m": 601.8
+   }
+  ],
+  "snapshot": "opendata.paris.fr export 2026-10-22",
+  "bbox": [
+   48.8,
+   2.22,
+   48.92,
+   2.47
+  ]
+ },
+ "cambridge_pb_budget": {
+  "projects": [
+   {
+    "number": "",
+    "title": "Urban Micro-Forests for Cambridge",
+    "cost": 85000.0,
+    "votes": 4826.0,
+    "winner": 1
+   },
+   {
+    "number": "",
+    "title": "Rain Gardens for Resilience",
+    "cost": 120000.0,
+    "votes": 3640.0,
+    "winner": 1
+   },
+   {
+    "number": "",
+    "title": "Bridging the Digital Divide",
+    "cost": 95000.0,
+    "votes": 3342.0,
+    "winner": 1
+   },
+   {
+    "number": "",
+    "title": "Bike Signals at Busy Intersections",
+    "cost": 40000.0,
+    "votes": 2984.0,
+    "winner": 1
+   },
+   {
+    "number": "",
+    "title": "Keep Cambridge Cleaner",
+    "cost": 45000.0,
+    "votes": 2661.0,
+    "winner": 1
+   },
+   {
+    "number": "",
+    "title": "Swinging into Inclusivity",
+    "cost": 40000.0,
+    "votes": 2282.0,
+    "winner": 1
+   },
+   {
+    "number": "",
+    "title": "Pedestrian-Controlled Crosswalk Lights",
+    "cost": 100000.0,
+    "votes": 2269.0,
+    "winner": 1
+   },
+   {
+    "number": "",
+    "title": "Open our Doors - Automatic Door Openers on Public Buildings",
+    "cost": 50000.0,
+    "votes": 1950.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "We Need More Crosswalks",
+    "cost": 40000.0,
+    "votes": 1942.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Safer Streets Around Parks and Schools",
+    "cost": 90000.0,
+    "votes": 1890.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "New Park Pavilion",
+    "cost": 175000.0,
+    "votes": 1710.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Waste Management Education Campaign",
+    "cost": 85000.0,
+    "votes": 1546.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Add Color to our Youth Centers",
+    "cost": 25000.0,
+    "votes": 1252.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Listen Up! Public Meeting Space Hearing Technology",
+    "cost": 150000.0,
+    "votes": 1072.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Who Let the Dogs Out?",
+    "cost": 20000.0,
+    "votes": 939.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Fast Response High Visibility Fire Hydrant Markers",
+    "cost": 8000.0,
+    "votes": 901.0,
+    "winner": 0
+   }
+  ],
+  "n_projects": 16,
+  "budget": 525000,
+  "optimum": {
+   "votes": 24769.0,
+   "projects": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    8,
+    12,
+    14,
+    15
+   ],
+   "cost": 518000.0
+  },
+  "city_rule": {
+   "votes": 22004.0,
+   "projects": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "cost": 525000.0
+  },
+  "actual_winners": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6
+  ],
+  "bbox": [
+   42.35,
+   -71.17,
+   42.41,
+   -71.06
+  ]
+ }
+}

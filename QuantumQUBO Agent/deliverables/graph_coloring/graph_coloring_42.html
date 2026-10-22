@@ -42,72 +42,86 @@
     <h2 class='subsection'>Graph K-Coloring Problem</h2>
 
 <h3>Problem Statement</h3>
-Given an undirected graph $G=(V,E)$ with $|V|=N$ vertices and $|E|=M$ edges, and a set of $K$ available colors, the task is to assign exactly one color to each vertex such that no two adjacent vertices share the same color. The objective is to minimize the number of violated edges, where a violated edge is defined as an edge whose endpoints are assigned the same color. In feasibility form, a valid $K$-coloring exists if and only if the minimum number of violated edges is zero.
+Given an undirected graph $G=(V,E)$ with $N=|V|$ vertices and a set of $K$ available colors, assign exactly one color to each vertex such that no two adjacent vertices share the same color. The goal is to find a valid $K$-coloring if one exists, or otherwise minimize the number of monochromatic (violated) edges. A valid coloring corresponds to an objective value of zero.
 
 <h3>Decision Variables</h3>
-We introduce binary decision variables $x_{v,c} \in \{0,1\}$ for each vertex $v \in V$ and each color $c \in \{0, 1, \dots, K-1\}$. The variable $x_{v,c}$ equals $1$ if and only if vertex $v$ is assigned color $c$, and $0$ otherwise.
+For each vertex $v \in V$ and each color $c \in \{0, 1, \dots, K-1\}$, introduce a binary decision variable $x_{v,c} \in \{0,1\}$. The variable $x_{v,c}$ equals $1$ if and only if vertex $v$ is assigned color $c$, and $0$ otherwise.
 
 <h3>QUBO Derivation</h3>
-<strong>Step 1 -- Objective Function.</strong> The number of violated edges is given by the sum over all edges of the indicator that both endpoints share a color. This yields the minimization problem:
-\begin{align}
-    \min_{x} \quad H_{\text{obj}}(x) = \sum_{(u,v) \in E} \sum_{c=0}^{K-1} x_{u,c} x_{v,c}.
-\end{align}
-Since QUBO solvers minimize quadratic forms, we retain this expression directly as the objective component of the Hamiltonian.
+We construct a Quadratic Unconstrained Binary Optimization (QUBO) formulation by relaxing the hard constraints into the objective function via quadratic penalty terms.
 
-<strong>Step 2 -- Constraints.</strong> Each vertex must be assigned exactly one color. This is enforced by the equality constraints:
+<strong>Step 1 -- Objective Function.</strong>
+The original goal is to minimize the number of violated edges. An edge $(u,v) \in E$ is violated if both endpoints receive the same color $c$. This is captured by the product $x_{u,c}x_{v,c}$. The objective to be minimized is:
+\begin{align}
+    \min \quad \sum_{(u,v) \in E} \sum_{c=0}^{K-1} x_{u,c} x_{v,c}.
+\end{align}
+
+<strong>Step 2 -- Constraints.</strong>
+Each vertex must be assigned exactly one color. For every vertex $v \in V$, this hard constraint is expressed as:
 \begin{align}
     \sum_{c=0}^{K-1} x_{v,c} = 1, \quad \forall v \in V.
 \end{align}
 
-<strong>Step 3 -- Penalty Term Expansion.</strong> We convert each equality constraint into a quadratic penalty term using a positive weight $\lambda > 0$. For a fixed vertex $v$, the penalty is:
+<strong>Step 3 -- Penalty Term Expansion.</strong>
+We enforce the constraints by adding a quadratic penalty to the objective. Let $\lambda > 0$ be the penalty weight. The penalty contribution for a single vertex $v$ is:
 \begin{align}
-    P_v(x) = \lambda \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2.
+    P_v(\mathbf{x}) = \lambda \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2.
 \end{align}
-Expanding the square and applying the idempotent property of binary variables ($x_{v,c}^2 = x_{v,c}$):
+Expanding the square yields:
 \begin{align}
-    \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2 &= \left( \sum_{c=0}^{K-1} x_{v,c} \right)^2 - 2 \sum_{c=0}^{K-1} x_{v,c} + 1 \\
-    &= \sum_{c=0}^{K-1} x_{v,c}^2 + \sum_{\substack{c,d=0 \\ c \neq d}}^{K-1} x_{v,c} x_{v,d} - 2 \sum_{c=0}^{K-1} x_{v,c} + 1 \\
-    &= \sum_{c=0}^{K-1} x_{v,c} + \sum_{\substack{c,d=0 \\ c \neq d}}^{K-1} x_{v,c} x_{v,d} - 2 \sum_{c=0}^{K-1} x_{v,c} + 1 \\
-    &= -\sum_{c=0}^{K-1} x_{v,c} + \sum_{\substack{c,d=0 \\ c \neq d}}^{K-1} x_{v,c} x_{v,d} + 1.
+    \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2 = \sum_{c=0}^{K-1} x_{v,c}^2 + \sum_{c=0}^{K-1} \sum_{\substack{c'=0 \\ c' \neq c}}^{K-1} x_{v,c} x_{v,c'} - 2 \sum_{c=0}^{K-1} x_{v,c} + 1.
 \end{align}
-Noting that the double sum over $c \neq d$ counts each unordered pair twice, we rewrite it as $2 \sum_{0 \le c < d \le K-1} x_{v,c} x_{v,d}$. Thus, the expanded penalty contribution for vertex $v$ is:
+Using the idempotent property of binary variables, $x_{v,c}^2 = x_{v,c}$, we simplify:
 \begin{align}
-    P_v(x) = \lambda \left( -\sum_{c=0}^{K-1} x_{v,c} + 2 \sum_{0 \le c < d \le K-1} x_{v,c} x_{v,d} + 1 \right).
+    \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2 = \sum_{c=0}^{K-1} x_{v,c} + \sum_{c \neq c'} x_{v,c} x_{v,c'} - 2 \sum_{c=0}^{K-1} x_{v,c} + 1 = \sum_{c \neq c'} x_{v,c} x_{v,c'} - \sum_{c=0}^{K-1} x_{v,c} + 1.
 \end{align}
-
-<strong>Step 4 -- Combined Hamiltonian.</strong> Summing the objective and all vertex penalties yields the full QUBO Hamiltonian:
+Summing over all vertices, the total penalty contribution to the Hamiltonian is:
 \begin{align}
-    H(x) = \sum_{(u,v) \in E} \sum_{c=0}^{K-1} x_{u,c} x_{v,c} + \lambda \sum_{v \in V} \left( -\sum_{c=0}^{K-1} x_{v,c} + 2 \sum_{0 \le c < d \le K-1} x_{v,c} x_{v,d} + 1 \right).
+    P(\mathbf{x}) = \lambda \sum_{v \in V} \left( \sum_{c \neq c'} x_{v,c} x_{v,c'} - \sum_{c=0}^{K-1} x_{v,c} + 1 \right).
 \end{align}
 
-<strong>Step 5 -- Q Matrix and Offset.</strong> By collecting coefficients of like terms in $H(x)$, we identify the entries of the symmetric upper-triangular QUBO matrix $Q$ and the constant offset $c$. Let $n = N \cdot K$ be the total number of variables. The non-zero entries are given by:
+<strong>Step 4 -- Combined Hamiltonian.</strong>
+Adding the objective and penalty terms gives the full QUBO Hamiltonian $H(\mathbf{x})$:
 \begin{align}
-    Q_{(v,c),(v,c)} &= -\lambda, & \forall v \in V, \, c \in \{0,\dots,K-1\}, \\
-    Q_{(v,c),(v,d)} &= 2\lambda, & \forall v \in V, \, 0 \le c < d \le K-1, \\
-    Q_{(u,c),(v,c)} &= 1, & \forall (u,v) \in E, \, c \in \{0,\dots,K-1\}, \\
-    c &= \lambda |V|.
+    H(\mathbf{x}) = \sum_{(u,v) \in E} \sum_{c=0}^{K-1} x_{u,c} x_{v,c} + \lambda \sum_{v \in V} \left( \sum_{c \neq c'} x_{v,c} x_{v,c'} - \sum_{c=0}^{K-1} x_{v,c} + 1 \right).
 \end{align}
-All other entries $Q_{i,j}$ are zero.
+
+<strong>Step 5 -- Q Matrix Entries and Offset.</strong>
+We express $H(\mathbf{x})$ in the standard QUBO form $H(\mathbf{x}) = \sum_{i} Q_{ii} x_i + \sum_{i < j} 2 Q_{ij} x_i x_j + c$, where $i$ indexes the pair $(v,c)$. Reading off the coefficients from the expanded Hamiltonian yields the following closed-form expressions for the Q matrix entries and constant offset:
+\begin{align}
+    Q_{(v,c),(v,c)} &= -\lambda, \quad \forall v \in V, \, c \in \{0,\dots,K-1\}, \\
+    Q_{(v,c),(v,c')} &= \lambda, \quad \forall v \in V, \, c \neq c', \\
+    Q_{(u,c),(v,c)} &= \frac{1}{2}, \quad \forall (u,v) \in E, \, c \in \{0,\dots,K-1\}, \\
+    c &= N \lambda.
+\end{align}
+All other entries $Q_{ij}$ are zero.
 
 <h3>Penalty Weight Justification</h3>
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the exactly-one-color constraint incurs a higher energy cost than the maximum possible reduction in the objective function. Violating the constraint for a vertex $v$ means either assigning zero colors or assigning two or more colors. In the worst case, assigning zero colors to $v$ removes all edge-conflict penalties incident to $v$, potentially reducing the objective by at most $\sum_{u: (u,v) \in E} w_{uv}$, where $w_{uv}$ are the edge weights (here $w_{uv}=1$). Assigning multiple colors to $v$ increases the penalty quadratically. Therefore, choosing $\lambda > \max_{v \in V} \deg(v)$ guarantees that the penalty dominates any feasible objective improvement. In practice, a safety margin is often added; for instance, $\lambda = 10$ is chosen when the maximum degree is small, ensuring strict dominance. The total number of variables in the resulting QUBO is $n = N \cdot K$.
+Let $\Delta = \max_{v \in V} \deg(v)$ denote the maximum vertex degree in $G$. Each variable $x_{v,c}$ participates in at most $\deg(v)$ terms in the objective function. Consequently, flipping a single variable can reduce the objective value by at most $\Delta$. To guarantee that any constraint violation is strictly more costly than any potential objective improvement, we require $\lambda > \Delta$. Setting $\lambda$ to any value strictly greater than $\Delta$ (e.g., $\lambda = \Delta + 1$) ensures that infeasible solutions are energetically unfavorable compared to all feasible solutions.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(x)$ over $\{0,1\}^n$ recovers the optimal $K$-coloring because the Hamiltonian is constructed such that $H(x) = H_{\text{obj}}(x)$ for all feasible assignments (where constraints are satisfied and penalties vanish), while $H(x) > H_{\text{obj}}(x)$ for all infeasible assignments. Specifically, any infeasible solution violates at least one vertex constraint, incurring a penalty of at least $\lambda$. Since $\lambda$ exceeds the maximum possible decrease in the objective function achievable by violating a single constraint, the energy of any infeasible solution strictly exceeds the energy of the best feasible solution. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that minimizes the original objective, i.e., a valid $K$-coloring with the minimum number of violated edges.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{NK}$ recovers the optimal coloring because (i) any feasible assignment satisfies $\sum_{c} x_{v,c} = 1$ for all $v$, causing all penalty terms to vanish and reducing $H(\mathbf{x})$ exactly to the objective function counting violated edges; (ii) any infeasible assignment incurs a penalty of at least $\lambda$ for each violated constraint. Since $\lambda > \Delta$, the penalty strictly exceeds the maximum possible decrease in the objective function achievable by any single variable flip. Therefore, the global minimum of $H(\mathbf{x})$ must occur at a feasible point, and among feasible points, $H(\mathbf{x})$ is minimized precisely when the number of violated edges is minimized.
 
 <h3>Illustrative Example</h3>
-Consider a triangle graph with $N=3$ vertices ($V=\{0,1,2\}$), edges $E=\{(0,1), (1,2), (2,0)\}$, and $K=3$ colors. The total number of variables is $n = 3 \times 3 = 9$. Using the variable mapping $x_{v,c} \mapsto vK + c$, the indices are $0,1,2$ for vertex $0$, $3,4,5$ for vertex $1$, and $6,7,8$ for vertex $2$. Setting $\lambda = 10$, the general formulas yield the following concrete QUBO terms:
+Consider a concrete instance with $N=3$ vertices, $K=3$ colors, and a complete graph $G=K_3$ where every pair of vertices is connected. The edges are $(0,1)$, $(1,2)$, and $(2,0)$. The maximum degree is $\Delta=2$, so we set $\lambda=10$. The variable mapping is $i = vK + c$, yielding indices $0,1,2$ for vertex $0$, $3,4,5$ for vertex $1$, and $6,7,8$ for vertex $2$.
+
+The concrete objective counts monochromatic edges:
 \begin{align}
-    H(x) &= x_{0,0}x_{1,0} + x_{1,0}x_{2,0} + x_{2,0}x_{0,0} + x_{0,1}x_{1,1} + x_{1,1}x_{2,1} + x_{2,1}x_{0,1} + x_{0,2}x_{1,2} + x_{1,2}x_{2,2} + x_{2,2}x_{0,2} \nonumber \\
-    &\quad + 10 \sum_{v=0}^{2} \left( -\sum_{c=0}^{2} x_{v,c} + 2 \sum_{0 \le c < d \le 2} x_{v,c} x_{v,d} + 1 \right).
+    \text{Obj}(\mathbf{x}) = \sum_{c=0}^{2} \left( x_{0,c}x_{1,c} + x_{1,c}x_{2,c} + x_{2,c}x_{0,c} \right).
 \end{align}
-Expanding the penalty terms for each vertex and collecting coefficients gives the explicit quadratic form:
+The concrete penalty terms for each vertex $v \in \{0,1,2\}$ are:
 \begin{align}
-    H(x) &= x_0 x_3 + x_1 x_4 + x_2 x_5 + x_3 x_6 + x_4 x_7 + x_5 x_8 + x_6 x_0 + x_7 x_1 + x_8 x_2 \nonumber \\
-    &\quad -10(x_0+x_1+x_2+x_3+x_4+x_5+x_6+x_7+x_8) \nonumber \\
-    &\quad + 20(x_0 x_1 + x_0 x_2 + x_1 x_2 + x_3 x_4 + x_3 x_5 + x_4 x_5 + x_6 x_7 + x_6 x_8 + x_7 x_8) + 30.
+    P_v(\mathbf{x}) = 10 \left( \sum_{c \neq c'} x_{v,c}x_{v,c'} - \sum_{c=0}^{2} x_{v,c} + 1 \right).
 \end{align}
-The corresponding $Q$ matrix entries match the derived general formulas with $\lambda=10$. A valid 3-coloring, e.g., $x_{0,0}=1, x_{1,1}=1, x_{2,2}=1$ (all other variables $0$), yields $H(x)=0$, confirming the existence of a feasible solution with zero violated edges. Any assignment violating the exactly-one-color constraint yields $H(x) \ge 10$, verifying the penalty dominance.
+The resulting Hamiltonian $H(\mathbf{x})$ is the sum of the objective and all three penalty terms. The non-zero Q matrix entries for this instance are:
+\begin{align}
+    Q_{0,0} = Q_{1,1} = Q_{2,2} = Q_{3,3} = Q_{4,4} = Q_{5,5} = Q_{6,6} = Q_{7,7} = Q_{8,8} &= -10, \\
+    Q_{0,1} = Q_{0,2} = Q_{1,2} = Q_{3,4} = Q_{3,5} = Q_{4,5} = Q_{6,7} = Q_{6,8} = Q_{7,8} &= 10, \\
+    Q_{0,3} = Q_{1,4} = Q_{2,5} = Q_{3,6} = Q_{4,7} = Q_{5,8} = Q_{6,0} = Q_{7,1} = Q_{8,2} &= \frac{1}{2},
+\end{align}
+with offset $c = 3 \times 10 = 30$.
+
+A valid 3-coloring exists. Setting $x_{0,0}=1$, $x_{1,1}=1$, $x_{2,2}=1$ (all other variables $0$) satisfies the exactly-one-color constraints and yields zero violated edges. The optimal energy is $H(\mathbf{x}^*) = 0 + 30 = 30$. Any assignment violating the constraints incurs a penalty of at least $10$, strictly exceeding the maximum possible objective reduction of $2$, confirming the formulation's correctness for this instance.
   </div>
 
   <div class="src-header">
@@ -119,72 +133,86 @@ The corresponding $Q$ matrix entries match the derived general formulas with $\l
 \subsection*{Graph K-Coloring Problem}
 
 \paragraph{Problem Statement.}
-Given an undirected graph $G=(V,E)$ with $|V|=N$ vertices and $|E|=M$ edges, and a set of $K$ available colors, the task is to assign exactly one color to each vertex such that no two adjacent vertices share the same color. The objective is to minimize the number of violated edges, where a violated edge is defined as an edge whose endpoints are assigned the same color. In feasibility form, a valid $K$-coloring exists if and only if the minimum number of violated edges is zero.
+Given an undirected graph $G=(V,E)$ with $N=|V|$ vertices and a set of $K$ available colors, assign exactly one color to each vertex such that no two adjacent vertices share the same color. The goal is to find a valid $K$-coloring if one exists, or otherwise minimize the number of monochromatic (violated) edges. A valid coloring corresponds to an objective value of zero.
 
 \paragraph{Decision Variables.}
-We introduce binary decision variables $x_{v,c} \in \{0,1\}$ for each vertex $v \in V$ and each color $c \in \{0, 1, \dots, K-1\}$. The variable $x_{v,c}$ equals $1$ if and only if vertex $v$ is assigned color $c$, and $0$ otherwise.
+For each vertex $v \in V$ and each color $c \in \{0, 1, \dots, K-1\}$, introduce a binary decision variable $x_{v,c} \in \{0,1\}$. The variable $x_{v,c}$ equals $1$ if and only if vertex $v$ is assigned color $c$, and $0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 -- Objective Function.} The number of violated edges is given by the sum over all edges of the indicator that both endpoints share a color. This yields the minimization problem:
-\begin{align}
-    \min_{x} \quad H_{\text{obj}}(x) = \sum_{(u,v) \in E} \sum_{c=0}^{K-1} x_{u,c} x_{v,c}.
-\end{align}
-Since QUBO solvers minimize quadratic forms, we retain this expression directly as the objective component of the Hamiltonian.
+We construct a Quadratic Unconstrained Binary Optimization (QUBO) formulation by relaxing the hard constraints into the objective function via quadratic penalty terms.
 
-\textbf{Step 2 -- Constraints.} Each vertex must be assigned exactly one color. This is enforced by the equality constraints:
+\textbf{Step 1 -- Objective Function.}
+The original goal is to minimize the number of violated edges. An edge $(u,v) \in E$ is violated if both endpoints receive the same color $c$. This is captured by the product $x_{u,c}x_{v,c}$. The objective to be minimized is:
+\begin{align}
+    \min \quad \sum_{(u,v) \in E} \sum_{c=0}^{K-1} x_{u,c} x_{v,c}.
+\end{align}
+
+\textbf{Step 2 -- Constraints.}
+Each vertex must be assigned exactly one color. For every vertex $v \in V$, this hard constraint is expressed as:
 \begin{align}
     \sum_{c=0}^{K-1} x_{v,c} = 1, \quad \forall v \in V.
 \end{align}
 
-\textbf{Step 3 -- Penalty Term Expansion.} We convert each equality constraint into a quadratic penalty term using a positive weight $\lambda &gt; 0$. For a fixed vertex $v$, the penalty is:
+\textbf{Step 3 -- Penalty Term Expansion.}
+We enforce the constraints by adding a quadratic penalty to the objective. Let $\lambda &gt; 0$ be the penalty weight. The penalty contribution for a single vertex $v$ is:
 \begin{align}
-    P_v(x) = \lambda \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2.
+    P_v(\mathbf{x}) = \lambda \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2.
 \end{align}
-Expanding the square and applying the idempotent property of binary variables ($x_{v,c}^2 = x_{v,c}$):
+Expanding the square yields:
 \begin{align}
-    \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2 &amp;= \left( \sum_{c=0}^{K-1} x_{v,c} \right)^2 - 2 \sum_{c=0}^{K-1} x_{v,c} + 1 \\
-    &amp;= \sum_{c=0}^{K-1} x_{v,c}^2 + \sum_{\substack{c,d=0 \\ c \neq d}}^{K-1} x_{v,c} x_{v,d} - 2 \sum_{c=0}^{K-1} x_{v,c} + 1 \\
-    &amp;= \sum_{c=0}^{K-1} x_{v,c} + \sum_{\substack{c,d=0 \\ c \neq d}}^{K-1} x_{v,c} x_{v,d} - 2 \sum_{c=0}^{K-1} x_{v,c} + 1 \\
-    &amp;= -\sum_{c=0}^{K-1} x_{v,c} + \sum_{\substack{c,d=0 \\ c \neq d}}^{K-1} x_{v,c} x_{v,d} + 1.
+    \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2 = \sum_{c=0}^{K-1} x_{v,c}^2 + \sum_{c=0}^{K-1} \sum_{\substack{c&#x27;=0 \\ c&#x27; \neq c}}^{K-1} x_{v,c} x_{v,c&#x27;} - 2 \sum_{c=0}^{K-1} x_{v,c} + 1.
 \end{align}
-Noting that the double sum over $c \neq d$ counts each unordered pair twice, we rewrite it as $2 \sum_{0 \le c &lt; d \le K-1} x_{v,c} x_{v,d}$. Thus, the expanded penalty contribution for vertex $v$ is:
+Using the idempotent property of binary variables, $x_{v,c}^2 = x_{v,c}$, we simplify:
 \begin{align}
-    P_v(x) = \lambda \left( -\sum_{c=0}^{K-1} x_{v,c} + 2 \sum_{0 \le c &lt; d \le K-1} x_{v,c} x_{v,d} + 1 \right).
+    \left( \sum_{c=0}^{K-1} x_{v,c} - 1 \right)^2 = \sum_{c=0}^{K-1} x_{v,c} + \sum_{c \neq c&#x27;} x_{v,c} x_{v,c&#x27;} - 2 \sum_{c=0}^{K-1} x_{v,c} + 1 = \sum_{c \neq c&#x27;} x_{v,c} x_{v,c&#x27;} - \sum_{c=0}^{K-1} x_{v,c} + 1.
 \end{align}
-
-\textbf{Step 4 -- Combined Hamiltonian.} Summing the objective and all vertex penalties yields the full QUBO Hamiltonian:
+Summing over all vertices, the total penalty contribution to the Hamiltonian is:
 \begin{align}
-    H(x) = \sum_{(u,v) \in E} \sum_{c=0}^{K-1} x_{u,c} x_{v,c} + \lambda \sum_{v \in V} \left( -\sum_{c=0}^{K-1} x_{v,c} + 2 \sum_{0 \le c &lt; d \le K-1} x_{v,c} x_{v,d} + 1 \right).
+    P(\mathbf{x}) = \lambda \sum_{v \in V} \left( \sum_{c \neq c&#x27;} x_{v,c} x_{v,c&#x27;} - \sum_{c=0}^{K-1} x_{v,c} + 1 \right).
 \end{align}
 
-\textbf{Step 5 -- Q Matrix and Offset.} By collecting coefficients of like terms in $H(x)$, we identify the entries of the symmetric upper-triangular QUBO matrix $Q$ and the constant offset $c$. Let $n = N \cdot K$ be the total number of variables. The non-zero entries are given by:
+\textbf{Step 4 -- Combined Hamiltonian.}
+Adding the objective and penalty terms gives the full QUBO Hamiltonian $H(\mathbf{x})$:
 \begin{align}
-    Q_{(v,c),(v,c)} &amp;= -\lambda, &amp; \forall v \in V, \, c \in \{0,\dots,K-1\}, \\
-    Q_{(v,c),(v,d)} &amp;= 2\lambda, &amp; \forall v \in V, \, 0 \le c &lt; d \le K-1, \\
-    Q_{(u,c),(v,c)} &amp;= 1, &amp; \forall (u,v) \in E, \, c \in \{0,\dots,K-1\}, \\
-    c &amp;= \lambda |V|.
+    H(\mathbf{x}) = \sum_{(u,v) \in E} \sum_{c=0}^{K-1} x_{u,c} x_{v,c} + \lambda \sum_{v \in V} \left( \sum_{c \neq c&#x27;} x_{v,c} x_{v,c&#x27;} - \sum_{c=0}^{K-1} x_{v,c} + 1 \right).
 \end{align}
-All other entries $Q_{i,j}$ are zero.
+
+\textbf{Step 5 -- Q Matrix Entries and Offset.}
+We express $H(\mathbf{x})$ in the standard QUBO form $H(\mathbf{x}) = \sum_{i} Q_{ii} x_i + \sum_{i &lt; j} 2 Q_{ij} x_i x_j + c$, where $i$ indexes the pair $(v,c)$. Reading off the coefficients from the expanded Hamiltonian yields the following closed-form expressions for the Q matrix entries and constant offset:
+\begin{align}
+    Q_{(v,c),(v,c)} &amp;= -\lambda, \quad \forall v \in V, \, c \in \{0,\dots,K-1\}, \\
+    Q_{(v,c),(v,c&#x27;)} &amp;= \lambda, \quad \forall v \in V, \, c \neq c&#x27;, \\
+    Q_{(u,c),(v,c)} &amp;= \frac{1}{2}, \quad \forall (u,v) \in E, \, c \in \{0,\dots,K-1\}, \\
+    c &amp;= N \lambda.
+\end{align}
+All other entries $Q_{ij}$ are zero.
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the exactly-one-color constraint incurs a higher energy cost than the maximum possible reduction in the objective function. Violating the constraint for a vertex $v$ means either assigning zero colors or assigning two or more colors. In the worst case, assigning zero colors to $v$ removes all edge-conflict penalties incident to $v$, potentially reducing the objective by at most $\sum_{u: (u,v) \in E} w_{uv}$, where $w_{uv}$ are the edge weights (here $w_{uv}=1$). Assigning multiple colors to $v$ increases the penalty quadratically. Therefore, choosing $\lambda &gt; \max_{v \in V} \deg(v)$ guarantees that the penalty dominates any feasible objective improvement. In practice, a safety margin is often added; for instance, $\lambda = 10$ is chosen when the maximum degree is small, ensuring strict dominance. The total number of variables in the resulting QUBO is $n = N \cdot K$.
+Let $\Delta = \max_{v \in V} \deg(v)$ denote the maximum vertex degree in $G$. Each variable $x_{v,c}$ participates in at most $\deg(v)$ terms in the objective function. Consequently, flipping a single variable can reduce the objective value by at most $\Delta$. To guarantee that any constraint violation is strictly more costly than any potential objective improvement, we require $\lambda &gt; \Delta$. Setting $\lambda$ to any value strictly greater than $\Delta$ (e.g., $\lambda = \Delta + 1$) ensures that infeasible solutions are energetically unfavorable compared to all feasible solutions.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^n$ recovers the optimal $K$-coloring because the Hamiltonian is constructed such that $H(x) = H_{\text{obj}}(x)$ for all feasible assignments (where constraints are satisfied and penalties vanish), while $H(x) &gt; H_{\text{obj}}(x)$ for all infeasible assignments. Specifically, any infeasible solution violates at least one vertex constraint, incurring a penalty of at least $\lambda$. Since $\lambda$ exceeds the maximum possible decrease in the objective function achievable by violating a single constraint, the energy of any infeasible solution strictly exceeds the energy of the best feasible solution. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that minimizes the original objective, i.e., a valid $K$-coloring with the minimum number of violated edges.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{NK}$ recovers the optimal coloring because (i) any feasible assignment satisfies $\sum_{c} x_{v,c} = 1$ for all $v$, causing all penalty terms to vanish and reducing $H(\mathbf{x})$ exactly to the objective function counting violated edges; (ii) any infeasible assignment incurs a penalty of at least $\lambda$ for each violated constraint. Since $\lambda &gt; \Delta$, the penalty strictly exceeds the maximum possible decrease in the objective function achievable by any single variable flip. Therefore, the global minimum of $H(\mathbf{x})$ must occur at a feasible point, and among feasible points, $H(\mathbf{x})$ is minimized precisely when the number of violated edges is minimized.
 
 \paragraph{Illustrative Example.}
-Consider a triangle graph with $N=3$ vertices ($V=\{0,1,2\}$), edges $E=\{(0,1), (1,2), (2,0)\}$, and $K=3$ colors. The total number of variables is $n = 3 \times 3 = 9$. Using the variable mapping $x_{v,c} \mapsto vK + c$, the indices are $0,1,2$ for vertex $0$, $3,4,5$ for vertex $1$, and $6,7,8$ for vertex $2$. Setting $\lambda = 10$, the general formulas yield the following concrete QUBO terms:
+Consider a concrete instance with $N=3$ vertices, $K=3$ colors, and a complete graph $G=K_3$ where every pair of vertices is connected. The edges are $(0,1)$, $(1,2)$, and $(2,0)$. The maximum degree is $\Delta=2$, so we set $\lambda=10$. The variable mapping is $i = vK + c$, yielding indices $0,1,2$ for vertex $0$, $3,4,5$ for vertex $1$, and $6,7,8$ for vertex $2$.
+
+The concrete objective counts monochromatic edges:
 \begin{align}
-    H(x) &amp;= x_{0,0}x_{1,0} + x_{1,0}x_{2,0} + x_{2,0}x_{0,0} + x_{0,1}x_{1,1} + x_{1,1}x_{2,1} + x_{2,1}x_{0,1} + x_{0,2}x_{1,2} + x_{1,2}x_{2,2} + x_{2,2}x_{0,2} \nonumber \\
-    &amp;\quad + 10 \sum_{v=0}^{2} \left( -\sum_{c=0}^{2} x_{v,c} + 2 \sum_{0 \le c &lt; d \le 2} x_{v,c} x_{v,d} + 1 \right).
+    \text{Obj}(\mathbf{x}) = \sum_{c=0}^{2} \left( x_{0,c}x_{1,c} + x_{1,c}x_{2,c} + x_{2,c}x_{0,c} \right).
 \end{align}
-Expanding the penalty terms for each vertex and collecting coefficients gives the explicit quadratic form:
+The concrete penalty terms for each vertex $v \in \{0,1,2\}$ are:
 \begin{align}
-    H(x) &amp;= x_0 x_3 + x_1 x_4 + x_2 x_5 + x_3 x_6 + x_4 x_7 + x_5 x_8 + x_6 x_0 + x_7 x_1 + x_8 x_2 \nonumber \\
-    &amp;\quad -10(x_0+x_1+x_2+x_3+x_4+x_5+x_6+x_7+x_8) \nonumber \\
-    &amp;\quad + 20(x_0 x_1 + x_0 x_2 + x_1 x_2 + x_3 x_4 + x_3 x_5 + x_4 x_5 + x_6 x_7 + x_6 x_8 + x_7 x_8) + 30.
+    P_v(\mathbf{x}) = 10 \left( \sum_{c \neq c&#x27;} x_{v,c}x_{v,c&#x27;} - \sum_{c=0}^{2} x_{v,c} + 1 \right).
 \end{align}
-The corresponding $Q$ matrix entries match the derived general formulas with $\lambda=10$. A valid 3-coloring, e.g., $x_{0,0}=1, x_{1,1}=1, x_{2,2}=1$ (all other variables $0$), yields $H(x)=0$, confirming the existence of a feasible solution with zero violated edges. Any assignment violating the exactly-one-color constraint yields $H(x) \ge 10$, verifying the penalty dominance.</pre>
+The resulting Hamiltonian $H(\mathbf{x})$ is the sum of the objective and all three penalty terms. The non-zero Q matrix entries for this instance are:
+\begin{align}
+    Q_{0,0} = Q_{1,1} = Q_{2,2} = Q_{3,3} = Q_{4,4} = Q_{5,5} = Q_{6,6} = Q_{7,7} = Q_{8,8} &amp;= -10, \\
+    Q_{0,1} = Q_{0,2} = Q_{1,2} = Q_{3,4} = Q_{3,5} = Q_{4,5} = Q_{6,7} = Q_{6,8} = Q_{7,8} &amp;= 10, \\
+    Q_{0,3} = Q_{1,4} = Q_{2,5} = Q_{3,6} = Q_{4,7} = Q_{5,8} = Q_{6,0} = Q_{7,1} = Q_{8,2} &amp;= \frac{1}{2},
+\end{align}
+with offset $c = 3 \times 10 = 30$.
+
+A valid 3-coloring exists. Setting $x_{0,0}=1$, $x_{1,1}=1$, $x_{2,2}=1$ (all other variables $0$) satisfies the exactly-one-color constraints and yields zero violated edges. The optimal energy is $H(\mathbf{x}^*) = 0 + 30 = 30$. Any assignment violating the constraints incurs a penalty of at least $10$, strictly exceeding the maximum possible objective reduction of $2$, confirming the formulation&#x27;s correctness for this instance.</pre>
 
   <script>
     function copyLatex(btn) {

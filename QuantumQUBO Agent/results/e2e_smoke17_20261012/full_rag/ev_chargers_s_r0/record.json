@@ -1,0 +1,261 @@
+{
+ "case": "ev_chargers_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 118.3
+  },
+  "model": {
+   "ok": true,
+   "seconds": 119.6
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 23.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 298.7
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 90.7
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact binary formulation with helper coverage variables. N~35 sites => 70 variables. Fits easily in CGA backend (limit ~3600). Uses linear constraints for cardinality and coverage implications.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Candidate charging station locations (district centers)",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site in degrees",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site in degrees",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Population of each site (district)",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "k": {
+    "meaning": "Number of charging stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   },
+   "coverage": {
+    "meaning": "Binary coverage matrix: 1 if site j covers site i within 1km",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "dist <= 1km"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "prep": {
+  "tools_used": [
+   "attach_parent",
+   "haversine_matrix",
+   "keep_category",
+   "keep_level",
+   "latest_period",
+   "match",
+   "to_wgs84"
+  ],
+  "notes": "Filtered population data to latest period, total gender, and '里' level. Extracted district parent using prep.attach_parent. Filtered boundary data to Da'an District and converted TWD97 coordinates to WGS84. Joined on [district, village] using prep.match to resolve ambiguous names. Computed 1km coverage matrix using Haversine distance. Selected k=3 as per specification.",
+  "prep_log": "**資料來源**\n\n- 臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分（政府資料開放平台） <https://data.gov.tw/dataset/136896>，授權：待確認，取得 2026-10-12T11:54:44.778565+00:00\n- 臺北市里界圖（政府資料開放平台） <https://data.gov.tw/dataset/121163>，授權：待確認，取得 2026-10-12T11:54:45.097759+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| pop_latest | 63315 |  |  |\n| 只取最新一期 {'年份': 115, '月份': 9} | 63315 | 1407 |  |\n| pop_gender | 1407 |  |  |\n| 只保留 性別=計 | 1407 | 469 |  |\n| pop_attach_parent | 469 |  |  |\n| 補上上層行政區（區） | 469 | 469 | 1 列找不到上層 |\n| pop_level | 469 |  |  |\n| 只保留行政層級「里」 | 469 | 456 | 移除 13 列上層彙總 |\n| geo_wgs84 | 456 |  |  |\n| 座標轉換 EPSG:3826 → WGS84 | 456 | 456 |  |\n| geo_daan_filter | 456 | 53 |  |\n| 合併（TNAME+VNAME ↔ TNAME+VNAME） | 53 | 53 | 完全對上 53、模糊對上 0、對不上 0 |\n| merge_pop_geo | 53 | 53 |  |",
+  "flags": [],
+  "review_required": [
+   "k: ['Confirmed by specification']",
+   "coverage: ['Straight-line distance <= 1km']",
+   "獨立資料核對不一致：set 'sites' has 53 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 35. Check which rows you keep and whether duplicates of the same place are merged"
+  ],
+  "sources": [
+   {
+    "title": "臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分",
+    "url": "https://data.gov.tw/dataset/136896",
+    "resource_url": "https://data.taipei/api/dataset/a6394e3f-3514-4542-87bd-de4310a40db3/resource/c8f5b53d-ef3d-4321-ae8e-58cd2a5ee73c/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T11:54:44.778565+00:00",
+    "sha256": "a478cb4d3cdf509eec3453285bf0c1c542b7f53268608348ced4bafa7150bed3",
+    "bytes": 20821765
+   },
+   {
+    "title": "臺北市里界圖",
+    "url": "https://data.gov.tw/dataset/121163",
+    "resource_url": "https://data.taipei/api/dataset/6b17b31d-4e16-495e-95b1-9fd1f47c80d8/resource/145e30da-58f3-45db-a125-8adc3fde2620/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T11:54:45.097759+00:00",
+    "sha256": "acff9aebcaa04c26d1fd8beceff1e7a3b95a2d35177ec0bafef08499e1e276ac",
+    "bytes": 521114
+   }
+  ],
+  "n_variables": 106,
+  "n_constraints": 54,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 35
+    },
+    "totals": {}
+   },
+   "issues": [
+    "set 'sites' has 53 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 35. Check which rows you keep and whether duplicates of the same place are merged"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "5418da9405999ef021219acf",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:solve",
+  "delivery:no_solution",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": -239968.0,
+  "baseline_objective": -239968.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 53,
+    "mapped": 53,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "pop",
+    "population_exact_matches": 53,
+    "population_total": 279617.0,
+    "population_truth_total": 279617
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.978,
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "helper variables optimised"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 3,
+    "meets_original_requirements": true,
+    "true_quality": 255941.0,
+    "reference_quality": 241701,
+    "gap_vs_reference": -0.0589
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 127545,
+  "solver_calls": 3
+ },
+ "seconds": 651.5
+}

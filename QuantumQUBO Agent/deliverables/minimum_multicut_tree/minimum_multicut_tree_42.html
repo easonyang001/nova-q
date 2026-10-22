@@ -42,67 +42,75 @@
     <h2 class='subsection'>Minimum Multicut on a Tree</h2>
 
 <h3>Problem Statement</h3>
-Given a weighted tree $T = (V, E)$ with non-negative edge weights $w_e$ for each $e \in E$, and a set of terminal pairs $K = \{(s_k, t_k)\}_{k \in K}$, the Minimum Multicut on a Tree problem seeks a minimum-cost subset of edges $C \subseteq E$ such that for every $k \in K$, the terminals $s_k$ and $t_k$ reside in different connected components of the forest $T \setminus C$.
+Let $T=(V,E)$ be a tree with edge set $E$ and non-negative edge weights $w_e$ for each $e \in E$. Let $\mathcal{P} = \{(s_1, t_1), \dots, (s_k, t_k)\}$ be a set of $k$ terminal pairs, where $s_i, t_i \in V$. The Minimum Multicut on a Tree problem seeks a subset of edges $C \subseteq E$ such that for every pair $(s_i, t_i)$, the nodes $s_i$ and $t_i$ are disconnected in the graph $T \setminus C$, and the total weight $\sum_{e \in C} w_e$ is minimized.
 
 <h3>Decision Variables</h3>
-For each edge $e \in E$, introduce a binary decision variable $x_e \in \{0,1\}$, where $x_e = 1$ indicates that edge $e$ is selected for removal (cut), and $x_e = 0$ indicates that edge $e$ is retained.
+For each edge $e \in E$, we introduce a binary decision variable $x_e \in \{0,1\}$. The variable $x_e$ indicates whether edge $e$ is selected for the cut: $x_e = 1$ if $e \in C$, and $x_e = 0$ otherwise.
 
 <h3>QUBO Derivation</h3>
-<strong>Step 1 --- Original Objective.</strong> The goal is to minimize the total weight of the cut edges:
+<strong>Step 1: Objective Function.</strong>
+The objective is to minimize the total weight of the cut:
 \begin{align}
     \min \sum_{e \in E} w_e x_e.
 \end{align}
 
-<strong>Step 2 --- Original Constraints.</strong> For each terminal pair $k \in K$, let $P_k \subseteq E$ denote the unique simple path between $s_k$ and $t_k$. The separation requirement is enforced by the linear inequalities:
+<strong>Step 2: Constraints.</strong>
+For each terminal pair $(s_i, t_i)$, let $P_i \subseteq E$ denote the unique set of edges on the simple path between $s_i$ and $t_i$ in the tree. The separation constraint requires that at least one edge on this path is cut:
 \begin{align}
-    \sum_{e \in P_k} x_e \ge 1, \quad \forall k \in K.
+    \sum_{e \in P_i} x_e \ge 1, \quad \forall i \in \{1, \dots, k\}.
 \end{align}
 
-<strong>Step 3 --- Penalty Term Conversion.</strong> Since $x_e \in \{0,1\}$, the sum $\sum_{e \in P_k} x_e$ is integer-valued. The constraint is violated if and only if the sum equals $0$. We enforce feasibility via a quadratic penalty with weight $\lambda > 0$:
+<strong>Step 3: Penalty Terms.</strong>
+We convert each inequality constraint to a quadratic penalty term. For a constraint $\sum_{e \in P_i} x_e \ge 1$, the violation occurs when $\sum_{e \in P_i} x_e = 0$. We use the penalty function $\lambda \left(1 - \sum_{e \in P_i} x_e\right)^2$, where $\lambda > 0$ is a penalty weight. Expanding this expression and using the idempotent property $x_e^2 = x_e$ for binary variables:
 \begin{align}
-    \lambda \left( \sum_{e \in P_k} x_e - 1 \right)^2.
+    \lambda \left(1 - \sum_{e \in P_i} x_e\right)^2 &= \lambda \left(1 - 2\sum_{e \in P_i} x_e + \left(\sum_{e \in P_i} x_e\right)^2 \right) \\
+    &= \lambda \left(1 - 2\sum_{e \in P_i} x_e + \sum_{e \in P_i} x_e^2 + \sum_{e,f \in P_i, e \neq f} x_e x_f \right) \\
+    &= \lambda \left(1 - 2\sum_{e \in P_i} x_e + \sum_{e \in P_i} x_e + \sum_{e,f \in P_i, e \neq f} x_e x_f \right) \\
+    &= \lambda \left(1 - \sum_{e \in P_i} x_e + \sum_{e,f \in P_i, e \neq f} x_e x_f \right).
 \end{align}
-Expanding the square yields:
-\begin{align}
-    \lambda \left( \sum_{e \in P_k} x_e^2 + \sum_{\substack{e,f \in P_k \\ e \neq f}} x_e x_f - 2 \sum_{e \in P_k} x_e + 1 \right).
-\end{align}
-Applying the idempotent property $x_e^2 = x_e$ for binary variables simplifies the expression to:
-\begin{align}
-    \lambda \left( 1 - \sum_{e \in P_k} x_e + \sum_{\substack{e,f \in P_k \\ e \neq f}} x_e x_f \right).
-\end{align}
-This is the general penalty contribution for constraint $k$.
+The term $\sum_{e,f \in P_i, e \neq f} x_e x_f$ contains each pair $\{e,f\}$ twice (once as $x_e x_f$ and once as $x_f x_e$). Thus, the quadratic contribution for distinct $e,f \in P_i$ is $2\lambda x_e x_f$. The linear contribution for $e \in P_i$ is $-\lambda x_e$, and the constant contribution is $\lambda$.
 
-<strong>Step 4 --- Combined QUBO Hamiltonian.</strong> Summing the objective and all penalty terms gives the total energy function $H(\mathbf{x})$:
+<strong>Step 4: QUBO Hamiltonian.</strong>
+Combining the objective and all penalty terms, the QUBO Hamiltonian $H(x)$ is:
 \begin{align}
-    H(\mathbf{x}) = \sum_{e \in E} w_e x_e + \sum_{k \in K} \lambda \left( 1 - \sum_{e \in P_k} x_e + \sum_{\substack{e,f \in P_k \\ e \neq f}} x_e x_f \right).
+    H(x) = \sum_{e \in E} w_e x_e + \sum_{i=1}^k \lambda \left(1 - \sum_{e \in P_i} x_e + \sum_{e,f \in P_i, e \neq f} x_e x_f \right).
 \end{align}
 
-<strong>Step 5 --- Q Matrix Entries and Offset.</strong> Collecting coefficients for linear and quadratic terms over all $e, f \in E$ yields the closed-form QUBO parameters:
+<strong>Step 5: Q Matrix and Offset.</strong>
+Collecting coefficients, the QUBO parameters are defined as follows. Let $n_e = |\{i : e \in P_i\}|$ be the number of terminal paths that include edge $e$, and let $n_{e,f} = |\{i : e,f \in P_i\}|$ be the number of terminal paths that include both edges $e$ and $f$. The diagonal entries, off-diagonal entries, and offset are:
 \begin{align}
-    Q_{e,e} &= w_e - \lambda \cdot |\{k \in K : e \in P_k\}|, \quad \forall e \in E, \\
-    Q_{e,f} &= \lambda \cdot |\{k \in K : \{e,f\} \subseteq P_k\}|, \quad \forall e,f \in E, e \neq f, \\
-    c &= \lambda |K|.
+    Q_{e,e} &= w_e - \lambda n_e, \quad \forall e \in E, \\
+    Q_{e,f} &= 2\lambda n_{e,f}, \quad \forall e,f \in E, e \neq f, \\
+    c &= k \lambda.
 \end{align}
-The QUBO is then expressed as $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$.
+The QUBO is then $H(x) = \sum_{e \in E} Q_{e,e} x_e + \sum_{e,f \in E, e < f} Q_{e,f} x_e x_f + c$.
 
 <h3>Penalty Weight Justification</h3>
-Let $W_{\max} = \max_{e \in E} w_e$. Choosing $\lambda > W_{\max}$ ensures that the penalty cost incurred by violating any single constraint strictly exceeds the maximum possible reduction in the objective function achievable by setting any subset of variables to one. More conservatively, $\lambda > \max_{k \in K} \sum_{e \in P_k} w_e$ guarantees that the penalty for infeasibility dominates the total objective value, ensuring that no infeasible configuration can achieve a lower energy than the optimal feasible one.
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any infeasible solution has a higher energy than the optimal feasible solution. A sufficient condition is $\lambda > \max_{e \in E} w_e$. This ensures that the penalty cost $\lambda$ incurred by violating a separation constraint (which occurs when no edge on a path is cut) exceeds the maximum possible objective saving from omitting any single edge from the cut. Consequently, the optimizer is driven to satisfy all constraints.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^{|E|}$ recovers the optimal multicut solution. For any feasible assignment, all constraints are satisfied, causing every penalty term to evaluate to zero; thus $H(\mathbf{x})$ reduces exactly to the original objective function. For any infeasible assignment, at least one constraint is violated, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, this penalty strictly outweighs the maximum possible decrease in the objective function that could result from flipping variables to satisfy the constraint. Consequently, the global minimum of $H(\mathbf{x})$ must occur at a feasible point, and among all feasible points, it minimizes the original objective.
+Minimizing $H(x)$ over $x \in \{0,1\}^{|E|}$ recovers the optimal multicut. For any feasible solution, all constraints are satisfied, so the penalty terms vanish and $H(x)$ equals the objective value. For any infeasible solution, at least one constraint is violated, incurring a penalty of at least $\lambda$. Since $\lambda > \max_{e \in E} w_e$, the penalty strictly dominates any potential reduction in the objective function, guaranteeing that the global minimum of $H(x)$ corresponds to a feasible solution with minimum objective value.
 
 <h3>Illustrative Example</h3>
-Consider a tree with three edges $E = \{e_0, e_1, e_2\}$ and weights $w_0, w_1, w_2$. Suppose there is a single terminal pair ($|K|=1$) whose unique path traverses all three edges, i.e., $P_1 = \{e_0, e_1, e_2\}$. The general formulas instantiate as follows. The objective is $w_0 x_0 + w_1 x_1 + w_2 x_2$. The constraint is $x_0 + x_1 + x_2 \ge 1$. The penalty term expands to $\lambda(1 - x_0 - x_1 - x_2 + 2x_0x_1 + 2x_0x_2 + 2x_1x_2)$. The resulting QUBO Hamiltonian is:
+Consider a tree with two edges $E = \{e_0, e_1\}$ and weights $w_0 = 3$, $w_1 = 5$. Let there be a single terminal pair $(s_1, t_1)$ such that the path between them includes both edges, i.e., $P_1 = \{e_0, e_1\}$. Here $k=1$, $n_{e_0} = 1$, $n_{e_1} = 1$, and $n_{e_0, e_1} = 1$. Choosing $\lambda = 10$ (which satisfies $\lambda > \max\{3, 5\}$), the QUBO parameters are:
 \begin{align}
-    H(\mathbf{x}) = w_0 x_0 + w_1 x_1 + w_2 x_2 + \lambda(1 - x_0 - x_1 - x_2 + 2x_0x_1 + 2x_0x_2 + 2x_1x_2).
+    Q_{e_0, e_0} &= 3 - 10(1) = -7, \\
+    Q_{e_1, e_1} &= 5 - 10(1) = -5, \\
+    Q_{e_0, e_1} &= 2(10)(1) = 20, \\
+    c &= 1 \cdot 10 = 10.
 \end{align}
-The corresponding Q matrix entries and offset are:
+The Hamiltonian is:
 \begin{align}
-    Q_{0,0} &= w_0 - \lambda, \quad Q_{1,1} = w_1 - \lambda, \quad Q_{2,2} = w_2 - \lambda, \\
-    Q_{0,1} = Q_{1,0} &= 2\lambda, \quad Q_{0,2} = Q_{2,0} = 2\lambda, \quad Q_{1,2} = Q_{2,1} = 2\lambda, \\
-    c &= \lambda.
+    H(x) = -7x_0 - 5x_1 + 20x_0 x_1 + 10.
 \end{align}
-Assuming $w_0 \le w_1 \le w_2$, the optimal solution is $x_0 = 1, x_1 = 0, x_2 = 0$, yielding a minimum energy of $H(\mathbf{x}^*) = w_0$. This corresponds to cutting the minimum-weight edge on the path, which correctly separates the terminal pair at minimal cost.
+Evaluating $H(x)$ for all $x \in \{0,1\}^2$:
+<ul>
+    <li> $x=(0,0)$: $H = 10$ (infeasible, penalty 10).
+    <li> $x=(1,0)$: $H = -7 + 10 = 3$ (feasible, cost 3).
+    <li> $x=(0,1)$: $H = -5 + 10 = 5$ (feasible, cost 5).
+    <li> $x=(1,1)$: $H = -7 - 5 + 20 + 10 = 18$ (feasible, cost 8).
+</ul>
+The minimum energy is $3$ at $x=(1,0)$, corresponding to cutting edge $e_0$ with total cost $3$.
   </div>
 
   <div class="src-header">
@@ -114,67 +122,75 @@ Assuming $w_0 \le w_1 \le w_2$, the optimal solution is $x_0 = 1, x_1 = 0, x_2 =
 \subsection*{Minimum Multicut on a Tree}
 
 \paragraph{Problem Statement.}
-Given a weighted tree $T = (V, E)$ with non-negative edge weights $w_e$ for each $e \in E$, and a set of terminal pairs $K = \{(s_k, t_k)\}_{k \in K}$, the Minimum Multicut on a Tree problem seeks a minimum-cost subset of edges $C \subseteq E$ such that for every $k \in K$, the terminals $s_k$ and $t_k$ reside in different connected components of the forest $T \setminus C$.
+Let $T=(V,E)$ be a tree with edge set $E$ and non-negative edge weights $w_e$ for each $e \in E$. Let $\mathcal{P} = \{(s_1, t_1), \dots, (s_k, t_k)\}$ be a set of $k$ terminal pairs, where $s_i, t_i \in V$. The Minimum Multicut on a Tree problem seeks a subset of edges $C \subseteq E$ such that for every pair $(s_i, t_i)$, the nodes $s_i$ and $t_i$ are disconnected in the graph $T \setminus C$, and the total weight $\sum_{e \in C} w_e$ is minimized.
 
 \paragraph{Decision Variables.}
-For each edge $e \in E$, introduce a binary decision variable $x_e \in \{0,1\}$, where $x_e = 1$ indicates that edge $e$ is selected for removal (cut), and $x_e = 0$ indicates that edge $e$ is retained.
+For each edge $e \in E$, we introduce a binary decision variable $x_e \in \{0,1\}$. The variable $x_e$ indicates whether edge $e$ is selected for the cut: $x_e = 1$ if $e \in C$, and $x_e = 0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 --- Original Objective.} The goal is to minimize the total weight of the cut edges:
+\textbf{Step 1: Objective Function.}
+The objective is to minimize the total weight of the cut:
 \begin{align}
     \min \sum_{e \in E} w_e x_e.
 \end{align}
 
-\textbf{Step 2 --- Original Constraints.} For each terminal pair $k \in K$, let $P_k \subseteq E$ denote the unique simple path between $s_k$ and $t_k$. The separation requirement is enforced by the linear inequalities:
+\textbf{Step 2: Constraints.}
+For each terminal pair $(s_i, t_i)$, let $P_i \subseteq E$ denote the unique set of edges on the simple path between $s_i$ and $t_i$ in the tree. The separation constraint requires that at least one edge on this path is cut:
 \begin{align}
-    \sum_{e \in P_k} x_e \ge 1, \quad \forall k \in K.
+    \sum_{e \in P_i} x_e \ge 1, \quad \forall i \in \{1, \dots, k\}.
 \end{align}
 
-\textbf{Step 3 --- Penalty Term Conversion.} Since $x_e \in \{0,1\}$, the sum $\sum_{e \in P_k} x_e$ is integer-valued. The constraint is violated if and only if the sum equals $0$. We enforce feasibility via a quadratic penalty with weight $\lambda &gt; 0$:
+\textbf{Step 3: Penalty Terms.}
+We convert each inequality constraint to a quadratic penalty term. For a constraint $\sum_{e \in P_i} x_e \ge 1$, the violation occurs when $\sum_{e \in P_i} x_e = 0$. We use the penalty function $\lambda \left(1 - \sum_{e \in P_i} x_e\right)^2$, where $\lambda &gt; 0$ is a penalty weight. Expanding this expression and using the idempotent property $x_e^2 = x_e$ for binary variables:
 \begin{align}
-    \lambda \left( \sum_{e \in P_k} x_e - 1 \right)^2.
+    \lambda \left(1 - \sum_{e \in P_i} x_e\right)^2 &amp;= \lambda \left(1 - 2\sum_{e \in P_i} x_e + \left(\sum_{e \in P_i} x_e\right)^2 \right) \\
+    &amp;= \lambda \left(1 - 2\sum_{e \in P_i} x_e + \sum_{e \in P_i} x_e^2 + \sum_{e,f \in P_i, e \neq f} x_e x_f \right) \\
+    &amp;= \lambda \left(1 - 2\sum_{e \in P_i} x_e + \sum_{e \in P_i} x_e + \sum_{e,f \in P_i, e \neq f} x_e x_f \right) \\
+    &amp;= \lambda \left(1 - \sum_{e \in P_i} x_e + \sum_{e,f \in P_i, e \neq f} x_e x_f \right).
 \end{align}
-Expanding the square yields:
-\begin{align}
-    \lambda \left( \sum_{e \in P_k} x_e^2 + \sum_{\substack{e,f \in P_k \\ e \neq f}} x_e x_f - 2 \sum_{e \in P_k} x_e + 1 \right).
-\end{align}
-Applying the idempotent property $x_e^2 = x_e$ for binary variables simplifies the expression to:
-\begin{align}
-    \lambda \left( 1 - \sum_{e \in P_k} x_e + \sum_{\substack{e,f \in P_k \\ e \neq f}} x_e x_f \right).
-\end{align}
-This is the general penalty contribution for constraint $k$.
+The term $\sum_{e,f \in P_i, e \neq f} x_e x_f$ contains each pair $\{e,f\}$ twice (once as $x_e x_f$ and once as $x_f x_e$). Thus, the quadratic contribution for distinct $e,f \in P_i$ is $2\lambda x_e x_f$. The linear contribution for $e \in P_i$ is $-\lambda x_e$, and the constant contribution is $\lambda$.
 
-\textbf{Step 4 --- Combined QUBO Hamiltonian.} Summing the objective and all penalty terms gives the total energy function $H(\mathbf{x})$:
+\textbf{Step 4: QUBO Hamiltonian.}
+Combining the objective and all penalty terms, the QUBO Hamiltonian $H(x)$ is:
 \begin{align}
-    H(\mathbf{x}) = \sum_{e \in E} w_e x_e + \sum_{k \in K} \lambda \left( 1 - \sum_{e \in P_k} x_e + \sum_{\substack{e,f \in P_k \\ e \neq f}} x_e x_f \right).
+    H(x) = \sum_{e \in E} w_e x_e + \sum_{i=1}^k \lambda \left(1 - \sum_{e \in P_i} x_e + \sum_{e,f \in P_i, e \neq f} x_e x_f \right).
 \end{align}
 
-\textbf{Step 5 --- Q Matrix Entries and Offset.} Collecting coefficients for linear and quadratic terms over all $e, f \in E$ yields the closed-form QUBO parameters:
+\textbf{Step 5: Q Matrix and Offset.}
+Collecting coefficients, the QUBO parameters are defined as follows. Let $n_e = |\{i : e \in P_i\}|$ be the number of terminal paths that include edge $e$, and let $n_{e,f} = |\{i : e,f \in P_i\}|$ be the number of terminal paths that include both edges $e$ and $f$. The diagonal entries, off-diagonal entries, and offset are:
 \begin{align}
-    Q_{e,e} &amp;= w_e - \lambda \cdot |\{k \in K : e \in P_k\}|, \quad \forall e \in E, \\
-    Q_{e,f} &amp;= \lambda \cdot |\{k \in K : \{e,f\} \subseteq P_k\}|, \quad \forall e,f \in E, e \neq f, \\
-    c &amp;= \lambda |K|.
+    Q_{e,e} &amp;= w_e - \lambda n_e, \quad \forall e \in E, \\
+    Q_{e,f} &amp;= 2\lambda n_{e,f}, \quad \forall e,f \in E, e \neq f, \\
+    c &amp;= k \lambda.
 \end{align}
-The QUBO is then expressed as $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$.
+The QUBO is then $H(x) = \sum_{e \in E} Q_{e,e} x_e + \sum_{e,f \in E, e &lt; f} Q_{e,f} x_e x_f + c$.
 
 \paragraph{Penalty Weight Justification.}
-Let $W_{\max} = \max_{e \in E} w_e$. Choosing $\lambda &gt; W_{\max}$ ensures that the penalty cost incurred by violating any single constraint strictly exceeds the maximum possible reduction in the objective function achievable by setting any subset of variables to one. More conservatively, $\lambda &gt; \max_{k \in K} \sum_{e \in P_k} w_e$ guarantees that the penalty for infeasibility dominates the total objective value, ensuring that no infeasible configuration can achieve a lower energy than the optimal feasible one.
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any infeasible solution has a higher energy than the optimal feasible solution. A sufficient condition is $\lambda &gt; \max_{e \in E} w_e$. This ensures that the penalty cost $\lambda$ incurred by violating a separation constraint (which occurs when no edge on a path is cut) exceeds the maximum possible objective saving from omitting any single edge from the cut. Consequently, the optimizer is driven to satisfy all constraints.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^{|E|}$ recovers the optimal multicut solution. For any feasible assignment, all constraints are satisfied, causing every penalty term to evaluate to zero; thus $H(\mathbf{x})$ reduces exactly to the original objective function. For any infeasible assignment, at least one constraint is violated, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, this penalty strictly outweighs the maximum possible decrease in the objective function that could result from flipping variables to satisfy the constraint. Consequently, the global minimum of $H(\mathbf{x})$ must occur at a feasible point, and among all feasible points, it minimizes the original objective.
+Minimizing $H(x)$ over $x \in \{0,1\}^{|E|}$ recovers the optimal multicut. For any feasible solution, all constraints are satisfied, so the penalty terms vanish and $H(x)$ equals the objective value. For any infeasible solution, at least one constraint is violated, incurring a penalty of at least $\lambda$. Since $\lambda &gt; \max_{e \in E} w_e$, the penalty strictly dominates any potential reduction in the objective function, guaranteeing that the global minimum of $H(x)$ corresponds to a feasible solution with minimum objective value.
 
 \paragraph{Illustrative Example.}
-Consider a tree with three edges $E = \{e_0, e_1, e_2\}$ and weights $w_0, w_1, w_2$. Suppose there is a single terminal pair ($|K|=1$) whose unique path traverses all three edges, i.e., $P_1 = \{e_0, e_1, e_2\}$. The general formulas instantiate as follows. The objective is $w_0 x_0 + w_1 x_1 + w_2 x_2$. The constraint is $x_0 + x_1 + x_2 \ge 1$. The penalty term expands to $\lambda(1 - x_0 - x_1 - x_2 + 2x_0x_1 + 2x_0x_2 + 2x_1x_2)$. The resulting QUBO Hamiltonian is:
+Consider a tree with two edges $E = \{e_0, e_1\}$ and weights $w_0 = 3$, $w_1 = 5$. Let there be a single terminal pair $(s_1, t_1)$ such that the path between them includes both edges, i.e., $P_1 = \{e_0, e_1\}$. Here $k=1$, $n_{e_0} = 1$, $n_{e_1} = 1$, and $n_{e_0, e_1} = 1$. Choosing $\lambda = 10$ (which satisfies $\lambda &gt; \max\{3, 5\}$), the QUBO parameters are:
 \begin{align}
-    H(\mathbf{x}) = w_0 x_0 + w_1 x_1 + w_2 x_2 + \lambda(1 - x_0 - x_1 - x_2 + 2x_0x_1 + 2x_0x_2 + 2x_1x_2).
+    Q_{e_0, e_0} &amp;= 3 - 10(1) = -7, \\
+    Q_{e_1, e_1} &amp;= 5 - 10(1) = -5, \\
+    Q_{e_0, e_1} &amp;= 2(10)(1) = 20, \\
+    c &amp;= 1 \cdot 10 = 10.
 \end{align}
-The corresponding Q matrix entries and offset are:
+The Hamiltonian is:
 \begin{align}
-    Q_{0,0} &amp;= w_0 - \lambda, \quad Q_{1,1} = w_1 - \lambda, \quad Q_{2,2} = w_2 - \lambda, \\
-    Q_{0,1} = Q_{1,0} &amp;= 2\lambda, \quad Q_{0,2} = Q_{2,0} = 2\lambda, \quad Q_{1,2} = Q_{2,1} = 2\lambda, \\
-    c &amp;= \lambda.
+    H(x) = -7x_0 - 5x_1 + 20x_0 x_1 + 10.
 \end{align}
-Assuming $w_0 \le w_1 \le w_2$, the optimal solution is $x_0 = 1, x_1 = 0, x_2 = 0$, yielding a minimum energy of $H(\mathbf{x}^*) = w_0$. This corresponds to cutting the minimum-weight edge on the path, which correctly separates the terminal pair at minimal cost.</pre>
+Evaluating $H(x)$ for all $x \in \{0,1\}^2$:
+\begin{itemize}
+    \item $x=(0,0)$: $H = 10$ (infeasible, penalty 10).
+    \item $x=(1,0)$: $H = -7 + 10 = 3$ (feasible, cost 3).
+    \item $x=(0,1)$: $H = -5 + 10 = 5$ (feasible, cost 5).
+    \item $x=(1,1)$: $H = -7 - 5 + 20 + 10 = 18$ (feasible, cost 8).
+\end{itemize}
+The minimum energy is $3$ at $x=(1,0)$, corresponding to cutting edge $e_0$ with total cost $3$.</pre>
 
   <script>
     function copyLatex(btn) {

@@ -10,81 +10,124 @@
 \subsection*{DNA Read Ordering Problem for Genome Assembly}
 
 \paragraph{Problem Statement.}
-Given a set of $N$ DNA reads and an $N \times N$ pairwise overlap matrix $O$, where $O_{i,j}$ denotes the length of the longest suffix of read $i$ that matches a prefix of read $j$, the objective is to determine a linear ordering of all reads that maximizes the total overlap between consecutive reads in the sequence. Formally, we seek a permutation $\pi$ of $\{0, \dots, N-1\}$ that maximizes $\sum_{k=0}^{N-2} O_{\pi(k), \pi(k+1)}$.
+Given a set of $N$ DNA reads indexed by $i \in \{0, \dots, N-1\}$, let $O_{ij}$ denote the overlap score between read $i$ and read $j$, defined as the length of the longest suffix of read $i$ that matches a prefix of read $j$. The goal is to find a linear ordering of all reads that maximizes the total overlap between consecutive reads in the sequence. Formally, we seek a permutation $\pi$ of $\{0, \dots, N-1\}$ that maximizes the objective function:
+\begin{equation}
+    Z(\pi) = \sum_{k=0}^{N-2} O_{\pi(k), \pi(k+1)}.
+\end{equation}
+This problem is equivalent to finding a Hamiltonian path in a complete directed graph with edge weights $O_{ij}$ that maximizes the total weight.
 
 \paragraph{Decision Variables.}
-For each read index $i \in \{0, \dots, N-1\}$ and each position index $k \in \{0, \dots, N-1\}$, we introduce a binary decision variable $x_{i,k} \in \{0,1\}$. The variable $x_{i,k}$ equals $1$ if and only if read $i$ is assigned to position $k$ in the final ordering; otherwise, $x_{i,k} = 0$. The total number of variables is $N^2$.
+We introduce binary variables $x_{i,k} \in \{0,1\}$ for all $i \in \{0, \dots, N-1\}$ and $k \in \{0, \dots, N-1\}$, where:
+\begin{equation}
+    x_{i,k} = \begin{cases}
+        1 & \text{if read } i \text{ is placed at position } k \text{ in the ordering}, \\
+        0 & \text{otherwise}.
+    \end{cases}
+\end{equation}
+The variables form an $N \times N$ assignment matrix. A valid solution corresponds to a permutation matrix.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1.} The original objective is to maximize the sum of consecutive overlaps. To cast this as a minimization problem suitable for QUBO, we negate the objective function:
+We construct a Quadratic Unconstrained Binary Optimization (QUBO) formulation by converting the maximization problem into a minimization problem and incorporating constraints as quadratic penalty terms.
+
+\textbf{Step 1: Objective Function.}
+Maximizing $Z$ is equivalent to minimizing its negative. Substituting the variables $x_{i,k}$, the objective Hamiltonian is:
+\begin{equation}
+    H_{\text{obj}} = -\sum_{k=0}^{N-2} \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} O_{ij} \, x_{i,k} \, x_{j,k+1}.
+\end{equation}
+The sum over $k$ runs from $0$ to $N-2$ because the last position $N-1$ has no successor in the path.
+
+\textbf{Step 2: Constraints.}
+The assignment must satisfy two equality constraints:
 \begin{align}
-H_{\text{obj}}(x) = -\sum_{k=0}^{N-2} \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} O_{i,j} \, x_{i,k} \, x_{j,k+1}.
+    \sum_{k=0}^{N-1} x_{i,k} &= 1, \quad \forall i \in \{0, \dots, N-1\} \quad \text{(each read assigned once)}, \\
+    \sum_{i=0}^{N-1} x_{i,k} &= 1, \quad \forall k \in \{0, \dots, N-1\} \quad \text{(each position filled once)}.
 \end{align}
 
-\textbf{Step 2.} The assignment must satisfy two sets of equality constraints. First, each read must appear exactly once:
+\textbf{Step 3: Penalty Terms.}
+We introduce a penalty weight $\lambda > 0$ and convert constraints to quadratic penalties. Using the idempotent property $x_{i,k}^2 = x_{i,k}$ for binary variables, we expand the squared penalty terms.
+
+For the first constraint (each read once), the penalty contribution for read $i$ is:
 \begin{align}
-\sum_{k=0}^{N-1} x_{i,k} = 1, \quad \forall i \in \{0, \dots, N-1\}.
+    P_i^{(1)} &= \lambda \left( \sum_{k=0}^{N-1} x_{i,k} - 1 \right)^2 \\
+    &= \lambda \left( \sum_{k=0}^{N-1} x_{i,k}^2 + \sum_{\substack{k,l=0 \\ k \neq l}}^{N-1} x_{i,k} x_{i,l} - 2 \sum_{k=0}^{N-1} x_{i,k} + 1 \right) \\
+    &= \lambda \left( \sum_{k=0}^{N-1} x_{i,k} + \sum_{\substack{k,l=0 \\ k \neq l}}^{N-1} x_{i,k} x_{i,l} - 2 \sum_{k=0}^{N-1} x_{i,k} + 1 \right) \\
+    &= \lambda \left( 1 - \sum_{k=0}^{N-1} x_{i,k} + \sum_{\substack{k,l=0 \\ k \neq l}}^{N-1} x_{i,k} x_{i,l} \right).
 \end{align}
-Second, each position must be occupied by exactly one read:
+Summing over all reads $i$, the total penalty for the first constraint is:
+\begin{equation}
+    H_{\text{pen}}^{(1)} = \lambda \sum_{i=0}^{N-1} \left( 1 - \sum_{k=0}^{N-1} x_{i,k} + \sum_{\substack{k,l=0 \\ k \neq l}}^{N-1} x_{i,k} x_{i,l} \right).
+\end{equation}
+
+Similarly, for the second constraint (each position once), the penalty contribution for position $k$ is:
 \begin{align}
-\sum_{i=0}^{N-1} x_{i,k} = 1, \quad \forall k \in \{0, \dots, N-1\}.
+    P_k^{(2)} &= \lambda \left( \sum_{i=0}^{N-1} x_{i,k} - 1 \right)^2 \\
+    &= \lambda \left( 1 - \sum_{i=0}^{N-1} x_{i,k} + \sum_{\substack{i,j=0 \\ i \neq j}}^{N-1} x_{i,k} x_{j,k} \right).
+\end{align}
+Summing over all positions $k$, the total penalty for the second constraint is:
+\begin{equation}
+    H_{\text{pen}}^{(2)} = \lambda \sum_{k=0}^{N-1} \left( 1 - \sum_{i=0}^{N-1} x_{i,k} + \sum_{\substack{i,j=0 \\ i \neq j}}^{N-1} x_{i,k} x_{j,k} \right).
+\end{equation}
+
+\textbf{Step 4: Combined Hamiltonian.}
+The total QUBO Hamiltonian $H(x)$ is the sum of the objective and penalty terms:
+\begin{equation}
+    H(x) = H_{\text{obj}} + H_{\text{pen}}^{(1)} + H_{\text{pen}}^{(2)}.
+\end{equation}
+Substituting the expressions:
+\begin{align}
+    H(x) &= -\sum_{k=0}^{N-2} \sum_{i,j} O_{ij} x_{i,k} x_{j,k+1} \nonumber \\
+    &\quad + \lambda \sum_{i} \left( 1 - \sum_{k} x_{i,k} + \sum_{\substack{k,l \\ k \neq l}} x_{i,k} x_{i,l} \right) \nonumber \\
+    &\quad + \lambda \sum_{k} \left( 1 - \sum_{i} x_{i,k} + \sum_{\substack{i,j \\ i \neq j}} x_{i,k} x_{j,k} \right).
 \end{align}
 
-\textbf{Step 3.} We convert the equality constraints into quadratic penalty terms using a positive weight $\lambda$. For the read-assignment constraints, the penalty for a fixed $i$ is:
+\textbf{Step 5: Q Matrix Entries and Offset.}
+We express $H(x)$ in the standard QUBO form $H(x) = \sum_{u,v} Q_{u,v} x_u x_v + c$, where the variables are indexed by a single index $u = iN+k$. The constant offset $c$ collects all terms independent of $x$:
+\begin{equation}
+    c = \lambda \sum_{i=0}^{N-1} 1 + \lambda \sum_{k=0}^{N-1} 1 = N\lambda + N\lambda = 2N\lambda.
+\end{equation}
+The linear terms $x_{i,k}$ arise from $-\lambda \sum_i \sum_k x_{i,k}$ and $-\lambda \sum_k \sum_i x_{i,k}$, yielding a coefficient of $-2\lambda$ for each $x_{i,k}$. Thus, the diagonal entries of $Q$ are:
+\begin{equation}
+    Q_{(i,k),(i,k)} = -2\lambda, \quad \forall i,k.
+\end{equation}
+The quadratic terms $x_{i,k} x_{j,l}$ with $(i,k) \neq (j,l)$ arise from the penalty expansions and the objective. Collecting coefficients:
 \begin{align}
-\lambda \left( \sum_{k=0}^{N-1} x_{i,k} - 1 \right)^2.
+    Q_{(i,k),(i,l)} &= \lambda, \quad \forall i, \, \forall k \neq l, \\
+    Q_{(i,k),(j,k)} &= \lambda, \quad \forall k, \, \forall i \neq j, \\
+    Q_{(i,k),(j,k+1)} &= -O_{ij}, \quad \forall k \in \{0, \dots, N-2\}, \, \forall i,j.
 \end{align}
-Expanding the square and applying the idempotent property $x_{i,k}^2 = x_{i,k}$ for binary variables yields:
-\begin{align}
-\lambda \left( \sum_{k=0}^{N-1} x_{i,k}^2 + \sum_{k \neq l} x_{i,k} x_{i,l} - 2\sum_{k=0}^{N-1} x_{i,k} + 1 \right) = \lambda \left( 1 - \sum_{k=0}^{N-1} x_{i,k} + \sum_{k \neq l} x_{i,k} x_{i,l} \right).
-\end{align}
-An identical expansion applies to the position-assignment constraints for a fixed $k$:
-\begin{align}
-\lambda \left( \sum_{i=0}^{N-1} x_{i,k} - 1 \right)^2 = \lambda \left( 1 - \sum_{i=0}^{N-1} x_{i,k} + \sum_{i \neq j} x_{i,k} x_{j,k} \right).
-\end{align}
-
-\textbf{Step 4.} Combining the objective and all penalty terms gives the full QUBO Hamiltonian $H(x)$:
-\begin{align}
-H(x) &= -\sum_{k=0}^{N-2} \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} O_{i,j} \, x_{i,k} \, x_{j,k+1} \nonumber \\
-&\quad + \lambda \sum_{i=0}^{N-1} \left( 1 - \sum_{k=0}^{N-1} x_{i,k} + \sum_{k \neq l} x_{i,k} x_{i,l} \right) \nonumber \\
-&\quad + \lambda \sum_{k=0}^{N-1} \left( 1 - \sum_{i=0}^{N-1} x_{i,k} + \sum_{i \neq j} x_{i,k} x_{j,k} \right).
-\end{align}
-
-\textbf{Step 5.} Collecting linear and quadratic terms, and using the symmetric QUBO representation $H(x) = \sum_{p \le q} Q_{p,q} x_p x_q + c$, we read off the matrix entries and offset. Variables are indexed by pairs $(i,k)$. The Q matrix entries are:
-\begin{align}
-Q_{(i,k),(j,l)} &= 
-\begin{cases} 
--O_{i,j} & \text{if } l = k+1 \text{ and } 0 \le k \le N-2, \\
--\lambda & \text{if } i=j \text{ and } k=l, \\
-2\lambda & \text{if } i=j \text{ and } k \neq l, \\
-2\lambda & \text{if } k=l \text{ and } i \neq j, \\
-0 & \text{otherwise}.
-\end{cases} \\
-c &= 2N\lambda.
-\end{align}
+All other entries $Q_{(i,k),(j,l)}$ are zero. The matrix $Q$ is symmetric, so $Q_{(j,k+1),(i,k)} = -O_{ij}$.
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen strictly greater than the maximum magnitude of any overlap score: $\lambda > \max_{i,j} |O_{i,j}|$. This condition guarantees that any violation of the assignment constraints incurs a penalty energy strictly larger than the maximum possible reduction in the objective function. Since the objective coefficients are bounded by $\max |O_{i,j}|$, a larger $\lambda$ ensures that the energy landscape penalizes infeasible configurations more heavily than any feasible configuration can benefit from the objective terms.
+Let $W = \max_{i,j} |O_{ij}|$ be the maximum absolute overlap score. We require $\lambda > W$. This choice ensures that the penalty cost for violating any constraint strictly exceeds the maximum possible gain in the objective function from any single adjacency term. Specifically, the minimum energy increase due to a constraint violation is $\lambda$, while the maximum reduction in the objective (increase in overlap) from any edge is bounded by $W$. Thus, $\lambda > W$ guarantees that the global minimum of $H(x)$ cannot occur at an infeasible point, as any infeasible solution would incur a penalty strictly greater than the best possible objective improvement.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^{N^2}$ recovers the optimal read ordering because feasible solutions satisfy all constraints, causing all penalty terms to vanish and yielding $H(x) = H_{\text{obj}}(x)$. Infeasible solutions violate at least one constraint, incurring a penalty of at least $\lambda$. By the choice $\lambda > \max |O_{i,j}|$, the energy of any infeasible configuration strictly exceeds the energy of the best feasible configuration. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that minimizes $H_{\text{obj}}(x)$, which is equivalent to maximizing the original overlap sum.
+Minimizing $H(x)$ over $x \in \{0,1\}^{N^2}$ recovers the optimal read ordering. For any feasible assignment $x$, the penalty terms vanish, and $H(x) = H_{\text{obj}}(x) = -Z(x)$. Thus, minimizing $H$ over feasible solutions is equivalent to maximizing the total overlap $Z$. For any infeasible $x$, at least one constraint is violated, resulting in a penalty term of at least $\lambda$. Since $\lambda > W$ and the maximum possible objective value is bounded, the energy of any infeasible solution is strictly greater than that of the optimal feasible solution. Consequently, the global minimum of $H(x)$ corresponds to a feasible permutation that maximizes the total overlap.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=3$ reads. The overlap matrix is:
-\[
-O = \begin{pmatrix}
-0 & 2 & 1 \\
-1 & 0 & 3 \\
-2 & 1 & 0
-\end{pmatrix}.
-\]
-The $9$ binary variables are linearly mapped to indices $0,\dots,8$ via $x_{i,k} \mapsto x_{3i+k}$. Substituting $N=3$ and the matrix entries into the general formulas yields the concrete Hamiltonian:
-\begin{align}
-H(x) &= -2x_{0,0}x_{0,1} - x_{0,0}x_{0,2} - x_{0,1}x_{1,2} - 3x_{1,1}x_{1,2} - 2x_{2,0}x_{2,1} - x_{2,0}x_{2,2} \nonumber \\
-&\quad + \lambda \sum_{i=0}^{2} \left( 1 - \sum_{k=0}^{2} x_{i,k} + \sum_{k \neq l} x_{i,k} x_{i,l} \right) + \lambda \sum_{k=0}^{2} \left( 1 - \sum_{i=0}^{2} x_{i,k} + \sum_{i \neq j} x_{i,k} x_{j,k} \right).
-\end{align}
-Using the Q matrix structure, the non-zero off-diagonal objective terms correspond to $Q_{0,1} = -2$, $Q_{0,2} = -1$, $Q_{4,5} = -3$, $Q_{6,7} = -2$, $Q_{6,8} = -1$ (all others zero). The diagonal entries are $Q_{p,p} = -\lambda$ for $p \in \{0,\dots,8\}$, and all same-row/same-column off-diagonals are $2\lambda$. The constant offset is $c = 6\lambda$.
+Consider an instance with $N=3$ reads $r_0, r_1, r_2$. Suppose the overlap matrix $O$ is given by:
+\begin{equation}
+    O = \begin{pmatrix}
+        0 & 2 & 0 \\
+        0 & 0 & 2 \\
+        0 & 0 & 0
+    \end{pmatrix},
+\end{equation}
+where $O_{0,1}=2$ and $O_{1,2}=2$, indicating overlaps $r_0 \to r_1$ and $r_1 \to r_2$. Let $\lambda = 3$, satisfying $\lambda > \max |O_{ij}| = 2$.
 
-For the feasible assignment corresponding to the ordering $r_0 \to r_1 \to r_2$, we set $x_{0,0}=1$, $x_{1,1}=1$, $x_{2,2}=1$ and all other $x$ to $0$. The penalty terms evaluate to zero. The objective energy is $H_{\text{obj}} = -(O_{0,1} + O_{1,2}) = -(2 + 3) = -5$. Thus, $H(x) = -5 + 6\lambda$. Any permutation violating the assignment constraints would incur a penalty of at least $\lambda$, resulting in an energy $\ge -5 + 7\lambda > -5 + 6\lambda$ (since $\lambda > 3$). Hence, the global minimum correctly identifies the optimal ordering.
+The offset is $c = 2N\lambda = 6 \times 3 = 18$.
+The diagonal entries are $Q_{(i,k),(i,k)} = -2\lambda = -6$.
+The penalty off-diagonals are $Q_{(i,k),(i,l)} = 3$ for $k \neq l$ and $Q_{(i,k),(j,k)} = 3$ for $i \neq j$.
+The objective terms are $Q_{(0,0),(1,1)} = -O_{0,1} = -2$ and $Q_{(1,1),(2,2)} = -O_{1,2} = -2$.
+
+The Hamiltonian includes terms such as:
+\begin{align}
+    H(x) &= 18 - 6 \sum_{i,k} x_{i,k} + 3 \sum_{i} \sum_{k \neq l} x_{i,k} x_{i,l} + 3 \sum_{k} \sum_{i \neq j} x_{i,k} x_{j,k} \nonumber \\
+    &\quad - 2 x_{0,0} x_{1,1} - 2 x_{1,1} x_{2,2}.
+\end{align}
+The optimal solution corresponds to the ordering $r_0 \to r_1 \to r_2$, represented by $x_{0,0}=1, x_{1,1}=1, x_{2,2}=1$ (all other $x_{i,k}=0$). The energy is:
+\begin{equation}
+    H(x^*) = 18 - 6(3) + 0 + 0 - 2(1) - 2(1) = 18 - 18 - 4 = -4.
+\end{equation}
+This matches the negative of the total overlap $Z = 2+2=4$. Any infeasible assignment would yield $H(x) \ge 3$, confirming optimality.
 
 \end{document}

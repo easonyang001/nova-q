@@ -1,0 +1,2 @@
+benchmark,seed,status,tests_passed,total_tests,wall_time_s,tokens_used,total_llm_cost,planner_retries,formulizer_retries,coder_retries,debugger_retries,failure_modes
+max_cut,42,success,8,8,84.2,17581,0.0000,0,0,0,0,

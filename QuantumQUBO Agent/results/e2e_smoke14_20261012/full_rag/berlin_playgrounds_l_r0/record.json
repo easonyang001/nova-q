@@ -1,0 +1,130 @@
+{
+ "case": "berlin_playgrounds_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 119.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 103.6
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 339.9,
+   "error": "ValueError: checker failed: evaluate rejects a solution from your own sample_decisions: ['opened 2 sites, required exactly 8']"
+  },
+  "data": {
+   "ok": false,
+   "seconds": 885.7,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: Missing tables for LOR planning area centers (candidates) and block centers with population (blocks).\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 166, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 99, in load_data\nValueError: DATA GAP: Missing tables for LOR planning area centers (candidates) and block centers with population (blocks).\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact binary formulation with helper coverage indicators. Uses x_j for candidates and y_i for blocks. Constraints enforce cardinality and coverage logic. Total variables ~2500, fits backend limit of 3600.",
+ "schema": {
+  "sets": {
+   "candidates": {
+    "meaning": "Candidate location ID",
+    "source": "public",
+    "reducible": null
+   },
+   "blocks": {
+    "meaning": "Block ID",
+    "source": "public",
+    "reducible": null
+   }
+  },
+  "params": {
+   "block_pop": {
+    "meaning": "Population of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "is_uncovered": {
+    "meaning": "1 if block is currently uncovered",
+    "index": [
+     "blocks"
+    ],
+    "type": "binary",
+    "source": "public"
+   },
+   "candidate_lat": {
+    "meaning": "Latitude of candidate",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "candidate_lon": {
+    "meaning": "Longitude of candidate",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_lat": {
+    "meaning": "Latitude of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "block_lon": {
+    "meaning": "Longitude of block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "coverage": {
+    "meaning": "1 if candidate covers block",
+    "index": [
+     "candidates",
+     "blocks"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true
+   }
+  }
+ },
+ "data_found": [
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 229332,
+  "solver_calls": null
+ },
+ "seconds": 1448.7
+}

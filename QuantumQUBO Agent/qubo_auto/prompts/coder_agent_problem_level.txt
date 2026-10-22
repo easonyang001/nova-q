@@ -1,0 +1,33 @@
+Write Python code for this QUBO formulation: a function that builds the Q matrix, and a function that decodes
+a binary vector back into a solution of the original problem.
+
+Spec: {spec_json}
+
+Formulation: {formulation_json}
+
+{sample_instance}
+
+Solution format (what decode must return, as a JSON-serialisable value):
+{solution_format}
+
+Requirements:
+- `def build_qubo(instance: dict) -> tuple[np.ndarray, float]` returns (Q, offset).
+- n = number of binary variables, computed at runtime from the instance (e.g. via the formula in variable_mapping);
+  the formulation's n_variables field is an example for one size only, never a literal to copy.
+- Q is an UPPER TRIANGULAR numpy array of shape (n, n). Diagonal term [i]: add to Q[i,i]. Off-diagonal term
+  [i,j], i != j: add the FULL coefficient to Q[min(i,j), max(i,j)]; leave Q[max,min] = 0.
+- Substitute symbolic coefficients and a symbolic offset with values computed from the instance.
+- `def decode(instance: dict, x: list[int])` receives one binary vector of length n in the same variable layout
+  build_qubo uses and returns the solution it represents, in the solution format above. It only reads x
+  (auxiliary/slack variables are ignored); it never repairs or optimises.
+- No imports beyond numpy.
+
+Energy convention: x^T Q x = sum_i Q[i,i] x_i + sum_{i<j} Q[i,j] x_i x_j.
+
+How it is tested: on small instances, every binary vector x is enumerated, every x with the minimum value of
+x^T Q x + offset is decoded with your decode(), and an independent checker of the original problem verifies that
+each decoded solution is feasible and optimal.
+
+{previous_feedback}
+
+Output: Python code only, both functions in a single ```python ... ``` block. No other text.

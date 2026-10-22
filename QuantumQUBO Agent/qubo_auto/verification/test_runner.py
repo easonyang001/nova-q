@@ -1,6 +1,5 @@
 from __future__ import annotations
 import traceback
-from itertools import product
 from typing import Callable
 
 import numpy as np
@@ -8,6 +7,9 @@ import numpy as np
 from ..schemas import QUBOFormulation, StructuredSpec, TestInstanceResult
 from .brute_force import validate_Q
 from .test_cases import TestCase
+
+MAX_BRUTE_FORCE_VARS = 26     # 2^26 = 67M energies, vectorised: well under a minute
+_CHUNK = 1 << 18              # bitstrings evaluated per numpy batch (keeps memory bounded)
 
 
 def run_tests(
@@ -21,6 +23,8 @@ def run_tests(
       - "success" if all cases pass
       - "coding_error" if Q construction fails or shape/triangularity wrong
       - "formulation_error" if Q is valid but its argmin disagrees with ground truth
+      - "unverifiable" if the only problem is a case too large to enumerate: not the code's fault,
+        so it must not be sent back to the Coder (it cannot change the test cases)
     """
     results: list[TestInstanceResult] = []
     for i, case in enumerate(test_cases):
@@ -32,6 +36,8 @@ def run_tests(
 
     coding_errors = sum(1 for r in results if r.status == "coding_error")
     formulation_errors = sum(1 for r in results if r.status == "formulation_error")
+    if coding_errors == formulation_errors == 0:
+        return results, "unverifiable"
     if coding_errors >= formulation_errors:
         return results, "coding_error"
     return results, "formulation_error"
@@ -75,16 +81,16 @@ def _run_single(
         )
 
     n = case.n_variables
+    if n > MAX_BRUTE_FORCE_VARS:        # 2^n enumeration would never finish (one benchmark hung for hours)
+        return TestInstanceResult(
+            instance_id=instance_id,
+            status="unverifiable",
+            error_message=(f"[{case.name}] {n} variables is too many for brute-force verification "
+                           f"(limit {MAX_BRUTE_FORCE_VARS}); the test case is too large, not a code error"),
+            match=False,
+        )
 
-    # Enumerate all 2^n strings, compute QUBO energy
-    qubo_energies: dict[tuple, float] = {}
-    for bits in product([0, 1], repeat=n):
-        x = np.array(bits, dtype=float)
-        qubo_energies[bits] = float(x @ Q @ x) + offset
-
-    qubo_min = min(qubo_energies.values())
-    tol = 1e-6
-    qubo_optimal = {b for b, e in qubo_energies.items() if abs(e - qubo_min) <= tol}
+    qubo_min, qubo_optimal = _enumerate_minima(np.asarray(Q, dtype=float), offset, n)
     problem_optimal = set(case.optimal_bitstrings)
 
     overlap = qubo_optimal & problem_optimal
@@ -113,3 +119,22 @@ def _run_single(
         problem_optimum=case.optimal_value,
         match=False,
     )
+
+
+def _enumerate_minima(Q: np.ndarray, offset: float, n: int, tol: float = 1e-6) -> tuple[float, set[tuple]]:
+    """Exact minimum of x^T Q x + offset over all 2^n bitstrings, and every bitstring within tol of it.
+    Bitstrings are tuples in itertools.product order (first variable = most significant bit)."""
+    shifts = np.arange(n - 1, -1, -1, dtype=np.int64)
+    best, optimal = np.inf, set()
+    for start in range(0, 1 << n, _CHUNK):
+        idx = np.arange(start, min(start + _CHUNK, 1 << n), dtype=np.int64)
+        X = ((idx[:, None] >> shifts) & 1).astype(float)
+        E = np.einsum("ij,ij->i", X @ Q, X) + offset
+        m = float(E.min())
+        if m < best - tol:                      # a strictly better level: earlier ties are not optimal
+            best, optimal = m, set()
+        if m <= best + tol:
+            best = min(best, m)
+            optimal |= {tuple(int(b) for b in X[k]) for k in np.flatnonzero(E <= best + tol)}
+    optimal = {b for b in optimal if abs(float(np.asarray(b, float) @ Q @ np.asarray(b, float)) + offset - best) <= tol}
+    return best, optimal

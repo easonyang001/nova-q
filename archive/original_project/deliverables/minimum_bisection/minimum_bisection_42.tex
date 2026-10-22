@@ -1,0 +1,77 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Minimum Graph Bisection Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Minimum Graph Bisection Problem}
+
+\paragraph{Problem Statement.}
+Given an undirected weighted graph $G=(V,E)$ with an even number of vertices $N=|V|$, and non-negative edge weights $w_{ij} \ge 0$ for each $(i,j) \in E$, partition the vertex set $V$ into two disjoint subsets $V_A$ and $V_B$ of equal cardinality $N/2$. The objective is to minimize the total weight of edges crossing between the two partitions, i.e., edges with exactly one endpoint in $V_A$ and the other in $V_B$.
+
+\paragraph{Decision Variables.}
+For each vertex $i \in V$, introduce a binary variable $x_i \in \{0,1\}$. The assignment $x_i = 0$ denotes that vertex $i$ belongs to partition $V_A$, while $x_i = 1$ denotes membership in partition $V_B$.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- Original Objective. The cut weight for a given assignment is the sum of weights of edges with endpoints in different partitions. This is captured by the expression $x_i + x_j - 2x_i x_j$, which equals $1$ if $x_i \neq x_j$ and $0$ otherwise. The minimization problem is:
+\begin{align}
+\min_{x \in \{0,1\}^N} \sum_{(i,j) \in E} w_{ij} (x_i + x_j - 2x_i x_j).
+\end{align}
+
+Step 2 --- Constraint. The partition must be balanced, requiring exactly $N/2$ vertices to be assigned to $V_B$:
+\begin{align}
+\sum_{i \in V} x_i = \frac{N}{2}.
+\end{align}
+
+Step 3 --- Penalty Term Conversion. We enforce the constraint by adding a quadratic penalty with weight $\lambda > 0$:
+\begin{align}
+P(x) = \lambda \left( \sum_{i \in V} x_i - \frac{N}{2} \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+\left( \sum_{i \in V} x_i - \frac{N}{2} \right)^2 = \left( \sum_{i \in V} x_i \right)^2 - N \sum_{i \in V} x_i + \frac{N^2}{4}.
+\end{align}
+Using the idempotent property $x_i^2 = x_i$ for binary variables, the squared sum expands as:
+\begin{align}
+\left( \sum_{i \in V} x_i \right)^2 = \sum_{i \in V} x_i^2 + \sum_{i \neq j} x_i x_j = \sum_{i \in V} x_i + \sum_{i \neq j} x_i x_j.
+\end{align}
+Substituting this back into the penalty expression and collecting linear terms gives:
+\begin{align}
+P(x) = \lambda \left( \sum_{i \neq j} x_i x_j - (N-1) \sum_{i \in V} x_i + \frac{N^2}{4} \right),
+\end{align}
+where $\sum_{i \neq j}$ denotes the sum over all ordered pairs of distinct vertices.
+
+Step 4 --- Combined Hamiltonian. Adding the objective and penalty terms produces the QUBO Hamiltonian $H(x)$:
+\begin{align}
+H(x) = \sum_{(i,j) \in E} w_{ij} (x_i + x_j - 2x_i x_j) + \lambda \left( \sum_{i \neq j} x_i x_j - (N-1) \sum_{i \in V} x_i + \frac{N^2}{4} \right).
+\end{align}
+
+Step 5 --- Q Matrix Entries and Offset. Grouping terms by $x_i$ and $x_i x_j$ for $i < j$ yields the standard QUBO form $H(x) = \sum_{i} Q_{ii} x_i + \sum_{i < j} Q_{ij} x_i x_j + c$. The coefficients are:
+\begin{align}
+Q_{ii} &= \sum_{j : (i,j) \in E} w_{ij} - \lambda(N-1), & \forall i \in V, \\
+Q_{ij} &= 2\lambda - 2w_{ij}, & \forall i < j \text{ with } (i,j) \in E, \\
+Q_{ij} &= 2\lambda, & \forall i < j \text{ with } (i,j) \notin E, \\
+c &= \frac{\lambda N^2}{4}. &
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+To guarantee that infeasible solutions are strictly penalized, $\lambda$ must exceed the maximum possible reduction in the objective function achievable by violating the balance constraint. The maximum change in the cut weight from any single vertex move is bounded by the total weight of all edges in the graph, $W_{\text{total}} = \sum_{(i,j) \in E} w_{ij}$. Therefore, choosing $\lambda > W_{\text{total}}$ ensures that the energy penalty for any imbalance strictly dominates any potential gain in the cut weight, forcing the optimizer toward feasible assignments.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal bisection because (i) all feasible assignments satisfying $\sum_{i \in V} x_i = N/2$ incur zero penalty, reducing $H(x)$ exactly to the original cut weight objective; (ii) any infeasible assignment violates the balance constraint, incurring a penalty strictly greater than the maximum possible improvement in the cut weight. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that minimizes the cut weight, yielding the optimal balanced partition and its minimum cut value.
+
+\paragraph{Illustrative Example.}
+Consider a graph with $N=2$ vertices $V=\{0,1\}$, a single edge $(0,1)$ with weight $w_{01} > 0$, and $E=\{(0,1)\}$. The balance constraint requires $x_0 + x_1 = 1$. Substituting $N=2$ and the edge set into the general formulas:
+\begin{align}
+H(x) &= w_{01}(x_0 + x_1 - 2x_0 x_1) + \lambda \left( 2x_0 x_1 - x_0 - x_1 + 1 \right).
+\end{align}
+Collecting terms according to the Q matrix rules gives:
+\begin{align}
+Q_{00} &= w_{01} - \lambda, \quad Q_{11} = w_{01} - \lambda, \quad Q_{01} = 2\lambda - 2w_{01}, \quad c = \lambda.
+\end{align}
+The feasible assignments are $(x_0,x_1) \in \{(0,1), (1,0)\}$. For both, the penalty term vanishes and $H(x) = w_{01}$. The infeasible assignments $(0,0)$ and $(1,1)$ yield $H(x) = \lambda$. Since $\lambda > w_{01}$, the feasible solutions have strictly lower energy. The optimal energy is $w_{01}$, achieved by either balanced partition, correctly recovering the minimum cut weight.
+
+\end{document}

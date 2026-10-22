@@ -1,0 +1,116 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 191.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 302.4
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 60.7
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1013.5,
+   "error": "ValueError: data preparation failed: RuntimeError: SyntaxError: positional argument follows keyword argument (<model>, line 91)\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 166, in _execute_adapter\n    exec(compile(code, \"<model>\", \"exec\"), ns)\n         ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<model>\", line 91\n    )\n    ^\nSyntaxError: positional argument follows keyword argument\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "TSP position encoding (x_{i,p}). For N=30 sites, variables = 30*30 = 900. This fits well within the CGA GPU annealer's 3,600 variable limit and stays within the high-quality range (< 1,500 variables).",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike stations within 800m of Daan Station, including Daan Station itself",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "positions": {
+    "meaning": "The sequence order in the tour (1 to N)",
+    "source": "mock"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between two stations",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "straight-line distance"
+    }
+   },
+   "daan_site_id": {
+    "meaning": "The ID of the site corresponding to Daan Station",
+    "index": [],
+    "type": "text",
+    "source": "user"
+   }
+  }
+ },
+ "data_found": [
+  "政府資料開放平臺.json"
+ ],
+ "cost": {
+  "llm_tokens": 127708,
+  "solver_calls": null
+ },
+ "seconds": 1568.1
+}

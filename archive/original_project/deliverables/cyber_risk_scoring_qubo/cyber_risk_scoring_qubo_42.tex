@@ -1,0 +1,89 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Cyber Risk Scoring Node Selection Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Cyber Risk Scoring Node Selection Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ infrastructure assets indexed by $i \in \{0, \dots, N-1\}$, each asset $i$ is associated with a risk score $w_i \ge 0$. Additionally, for every pair of distinct assets $i$ and $j$, there is a propagation-overlap penalty $p_{ij} \ge 0$ that quantifies the redundancy or shared risk pathway between them. The task is to select exactly $K$ assets for priority remediation or inspection such that the total risk-prioritization score is maximized. The total score is defined as the sum of the risk scores of the selected assets minus the sum of the pairwise overlap penalties among the selected assets.
+
+\paragraph{Decision Variables.}
+We introduce a binary variable $x_i \in \{0,1\}$ for each asset $i \in \{0, \dots, N-1\}$. The variable $x_i$ takes the value $1$ if asset $i$ is selected for remediation or inspection, and $0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1.} The original optimization problem is a maximization:
+\begin{align}
+  \max_{x \in \{0,1\}^N} \left( \sum_{i=0}^{N-1} w_i x_i - \sum_{0 \le i < j \le N-1} p_{ij} x_i x_j \right).
+\end{align}
+To cast this as a QUBO minimization problem, we negate the objective:
+\begin{align}
+  \min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} w_i x_i + \sum_{0 \le i < j \le N-1} p_{ij} x_i x_j \right).
+\end{align}
+
+\textbf{Step 2.} The selection constraint requires exactly $K$ assets to be chosen:
+\begin{align}
+  \sum_{i=0}^{N-1} x_i = K.
+\end{align}
+
+\textbf{Step 3.} We enforce the constraint via a quadratic penalty term with weight $\lambda > 0$:
+\begin{align}
+  H_{\text{pen}}(x) = \lambda \left( \sum_{i=0}^{N-1} x_i - K \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_i^2 = x_i$ for binary variables yields:
+\begin{align}
+  \left( \sum_{i=0}^{N-1} x_i - K \right)^2 &= \sum_{i=0}^{N-1} x_i^2 + \sum_{i \neq j} x_i x_j - 2K \sum_{i=0}^{N-1} x_i \\
+  &= \sum_{i=0}^{N-1} x_i + 2 \sum_{0 \le i < j \le N-1} x_i x_j - 2K \sum_{i=0}^{N-1} x_i \\
+  &= (1 - 2K) \sum_{i=0}^{N-1} x_i + 2 \sum_{0 \le i < j \le N-1} x_i x_j.
+\end{align}
+Multiplying by $\lambda$ and adding the constant term $\lambda K^2$ from the original square expansion gives the full penalty contribution:
+\begin{align}
+  H_{\text{pen}}(x) = \lambda(1 - 2K) \sum_{i=0}^{N-1} x_i + 2\lambda \sum_{0 \le i < j \le N-1} x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 4.} Combining the negated objective and the penalty term yields the total QUBO Hamiltonian $H(x)$:
+\begin{align}
+  H(x) = \sum_{i=0}^{N-1} \left[ -w_i + \lambda(1 - 2K) \right] x_i + \sum_{0 \le i < j \le N-1} \left[ p_{ij} + 2\lambda \right] x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 5.} Reading off the coefficients from the general closed form of $H(x)$, the QUBO matrix entries $Q$ and constant offset $c$ are:
+\begin{align}
+  Q_{i,i} &= -w_i + \lambda(1 - 2K), \quad \text{for } i \in \{0, \dots, N-1\}, \\
+  Q_{i,j} &= p_{ij} + 2\lambda, \quad \text{for } 0 \le i < j \le N-1, \\
+  Q_{j,i} &= Q_{i,j}, \quad \text{for } 0 \le i < j \le N-1, \\
+  c &= \lambda K^2.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+We set the penalty weight to $\lambda = \max_{i} w_i + 1$. This choice ensures $\lambda$ strictly exceeds the maximum possible contribution of any single asset to the objective function. Since the penalty term scales quadratically with the number of violated constraint units, any infeasible configuration incurs a penalty cost that dominates the maximum possible gain achievable by the linear and quadratic objective terms. Consequently, the optimizer is strictly driven toward feasible solutions.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution because feasible assignments ($\sum_i x_i = K$) incur zero penalty, making their energy exactly equal to the negated risk-prioritization score. Infeasible assignments violate the cardinality constraint and incur a penalty of at least $\lambda$, which by construction exceeds the maximum possible improvement in the objective function from any feasible configuration. Therefore, the global minimum of $H(x)$ must correspond to a feasible assignment that maximizes the original objective.
+
+\paragraph{Illustrative Example.}
+Consider a small instance with $N=3$ assets and $K=2$. Let the risk scores be $w_0 = 5$, $w_1 = 3$, $w_2 = 4$, and the pairwise penalties be $p_{01} = 1$, $p_{02} = 2$, $p_{12} = 1$. The penalty weight is $\lambda = \max\{5,3,4\} + 1 = 6$.
+The concrete objective to minimize is:
+\begin{align}
+  H_{\text{obj}}(x) = -5x_0 - 3x_1 - 4x_2 + 1x_0x_1 + 2x_0x_2 + 1x_1x_2.
+\end{align}
+The concrete penalty terms for the cardinality constraint are:
+\begin{align}
+  H_{\text{pen}}(x) = 6(1-4)(x_0+x_1+x_2) + 12(x_0x_1+x_0x_2+x_1x_2) + 6(2^2) = -18x_0 - 18x_1 - 18x_2 + 12x_0x_1 + 12x_0x_2 + 12x_1x_2 + 24.
+\end{align}
+Combining these yields the resulting Hamiltonian:
+\begin{align}
+  H(x) = -23x_0 - 21x_1 - 22x_2 + 13x_0x_1 + 14x_0x_2 + 13x_1x_2 + 24.
+\end{align}
+Enumerating the feasible solutions ($x$ with exactly two ones):
+\begin{itemize}
+  \item $x = (1,1,0)$: $H = -7$ (Objective score: $7$)
+  \item $x = (1,0,1)$: $H = -7$ (Objective score: $7$)
+  \item $x = (0,1,1)$: $H = -6$ (Objective score: $6$)
+\end{itemize}
+The optimal selections are $x^* = (1,1,0)$ or $x^* = (1,0,1)$, both yielding a maximum risk-prioritization score of $7$ and a minimum Hamiltonian energy of $-7$.
+
+\end{document}

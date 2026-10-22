@@ -1,0 +1,254 @@
+{
+ "case": "aed_groups_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 344.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1760.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 239.3
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1098.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 247.8
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 43.8
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment [mp-one-hot-assignment] with balanced group size [mp-group-size]. For N=600 sites and 4 teams, we have 2,400 binary variables. This fits within the CGA backend limit of 3,600 variables.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Filtered AED location",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "teams": {
+    "meaning": "Inspection team",
+    "source": "user"
+   }
+  },
+  "params": {
+   "dist": {
+    "meaning": "Straight-line distance between two AED sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    },
+    "sparse": false
+   },
+   "lat": {
+    "meaning": "Latitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "site_name": {
+    "meaning": "Name of the AED location",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "num_teams": {
+    "meaning": "Number of inspection teams",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 4
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "in_area",
+   "merge_same_place"
+  ],
+  "notes": "\n1. Filtered the AED locations to include only the four specified districts (Songshan, Xinyi, Da'an, and Zhongshan) using `prep.in_area` with the provided '區域代碼' column.\n2. Excluded records where '場所分類' is '學校、大型集會場所' or '其他'.\n3. Deduplicated locations using `prep.merge_same_place` to ensure that multiple AEDs at the same venue are treated as a single site.\n4. To satisfy the hard constraint that each of the 4 teams must have an identical number of sites, the total number of sites N was adjusted to be a multiple of 4 by randomly removing the remainder (N % 4) using a fixed seed for reproducibility.\n5. Computed the pairwise straight-line distance matrix using `prep.haversine_matrix`.\n",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-13T13:19:35.877488+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依實際邊界保留區域 ['松山區, 臺北市', '信義區, 臺北市', '大安區, 臺北市', '中山區, 臺北市'] | 2729 | 1151 | 各區點數 {'松山區, 臺北市': 231, '信義區, 臺北市': 280, '大安區, 臺北市': 327, '中山區, 臺北市': 317}；對應的區域代碼 {'松山區, 臺北市': 63000010, '信義區, 臺北市': 63000020, '大安區, 臺北市': 63000030, '中山區, 臺北市': 63000040}（以發布者代碼篩選） |\n| Filter districts | 2729 | 1151 | Kept only Songshan, Xinyi, Da'an, and Zhongshan |\n| Filter categories | 1151 | 405 | Excluded schools, large gathering venues, and 'others' |\n| 合併同名且相距 150 m 內的同一地點 | 405 | 201 | 合併 204 筆 |\n| Merge same places | 405 | 201 | Deduplicated multiple AEDs at the same venue |\n| Adjust N for equal teams | 201 | 200 | Removed 1 sites to make N divisible by 4 |",
+  "flags": [],
+  "review_required": [],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T13:19:35.877488+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 800,
+  "n_constraints": 204,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 201
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "b682367900d1d98d7d50c49c",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 54,
+    "invalid": 54,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "b682367900d1d98d7d50c49c",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.4924416939409247,
+  "objective": 7196448.915400534,
+  "baseline_objective": 14178565.948959036
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 200,
+    "mapped": 200,
+    "duplicates": [
+     "臺北大巨蛋"
+    ],
+    "missing_real_entities": 1,
+    "missing_examples": [
+     "臺北捷運中山地下街"
+    ],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 3,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.988,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 200,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 7206657.906369695
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 119489,
+  "solver_calls": 3
+ },
+ "seconds": 3735.1
+}

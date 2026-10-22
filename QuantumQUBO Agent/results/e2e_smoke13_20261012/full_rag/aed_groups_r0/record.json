@@ -1,0 +1,244 @@
+{
+ "case": "aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 179.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 239.6
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 55.8
+  },
+  "data": {
+   "ok": true,
+   "seconds": 344.8
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 68.9
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 2,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "Direct one-hot assignment with 3N variables and O(N^2) quadratic terms. Fits backend for N <= 50.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location ID",
+    "source": "user"
+   },
+   "groups": {
+    "meaning": "Inspection group ID",
+    "source": "user"
+   }
+  },
+  "params": {
+   "name": {
+    "meaning": "Site name",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "user"
+   },
+   "lat": {
+    "meaning": "Latitude",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "user",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "user",
+    "unit": "deg_lon"
+   }
+  }
+ },
+ "data_found": [
+  "osm_emergency_defibrillator.csv",
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [],
+  "notes": "",
+  "prep_log": "**資料來源**\n\n- 臺北市大安區 的 emergency=defibrillator（OpenStreetMap），授權：待確認，取得 2026-10-12T00:37:02.003219+00:00\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-12T00:36:50.436170+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter District | 193 | 193 | Kept rows with district '大安區' |\n| Filter Category | 47 | 47 | Excluded '學校、大型集會場所' and '其他' |\n| Drop missing category | 47 | 47 | Dropped rows with missing category |",
+  "flags": [],
+  "review_required": [
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "adapter 沒有聲明這些欄位的來源與單位：groups, lat, lon, name, sites"
+  ],
+  "sources": [
+   {
+    "title": "臺北市大安區 的 emergency=defibrillator",
+    "url": "",
+    "resource_url": "",
+    "publisher": "OpenStreetMap",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T00:37:02.003219+00:00",
+    "sha256": "65def43eb3e4075b2fd241f8ece975ee119392ee14a9a6817ddd386fd3a41c94",
+    "bytes": 116933
+   },
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T00:36:50.436170+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 141,
+  "n_constraints": 53,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "ValueError: unknown names ['locations']: use exactly the set names [] in counts and the parameter names [] in totals"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "5ac3c5af1c6509099f296c13",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 32,
+    "invalid": 32,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "5ac3c5af1c6509099f296c13",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.3626272819531732,
+  "objective": 330562.67440416757,
+  "baseline_objective": 518633.2345964667
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match + coordinates within 60 m",
+    "entity_set_declared": true,
+    "instance_entities": 47,
+    "mapped": 44,
+    "duplicates": [
+     "新光三越Diamond Towers",
+     "臺北市立龍門國民中學游泳池(委外)",
+     "行政院人事行政總處公務人力發展學院福華國際文教會館"
+    ],
+    "missing_real_entities": 7,
+    "missing_examples": [
+     "Pro Space",
+     "Vital Essence Fitness 運動賦能",
+     "台北美侖大飯店",
+     "國泰商旅股份有限公司敦南分公司(台北慕軒飯店，臻品之選)",
+     "嵨開安旅",
+     "洛碁大飯店忠孝館",
+     "蟾蜍山聚落文化中心煥民新村"
+    ],
+    "unmapped_ids": [
+     "13354199303",
+     "13354208916",
+     "13354228701"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [
+     "13354171411"
+    ],
+    "identical_coordinates": 0,
+    "group_set": "groups"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "groups",
+      "sites"
+     ]
+    ],
+    "structure": "the instance has 44 mapped places instead of 48: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 47,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 370657.2329274105
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 139596,
+  "solver_calls": 3
+ },
+ "seconds": 888.7
+}

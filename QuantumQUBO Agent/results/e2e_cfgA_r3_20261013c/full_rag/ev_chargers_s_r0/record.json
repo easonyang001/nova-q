@@ -1,0 +1,297 @@
+{
+ "case": "ev_chargers_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 122.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 214.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 37.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1371.3
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 191.6
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "from": "data",
+   "to": "model",
+   "evidence": "- param 'population': all 53 values are 0.0; a measured public value is never constant. If the tables do not contain it, report the data gap instead of a default",
+   "ok": true
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact binary formulation with linear constraints. Variables: 2N (N station candidates + N coverage indicators). For N=24, 48 variables. Fits backend (limit 3600). Constraints are linear, handled by system penalties. Objective is linear maximization of covered population.",
+ "schema": {
+  "sets": {
+   "candidates": {
+    "meaning": "Index of a candidate site (a 'li' center)",
+    "source": "public",
+    "reducible": null
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Population of the 'li'",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat": {
+    "meaning": "Latitude of the candidate center",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the candidate center",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   },
+   "radius": {
+    "meaning": "Coverage radius in meters",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1000.0,
+    "unit": "m"
+   },
+   "coverage": {
+    "meaning": "Binary matrix indicating if candidate j covers li i",
+    "index": [
+     "candidates",
+     "candidates"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon",
+      "radius"
+     ],
+     "how": "1 if distance <= radius, else 0"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "村里界圖.csv",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "prep": {
+  "tools_used": [
+   "attach_parent",
+   "haversine_matrix",
+   "keep_category",
+   "keep_level",
+   "latest_period",
+   "match",
+   "to_wgs84"
+  ],
+  "notes": "Filtered boundary and population data to Da'an District, Taipei City. Converted projected TWD97 TM2 coordinates to WGS84. Aggregated population to village level using latest period and total gender. Joined boundary and population on District and Village names. Computed pairwise coverage matrix for 1km radius. All IDs are full village names (e.g., '臺北市大安區龍坡里').",
+  "prep_log": "**資料來源**\n\n- 村里界圖（catalogue data.gov.tw） <https://data.gov.tw/dataset/17219>，授權：待確認，取得 2026-10-13T06:24:42.278381+00:00\n- 臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分（政府資料開放平台） <https://data.gov.tw/dataset/136896>，授權：待確認，取得 2026-10-13T06:24:32.259165+00:00\n- 臺北市里界圖（政府資料開放平台） <https://data.gov.tw/dataset/121163>，授權：待確認，取得 2026-10-13T06:24:40.806482+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| load boundary | 456 | 456 |  |\n| filter Da'an district | 53 | 53 |  |\n| 座標轉換 EPSG:3826 → WGS84 | 53 | 53 |  |\n| convert to WGS84 | 53 | 53 |  |\n| load population | 63315 | 63315 |  |\n| 只取最新一期 {'年份': 115, '月份': 9} | 63315 | 1407 |  |\n| latest period | 1407 | 1407 |  |\n| 只保留 性別=計 | 1407 | 469 |  |\n| keep total gender | 469 | 469 |  |\n| 補上上層行政區（區） | 469 | 469 | 1 列找不到上層 |\n| attach parent district | 469 | 469 |  |\n| 只保留行政層級「里」 | 469 | 456 | 移除 13 列上層彙總 |\n| keep village level | 456 | 456 |  |\n| filter Da'an population | 53 | 53 |  |\n| 合併（TNAME+VNAME ↔ 區+區域別） | 53 | 53 | 完全對上 53、模糊對上 0、對不上 0 |\n| match boundary & population | 53 | 53 |  |",
+  "flags": [],
+  "review_required": [
+   "candidates: 缺少實際來源對應，不能確認為公開真實資料",
+   "population: 尚未聲明 unit，需求為 persons",
+   "population: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "radius: 尚未聲明 unit，需求為 m",
+   "coverage: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：candidates, coverage, k, lat, lon, population, radius"
+  ],
+  "sources": [
+   {
+    "title": "村里界圖",
+    "url": "https://data.gov.tw/dataset/17219",
+    "resource_url": "https://opdadm.moi.gov.tw/api/v1/no-auth/resource/api/dataset/9C370B2D-D336-4F48-B061-58E07AE4E0DA/resource/0F2DC0B5-51E9-4863-921F-90832F000F1E/download",
+    "publisher": "catalogue data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T06:24:42.278381+00:00",
+    "sha256": "ea675c06dc95e2995ec4bd4584e6b78bc2a056b975b714f9f2403aa773850583",
+    "bytes": 581
+   },
+   {
+    "title": "臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分",
+    "url": "https://data.gov.tw/dataset/136896",
+    "resource_url": "https://data.taipei/api/dataset/a6394e3f-3514-4542-87bd-de4310a40db3/resource/c8f5b53d-ef3d-4321-ae8e-58cd2a5ee73c/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T06:24:32.259165+00:00",
+    "sha256": "a478cb4d3cdf509eec3453285bf0c1c542b7f53268608348ced4bafa7150bed3",
+    "bytes": 20821765
+   },
+   {
+    "title": "臺北市里界圖",
+    "url": "https://data.gov.tw/dataset/121163",
+    "resource_url": "https://data.taipei/api/dataset/6b17b31d-4e16-495e-95b1-9fd1f47c80d8/resource/145e30da-58f3-45db-a125-8adc3fde2620/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T06:24:40.806482+00:00",
+    "sha256": "acff9aebcaa04c26d1fd8beceff1e7a3b95a2d35177ec0bafef08499e1e276ac",
+    "bytes": 521114
+   }
+  ],
+  "n_variables": 106,
+  "n_constraints": 54,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "candidates": 53
+    },
+    "totals": {
+     "population": 279617.0
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "abfd16c50c69d53d2c684b5d",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:solve",
+  "delivery:no_solution",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": 239968.0,
+  "baseline_objective": 239968.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "candidates",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 53,
+    "mapped": 53,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "population",
+    "population_exact_matches": 53,
+    "population_total": 279617.0,
+    "population_truth_total": 279617
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "candidates"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.978,
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "helper variables optimised"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 3,
+    "meets_original_requirements": true,
+    "true_quality": 255941.0,
+    "reference_quality": 241701,
+    "gap_vs_reference": -0.0589
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 251742,
+  "solver_calls": 3
+ },
+ "seconds": 1937.3
+}

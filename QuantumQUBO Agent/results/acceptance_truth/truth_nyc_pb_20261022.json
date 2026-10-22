@@ -1,0 +1,195 @@
+{
+ "nyc_pb_budget": {
+  "projects": [
+   {
+    "number": "1",
+    "title": "New Park in Hell's Kitchen",
+    "category": "Parks & Recreation",
+    "cost": 200000.0,
+    "votes": 1405.0,
+    "winner": 1,
+    "lat": 40.763774,
+    "lon": -73.992552
+   },
+   {
+    "number": "3",
+    "title": "P.S. 111 Air Conditioning for the Library",
+    "category": "Education",
+    "cost": 150000.0,
+    "votes": 1323.0,
+    "winner": 1,
+    "lat": 40.7658,
+    "lon": -73.989501
+   },
+   {
+    "number": "2",
+    "title": "Real Time Rider Information at Bus Stops",
+    "category": "Transit",
+    "cost": 125000.0,
+    "votes": 1358.0,
+    "winner": 1,
+    "lat": 40.745606,
+    "lon": -73.99814
+   },
+   {
+    "number": "11",
+    "title": "Basketball Court Renovations at Chelsea Park",
+    "category": "Parks & Recreation",
+    "cost": 575000.0,
+    "votes": 868.0,
+    "winner": 0,
+    "lat": 40.750132,
+    "lon": -74.001227
+   },
+   {
+    "number": "12",
+    "title": "Bleecker Street Playground Renovation",
+    "category": "Parks & Recreation",
+    "cost": 450000.0,
+    "votes": 854.0,
+    "winner": 0,
+    "lat": 40.736494,
+    "lon": -74.005556
+   },
+   {
+    "number": "5",
+    "title": "Filtered Water Fountains at Lab & Museum Schools",
+    "category": "Education",
+    "cost": 144000.0,
+    "votes": 1019.0,
+    "winner": 0,
+    "lat": 40.742563,
+    "lon": -74.002321
+   },
+   {
+    "number": "4",
+    "title": "Grounds Renovation at NYCHA Elliott-Chelsea Houses",
+    "category": "Housing",
+    "cost": 500000.0,
+    "votes": 1295.0,
+    "winner": 1,
+    "lat": 40.742635,
+    "lon": -74.004693
+   },
+   {
+    "number": "7",
+    "title": "Historic Street Lighting for Greenwich Village",
+    "category": "Streets",
+    "cost": 176000.0,
+    "votes": 952.0,
+    "winner": 0,
+    "lat": 40.733811,
+    "lon": -74.002673
+   },
+   {
+    "number": "9",
+    "title": "Hudson Park Library Accessible Bathrooms",
+    "category": "Arts, Culture & Community Facilities",
+    "cost": 300000.0,
+    "votes": 922.0,
+    "winner": 0,
+    "lat": 40.730049,
+    "lon": -74.005352
+   },
+   {
+    "number": "14",
+    "title": "Humanities Educational Complex Bathroom Renovation",
+    "category": "Youth",
+    "cost": 300000.0,
+    "votes": 705.0,
+    "winner": 0,
+    "lat": 40.743374,
+    "lon": -74.00251
+   },
+   {
+    "number": "15",
+    "title": "Jefferson Market Garden Upgrades",
+    "category": "Parks & Recreation",
+    "cost": 175000.0,
+    "votes": 674.0,
+    "winner": 0,
+    "lat": 40.734371,
+    "lon": -73.999634
+   },
+   {
+    "number": "8",
+    "title": "New Electrical Outlets at P.S. 3",
+    "category": "Education",
+    "cost": 150000.0,
+    "votes": 950.0,
+    "winner": 0,
+    "lat": 40.732638,
+    "lon": -74.005917
+   },
+   {
+    "number": "6",
+    "title": "Renovation of Penn South Playground",
+    "category": "Parks & Recreation",
+    "cost": 300000.0,
+    "votes": 1013.0,
+    "winner": 0,
+    "lat": 40.747629,
+    "lon": -73.998703
+   },
+   {
+    "number": "13",
+    "title": "Tech Upgrade at High School of Fashion Industries",
+    "category": "Education",
+    "cost": 60000.0,
+    "votes": 827.0,
+    "winner": 0,
+    "lat": 40.745623,
+    "lon": -73.996201
+   },
+   {
+    "number": "10",
+    "title": "Toddler Sprinkler Resurface at Fulton Houses",
+    "category": "Youth",
+    "cost": 500000.0,
+    "votes": 890.0,
+    "winner": 0,
+    "lat": 40.742601,
+    "lon": -74.004667
+   }
+  ],
+  "n_projects": 15,
+  "budget": 1000000,
+  "district": "3",
+  "year": 2017,
+  "optimum": {
+   "votes": 7103.0,
+   "projects": [
+    1,
+    2,
+    5,
+    7,
+    10,
+    11,
+    13
+   ],
+   "cost": 980000.0
+  },
+  "city_rule": {
+   "votes": 5381.0,
+   "projects": [
+    0,
+    2,
+    1,
+    6
+   ],
+   "cost": 975000.0
+  },
+  "actual_winners": [
+   0,
+   1,
+   2,
+   6
+  ],
+  "bbox": [
+   40.68,
+   -74.03,
+   40.8,
+   -73.93
+  ]
+ }
+}

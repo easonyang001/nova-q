@@ -1,0 +1,230 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 145.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 332.6
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 0.2,
+   "error": "PromptTooLong: step 'req_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 28386 output tokens and your prompt contains at least 4383 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested "
+  },
+  "data": {
+   "ok": true,
+   "seconds": 384.1
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 182.7
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position encoding (N^2 variables). Fits CGA backend (N~20 -> 400 vars < 1500 limit). Enforces single tour naturally without subtour elimination.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike station ID",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Tour position index",
+    "source": "mock"
+   }
+  },
+  "params": {
+   "name": {
+    "meaning": "Station name",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between stations",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "sparse": false,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Haversine formula on WGS84 coordinates"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "YouBike2_0臺北市公共自行車即時資訊.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 500m of MRT Daan Station (25.0330, 121.5436). Used sno as unique station ID. Computed Haversine distance matrix. Positions are mock indices.",
+  "prep_log": "**資料來源**\n\n- YouBike2.0臺北市公共自行車即時資訊（catalogue data.gov.tw） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-13T07:40:15.899680+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (25.033, 121.5436) 500 公尺內的資料 | 1819 | 18 |  |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "name: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, name, positions, sites"
+  ],
+  "sources": [
+   {
+    "title": "YouBike2.0臺北市公共自行車即時資訊",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "catalogue data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T07:40:15.899680+00:00",
+    "sha256": "a48ea97331e6aaa83b68de00b533323a97402e0493e475f19bf49226a4ad39dc",
+    "bytes": 952845
+   }
+  ],
+  "n_variables": 324,
+  "n_constraints": 36,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 18
+    },
+    "totals": {
+     "lat": 450.59679,
+     "lon": 2187.79061
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.5785856387456778,
+  "objective": 3417.0711754159815,
+  "baseline_objective": 8108.577897642626
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (YouBike2_0臺北市公共自行車即時資訊.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 18,
+    "mapped": 18,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 18,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 3417.0711754159815,
+    "reference_quality": 3504.645699100399,
+    "gap_vs_reference": -0.025
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 120987,
+  "solver_calls": 3
+ },
+ "seconds": 1045.5
+}

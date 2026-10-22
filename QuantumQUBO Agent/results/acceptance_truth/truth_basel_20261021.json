@@ -1,0 +1,226 @@
+{
+ "basel_aed_groups": {
+  "rows": 44,
+  "places": [
+   {
+    "name": "Anima Engineering AG",
+    "lat": 47.555687886560015,
+    "lon": 7.584967675130604,
+    "n_aed": 1
+   },
+   {
+    "name": "Berufsfeuerwehr Basel",
+    "lat": 47.55610669951495,
+    "lon": 7.582934309139907,
+    "n_aed": 4
+   },
+   {
+    "name": "Departement Geschichte",
+    "lat": 47.55187160523418,
+    "lon": 7.589117292612752,
+    "n_aed": 2
+   },
+   {
+    "name": "Ethnologisches Seminar, Gesellschaftswissenschaften Universität Basel",
+    "lat": 47.556989148611244,
+    "lon": 7.59079977646539,
+    "n_aed": 1
+   },
+   {
+    "name": "Fitnesspark Heuwaage",
+    "lat": 47.55054274762429,
+    "lon": 7.587072695132466,
+    "n_aed": 1
+   },
+   {
+    "name": "Justiz- und Sicherheitsdepartement, Spiegelhof",
+    "lat": 47.5595177424032,
+    "lon": 7.5867075934237285,
+    "n_aed": 1
+   },
+   {
+    "name": "Kanton Basel-Stadt",
+    "lat": 47.55042877888773,
+    "lon": 7.5853826968626805,
+    "n_aed": 1
+   },
+   {
+    "name": "Kellerhals Carrard, Anwaltsbüro",
+    "lat": 47.55136300180643,
+    "lon": 7.5940479886551735,
+    "n_aed": 1
+   },
+   {
+    "name": "MAB Musikakademie",
+    "lat": 47.55478259091404,
+    "lon": 7.585901850915706,
+    "n_aed": 4
+   },
+   {
+    "name": "PD, Kultur, Kunstmuseum Basel Hauptbau",
+    "lat": 47.554272811469424,
+    "lon": 7.594059394442378,
+    "n_aed": 1
+   },
+   {
+    "name": "PD, Kultur, Kunstmuseum Basel Neubau",
+    "lat": 47.55465201128994,
+    "lon": 7.594974515295655,
+    "n_aed": 1
+   },
+   {
+    "name": "Parkhaus Elisabethen",
+    "lat": 47.55057736451807,
+    "lon": 7.587540056397547,
+    "n_aed": 1
+   },
+   {
+    "name": "Parkhaus Steinen",
+    "lat": 47.55244447686857,
+    "lon": 7.585964412235195,
+    "n_aed": 1
+   },
+   {
+    "name": "Parkhaus Storchen",
+    "lat": 47.559228188501976,
+    "lon": 7.5866318690211045,
+    "n_aed": 1
+   },
+   {
+    "name": "Polizeiposten Bahnhof SBB",
+    "lat": 47.54727101309007,
+    "lon": 7.590796422948726,
+    "n_aed": 1
+   },
+   {
+    "name": "Polizeiposten Spiegelhof",
+    "lat": 47.56016695328136,
+    "lon": 7.586814372296157,
+    "n_aed": 1
+   },
+   {
+    "name": "PureGym Fitness Club",
+    "lat": 47.549320763218795,
+    "lon": 7.5875546394525095,
+    "n_aed": 1
+   },
+   {
+    "name": "Pädagogisches Zentrum PZ.BS, ICT Medien ED BS",
+    "lat": 47.55744742238175,
+    "lon": 7.5828575105762654,
+    "n_aed": 1
+   },
+   {
+    "name": "Seminar für Medienwissenschaft",
+    "lat": 47.55458689134183,
+    "lon": 7.584110577447191,
+    "n_aed": 1
+   },
+   {
+    "name": "Seminar für Soziologie/Musikwissenschaftliches Seminar",
+    "lat": 47.559047892110975,
+    "lon": 7.5845868274587405,
+    "n_aed": 1
+   },
+   {
+    "name": "Sprachenzentrum und New Media Center",
+    "lat": 47.56211379101066,
+    "lon": 7.585140757147292,
+    "n_aed": 1
+   },
+   {
+    "name": "Staatsanwaltschaft",
+    "lat": 47.55024989030168,
+    "lon": 7.58583813797561,
+    "n_aed": 1
+   },
+   {
+    "name": "Stadtcasino Basel",
+    "lat": 47.554368752497375,
+    "lon": 7.589862660633778,
+    "n_aed": 1
+   },
+   {
+    "name": "Strafgericht Basel-Stadt",
+    "lat": 47.556689463509045,
+    "lon": 7.581514350239972,
+    "n_aed": 1
+   },
+   {
+    "name": "Theater Fauteuil",
+    "lat": 47.55734824827292,
+    "lon": 7.586419688334792,
+    "n_aed": 1
+   },
+   {
+    "name": "Theatergenossenschaft",
+    "lat": 47.55242074747124,
+    "lon": 7.590344625483506,
+    "n_aed": 1
+   },
+   {
+    "name": "Theologische Fakultät",
+    "lat": 47.557236885035636,
+    "lon": 7.585399437162089,
+    "n_aed": 2
+   },
+   {
+    "name": "UBS AG",
+    "lat": 47.55370295035805,
+    "lon": 7.592460893696439,
+    "n_aed": 1
+   },
+   {
+    "name": "Universität Basel, Dep. Mathematik und Informatik",
+    "lat": 47.560159575707246,
+    "lon": 7.587168290628721,
+    "n_aed": 2
+   },
+   {
+    "name": "Universität Basel, Departement Sprach- und Literaturwissenschaft, Deutsches Seminar",
+    "lat": 47.5587030864995,
+    "lon": 7.585374807144482,
+    "n_aed": 1
+   },
+   {
+    "name": "Universität Basel, Seminar für Kulturwissenschaft und Europäische Ethnologie",
+    "lat": 47.55896076079538,
+    "lon": 7.589237633479461,
+    "n_aed": 1
+   },
+   {
+    "name": "Universität Basel, eikones, Seminar für Kulturwissenschaft und Europäische Ethnologie",
+    "lat": 47.5587717596557,
+    "lon": 7.589383228088398,
+    "n_aed": 1
+   },
+   {
+    "name": "Zentrum für Bilddiagnostik",
+    "lat": 47.54829225035684,
+    "lon": 7.587701668231247,
+    "n_aed": 1
+   },
+   {
+    "name": "irides AG",
+    "lat": 47.55282976620904,
+    "lon": 7.587603684983217,
+    "n_aed": 1
+   },
+   {
+    "name": "irides AG (Blindenheim Basel)",
+    "lat": 47.55279911896846,
+    "lon": 7.587631997714117,
+    "n_aed": 1
+   }
+  ],
+  "n_places": 35,
+  "groups": 5,
+  "group_size": 7,
+  "bbox": [
+   47.51,
+   7.55,
+   47.6,
+   7.7
+  ]
+ }
+}

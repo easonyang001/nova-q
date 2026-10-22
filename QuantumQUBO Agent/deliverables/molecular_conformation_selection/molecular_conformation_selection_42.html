@@ -42,73 +42,75 @@
     <h2 class='subsection'>Molecular Conformation Selection Problem</h2>
 
 <h3>Problem Statement</h3>
-Given a molecule decomposed into $N_t$ rotatable torsions, each torsion $t \in \{0, \dots, N_t-1\}$ admits a discrete set of possible rotamer states $r \in \{0, \dots, N_r(t)-1\}$. Each rotamer configuration carries a local energy $E_{t,r}$, and every pair of rotamers at torsions $t_1$ and $t_2$ contributes an interaction energy $I_{t_1, t_2, r_1, r_2}$. The task is to select exactly one rotamer per torsion such that the total energy, defined as the sum of local energies of the selected rotamers plus the sum of interaction energies between all selected pairs, is minimized.
+Given a molecule decomposed into $N$ rotatable torsions, where torsion $i$ admits $M_i$ discrete conformational states (rotamers), the task is to select exactly one rotamer for each torsion such that the total molecular energy is minimized. The total energy comprises the sum of local energies associated with each selected rotamer and the sum of pairwise interaction energies between rotamers on distinct torsions.
 
 <h3>Decision Variables</h3>
-For each torsion $t \in \{0, \dots, N_t-1\}$ and each rotamer $r \in \{0, \dots, N_r(t)-1\}$, introduce a binary decision variable $x_{t,r} \in \{0,1\}$. The variable $x_{t,r}$ equals $1$ if rotamer $r$ is selected for torsion $t$, and $0$ otherwise.
+For each torsion $i \in \{0, \dots, N-1\}$ and each candidate rotamer $j \in \{0, \dots, M_i-1\}$, we introduce a binary decision variable $x_{i,j} \in \{0,1\}$. The variable $x_{i,j}$ equals $1$ if and only if rotamer $j$ is selected for torsion $i$, and $0$ otherwise.
 
 <h3>QUBO Derivation</h3>
-Step 1 --- Write the original objective in general notation. The minimization objective is
+Step 1 --- Write the original objective in general notation. The minimization problem is:
 \begin{align}
-H_{\text{obj}}(x) = \sum_{t=0}^{N_t-1} \sum_{r=0}^{N_r(t)-1} E_{t,r} x_{t,r} + \sum_{t_1=0}^{N_t-1} \sum_{r_1=0}^{N_r(t_1)-1} \sum_{t_2=0}^{N_t-1} \sum_{r_2=0}^{N_r(t_2)-1} I_{t_1, t_2, r_1, r_2} x_{t_1, r_1} x_{t_2, r_2}.
+\min_{\mathbf{x}} \quad & f(\mathbf{x}) = \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} E_{i,j} x_{i,j} + \sum_{i=0}^{N-1} \sum_{k=i+1}^{N-1} \sum_{j=0}^{M_i-1} \sum_{l=0}^{M_k-1} W_{i,j,k,l} x_{i,j} x_{k,l},
+\end{align}
+where $E_{i,j}$ denotes the local energy of rotamer $j$ on torsion $i$, and $W_{i,j,k,l}$ denotes the pairwise interaction weight between rotamer $j$ on torsion $i$ and rotamer $l$ on torsion $k$.
+
+Step 2 --- Write each constraint in its original algebraic form. For every torsion $i$, exactly one rotamer must be chosen:
+\begin{align}
+\sum_{j=0}^{M_i-1} x_{i,j} = 1, \quad \forall i \in \{0, \dots, N-1\}.
 \end{align}
 
-Step 2 --- Write each constraint in its original algebraic form. For each torsion $t$, exactly one rotamer must be selected:
+Step 3 --- Convert each constraint to a penalty term. For each torsion $i$, we introduce a penalty term with weight $\lambda > 0$:
 \begin{align}
-\sum_{r=0}^{N_r(t)-1} x_{t,r} = 1, \quad \forall t \in \{0, \dots, N_t-1\}.
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{M_i-1} x_{i,j} - 1 \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{M_i-1} x_{i,j}^2 + \sum_{j=0}^{M_i-1} \sum_{\substack{l=0 \\ l \neq j}}^{M_i-1} x_{i,j} x_{i,l} - 2 \sum_{j=0}^{M_i-1} x_{i,j} + 1 \right).
+\end{align}
+Applying the idempotent property $x_{i,j}^2 = x_{i,j}$ for binary variables simplifies the expression to:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( \sum_{j \neq l} x_{i,j} x_{i,l} - \sum_{j=0}^{M_i-1} x_{i,j} + 1 \right).
+\end{align}
+The total penalty contribution to the Hamiltonian is $\sum_{i=0}^{N-1} P_i(\mathbf{x})$.
+
+Step 4 --- Combine objective and all penalty terms into the single QUBO Hamiltonian $H(\mathbf{x})$:
+\begin{align}
+H(\mathbf{x}) = \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} E_{i,j} x_{i,j} + \sum_{i=0}^{N-1} \sum_{k=i+1}^{N-1} \sum_{j=0}^{M_i-1} \sum_{l=0}^{M_k-1} W_{i,j,k,l} x_{i,j} x_{k,l} + \sum_{i=0}^{N-1} \lambda \left( \sum_{j \neq l} x_{i,j} x_{i,l} - \sum_{j=0}^{M_i-1} x_{i,j} + 1 \right).
 \end{align}
 
-Step 3 --- Convert each constraint to a penalty term. Let $\lambda > 0$ be a penalty weight. For a fixed torsion $t$, the squared penalty is
+Step 5 --- Read off the Q matrix entries and offset $c$ from $H$ in general closed form. Grouping terms by variable pairs $(i,j)$ and $(k,l)$ gives:
 \begin{align}
-P_t(x) = \lambda \left( \sum_{r=0}^{N_r(t)-1} x_{t,r} - 1 \right)^2.
+Q_{(i,j),(i,j)} &= E_{i,j} - \lambda, \quad \forall i \in \{0,\dots,N-1\}, \, j \in \{0,\dots,M_i-1\}, \\
+Q_{(i,j),(i,l)} &= \lambda, \quad \forall i \in \{0,\dots,N-1\}, \, j,l \in \{0,\dots,M_i-1\}, \, j \neq l, \\
+Q_{(i,j),(k,l)} &= W_{i,j,k,l}, \quad \forall i,k \in \{0,\dots,N-1\}, \, i < k, \, j \in \{0,\dots,M_i-1\}, \, l \in \{0,\dots,M_k-1\}, \\
+Q_{(i,j),(k,l)} &= 0, \quad \text{otherwise}, \\
+c &= \sum_{i=0}^{N-1} \lambda.
 \end{align}
-Expanding the square yields
-\begin{align}
-P_t(x) = \lambda \left( \sum_{r=0}^{N_r(t)-1} x_{t,r}^2 + \sum_{\substack{r, r'=0 \\ r \neq r'}}^{N_r(t)-1} x_{t,r} x_{t,r'} - 2 \sum_{r=0}^{N_r(t)-1} x_{t,r} + 1 \right).
-\end{align}
-Applying the idempotent property $x_{t,r}^2 = x_{t,r}$ for binary variables simplifies the expression to
-\begin{align}
-P_t(x) = \lambda \left( \sum_{r=0}^{N_r(t)-1} x_{t,r} + \sum_{\substack{r, r'=0 \\ r \neq r'}}^{N_r(t)-1} x_{t,r} x_{t,r'} - 2 \sum_{r=0}^{N_r(t)-1} x_{t,r} + 1 \right) = \lambda \left( \sum_{\substack{r, r'=0 \\ r \neq r'}}^{N_r(t)-1} x_{t,r} x_{t,r'} - \sum_{r=0}^{N_r(t)-1} x_{t,r} + 1 \right).
-\end{align}
-The resulting general penalty contribution to the Hamiltonian is $\sum_{t=0}^{N_t-1} P_t(x)$.
-
-Step 4 --- Combine objective and all penalty terms into the single QUBO Hamiltonian $H(x)$:
-\begin{align}
-H(x) = \sum_{t=0}^{N_t-1} \sum_{r=0}^{N_r(t)-1} E_{t,r} x_{t,r} + \sum_{t_1, t_2, r_1, r_2} I_{t_1, t_2, r_1, r_2} x_{t_1, r_1} x_{t_2, r_2} + \sum_{t=0}^{N_t-1} \lambda \left( \sum_{\substack{r, r'=0 \\ r \neq r'}}^{N_r(t)-1} x_{t,r} x_{t,r'} - \sum_{r=0}^{N_r(t)-1} x_{t,r} + 1 \right).
-\end{align}
-
-Step 5 --- Read off the Q matrix entries and offset $c$ from $H$ in general closed form. Grouping linear and quadratic terms yields the standard QUBO form $H(x) = \sum_{(t,r)} Q_{(t,r),(t,r)} x_{t,r} + \sum_{(t,r) < (t',r')} Q_{(t,r),(t',r')} x_{t,r} x_{t',r'} + c$, where the entries are:
-\begin{align}
-Q_{(t,r),(t,r)} &= E_{t,r} - \lambda, \\
-Q_{(t,r),(t,r')} &= \lambda, \quad \text{for } r \neq r', \\
-Q_{(t_1,r_1),(t_2,r_2)} &= I_{t_1, t_2, r_1, r_2}, \quad \text{for } t_1 \neq t_2, \\
-c &= N_t \lambda.
-\end{align}
-By symmetry, $Q_{(t,r),(t',r')} = Q_{(t',r'),(t,r)}$.
 
 <h3>Penalty Weight Justification</h3>
-Let $W_{\max} = \max_{t,r} |E_{t,r}| + \sum_{t', r'} |I_{t,r,t',r'}|$. Choosing $\lambda > W_{\max}$ guarantees that any violation of the constraint $\sum_r x_{t,r} = 1$ incurs a penalty of at least $\lambda$, which strictly exceeds the maximum possible reduction in the objective function achievable by selecting zero or multiple rotamers for torsion $t$. Consequently, the energy of any infeasible assignment is strictly greater than that of the optimal feasible assignment.
+The penalty weight $\lambda$ must be chosen sufficiently large to enforce feasibility. Specifically, $\lambda > \max_{i,j} |E_{i,j}|$ guarantees that the energy penalty for violating any single constraint strictly exceeds the maximum possible reduction in the objective function achievable by any feasible assignment. This ensures that infeasible configurations are energetically unfavorable compared to all feasible ones.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(x)$ over $\{0,1\}^n$ recovers the optimal molecular conformation because the penalty terms vanish if and only if all constraints are satisfied. For feasible assignments, $H(x)$ exactly equals the original molecular energy. For infeasible assignments, the penalty contribution is at least $\lambda$, which dominates any potential decrease in the objective function from constraint violations. Therefore, the global minimum of $H(x)$ must occur at a feasible point, and among all feasible points, it corresponds to the assignment that minimizes the original energy.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal conformation because (i) for any feasible assignment, all constraint terms vanish, reducing $H(\mathbf{x})$ to the original objective function; (ii) for any infeasible assignment, at least one constraint is violated, contributing at least $\lambda$ to the total energy. Since $\lambda$ dominates the maximum possible objective gain, any infeasible solution has strictly higher energy than the optimal feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ corresponds exactly to the feasible assignment that minimizes the original molecular energy.
 
 <h3>Illustrative Example</h3>
-Consider an instance with $N_t = 2$ torsions and rotamer counts $[2, 2]$. The binary variables are indexed as $x_0 = x_{0,0}$, $x_1 = x_{0,1}$, $x_2 = x_{1,0}$, and $x_3 = x_{1,1}$. Instantiating the general formulas yields the concrete objective:
+Consider a molecule with $N=2$ torsions, where $M_0 = 2$ and $M_1 = 2$. The decision variables are $x_{0,0}, x_{0,1}, x_{1,0}, x_{1,1}$. The objective function becomes:
 \begin{align}
-H_{\text{obj}}(x) = E_{0,0}x_0 + E_{0,1}x_1 + E_{1,0}x_2 + E_{1,1}x_3 + I_{0,0,0,1}x_0x_1 + I_{1,1,0,1}x_2x_3 + (I_{0,1,0,0}+I_{1,0,0,0})x_0x_2 + (I_{0,1,0,1}+I_{1,0,0,1})x_0x_3 + (I_{0,1,1,0}+I_{1,0,1,0})x_1x_2 + (I_{0,1,1,1}+I_{1,0,1,1})x_1x_3.
+f(\mathbf{x}) = E_{0,0}x_{0,0} + E_{0,1}x_{0,1} + E_{1,0}x_{1,0} + E_{1,1}x_{1,1} + W_{0,0,1,0}x_{0,0}x_{1,0} + W_{0,0,1,1}x_{0,0}x_{1,1} + W_{0,1,1,0}x_{0,1}x_{1,0} + W_{0,1,1,1}x_{0,1}x_{1,1}.
 \end{align}
-The concrete penalty terms are:
+The penalty terms for the two torsions are:
 \begin{align}
-P_0(x) = \lambda(x_0 + x_1 - 1)^2, \quad P_1(x) = \lambda(x_2 + x_3 - 1)^2.
+\lambda \left( x_{0,0} + x_{0,1} - 1 \right)^2 + \lambda \left( x_{1,0} + x_{1,1} - 1 \right)^2.
 \end{align}
-Expanding and combining with the objective gives the resulting Hamiltonian $H(x) = \sum_{i=0}^{3} Q_{i,i} x_i + \sum_{0 \le i < j \le 3} Q_{i,j} x_i x_j + c$, with the following Q matrix entries:
+Expanding and applying $x_{i,j}^2 = x_{i,j}$ yields:
 \begin{align}
-Q_{0,0} &= E_{0,0} - \lambda, & Q_{1,1} &= E_{0,1} - \lambda, & Q_{2,2} &= E_{1,0} - \lambda, & Q_{3,3} &= E_{1,1} - \lambda, \\
-Q_{0,1} &= \lambda + I_{0,0,0,1}, & Q_{2,3} &= \lambda + I_{1,1,0,1}, & Q_{0,2} &= I_{0,1,0,0} + I_{1,0,0,0}, \\
-Q_{0,3} &= I_{0,1,0,1} + I_{1,0,0,1}, & Q_{1,2} &= I_{0,1,1,0} + I_{1,0,1,0}, & Q_{1,3} &= I_{0,1,1,1} + I_{1,0,1,1}, \\
-c &= 2\lambda.
+\lambda \left( x_{0,0}x_{0,1} - x_{0,0} - x_{0,1} + 1 \right) + \lambda \left( x_{1,0}x_{1,1} - x_{1,0} - x_{1,1} + 1 \right).
 \end{align}
-For this small instance, the optimal assignment can be found by enumerating the $2^4 = 16$ binary vectors, evaluating $H(x)$, and selecting the $x^*$ that minimizes the energy while satisfying $\sum_{r} x_{t,r} = 1$ for $t \in \{0,1\}$. The minimum value $H(x^*)$ gives the optimal conformation energy.
+The complete QUBO Hamiltonian is:
+\begin{align}
+H(\mathbf{x}) = (E_{0,0}-\lambda)x_{0,0} + (E_{0,1}-\lambda)x_{0,1} + (E_{1,0}-\lambda)x_{1,0} + (E_{1,1}-\lambda)x_{1,1} + 2\lambda x_{0,0}x_{0,1} + 2\lambda x_{1,0}x_{1,1} + W_{0,0,1,0}x_{0,0}x_{1,0} + W_{0,0,1,1}x_{0,0}x_{1,1} + W_{0,1,1,0}x_{0,1}x_{1,0} + W_{0,1,1,1}x_{0,1}x_{1,1} + 2\lambda.
+\end{align}
+The constant offset is $c = 2\lambda$. For any concrete instance parameters $\{E_{i,j}, W_{i,j,k,l}\}$, the optimal rotamer selection $\mathbf{x}^*$ is the binary vector minimizing $H(\mathbf{x})$, and the minimum total energy is $H(\mathbf{x}^*) - c$.
   </div>
 
   <div class="src-header">
@@ -120,73 +122,75 @@ For this small instance, the optimal assignment can be found by enumerating the 
 \subsection*{Molecular Conformation Selection Problem}
 
 \paragraph{Problem Statement.}
-Given a molecule decomposed into $N_t$ rotatable torsions, each torsion $t \in \{0, \dots, N_t-1\}$ admits a discrete set of possible rotamer states $r \in \{0, \dots, N_r(t)-1\}$. Each rotamer configuration carries a local energy $E_{t,r}$, and every pair of rotamers at torsions $t_1$ and $t_2$ contributes an interaction energy $I_{t_1, t_2, r_1, r_2}$. The task is to select exactly one rotamer per torsion such that the total energy, defined as the sum of local energies of the selected rotamers plus the sum of interaction energies between all selected pairs, is minimized.
+Given a molecule decomposed into $N$ rotatable torsions, where torsion $i$ admits $M_i$ discrete conformational states (rotamers), the task is to select exactly one rotamer for each torsion such that the total molecular energy is minimized. The total energy comprises the sum of local energies associated with each selected rotamer and the sum of pairwise interaction energies between rotamers on distinct torsions.
 
 \paragraph{Decision Variables.}
-For each torsion $t \in \{0, \dots, N_t-1\}$ and each rotamer $r \in \{0, \dots, N_r(t)-1\}$, introduce a binary decision variable $x_{t,r} \in \{0,1\}$. The variable $x_{t,r}$ equals $1$ if rotamer $r$ is selected for torsion $t$, and $0$ otherwise.
+For each torsion $i \in \{0, \dots, N-1\}$ and each candidate rotamer $j \in \{0, \dots, M_i-1\}$, we introduce a binary decision variable $x_{i,j} \in \{0,1\}$. The variable $x_{i,j}$ equals $1$ if and only if rotamer $j$ is selected for torsion $i$, and $0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-Step 1 --- Write the original objective in general notation. The minimization objective is
+Step 1 --- Write the original objective in general notation. The minimization problem is:
 \begin{align}
-H_{\text{obj}}(x) = \sum_{t=0}^{N_t-1} \sum_{r=0}^{N_r(t)-1} E_{t,r} x_{t,r} + \sum_{t_1=0}^{N_t-1} \sum_{r_1=0}^{N_r(t_1)-1} \sum_{t_2=0}^{N_t-1} \sum_{r_2=0}^{N_r(t_2)-1} I_{t_1, t_2, r_1, r_2} x_{t_1, r_1} x_{t_2, r_2}.
+\min_{\mathbf{x}} \quad &amp; f(\mathbf{x}) = \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} E_{i,j} x_{i,j} + \sum_{i=0}^{N-1} \sum_{k=i+1}^{N-1} \sum_{j=0}^{M_i-1} \sum_{l=0}^{M_k-1} W_{i,j,k,l} x_{i,j} x_{k,l},
+\end{align}
+where $E_{i,j}$ denotes the local energy of rotamer $j$ on torsion $i$, and $W_{i,j,k,l}$ denotes the pairwise interaction weight between rotamer $j$ on torsion $i$ and rotamer $l$ on torsion $k$.
+
+Step 2 --- Write each constraint in its original algebraic form. For every torsion $i$, exactly one rotamer must be chosen:
+\begin{align}
+\sum_{j=0}^{M_i-1} x_{i,j} = 1, \quad \forall i \in \{0, \dots, N-1\}.
 \end{align}
 
-Step 2 --- Write each constraint in its original algebraic form. For each torsion $t$, exactly one rotamer must be selected:
+Step 3 --- Convert each constraint to a penalty term. For each torsion $i$, we introduce a penalty term with weight $\lambda &gt; 0$:
 \begin{align}
-\sum_{r=0}^{N_r(t)-1} x_{t,r} = 1, \quad \forall t \in \{0, \dots, N_t-1\}.
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{M_i-1} x_{i,j} - 1 \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{M_i-1} x_{i,j}^2 + \sum_{j=0}^{M_i-1} \sum_{\substack{l=0 \\ l \neq j}}^{M_i-1} x_{i,j} x_{i,l} - 2 \sum_{j=0}^{M_i-1} x_{i,j} + 1 \right).
+\end{align}
+Applying the idempotent property $x_{i,j}^2 = x_{i,j}$ for binary variables simplifies the expression to:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( \sum_{j \neq l} x_{i,j} x_{i,l} - \sum_{j=0}^{M_i-1} x_{i,j} + 1 \right).
+\end{align}
+The total penalty contribution to the Hamiltonian is $\sum_{i=0}^{N-1} P_i(\mathbf{x})$.
+
+Step 4 --- Combine objective and all penalty terms into the single QUBO Hamiltonian $H(\mathbf{x})$:
+\begin{align}
+H(\mathbf{x}) = \sum_{i=0}^{N-1} \sum_{j=0}^{M_i-1} E_{i,j} x_{i,j} + \sum_{i=0}^{N-1} \sum_{k=i+1}^{N-1} \sum_{j=0}^{M_i-1} \sum_{l=0}^{M_k-1} W_{i,j,k,l} x_{i,j} x_{k,l} + \sum_{i=0}^{N-1} \lambda \left( \sum_{j \neq l} x_{i,j} x_{i,l} - \sum_{j=0}^{M_i-1} x_{i,j} + 1 \right).
 \end{align}
 
-Step 3 --- Convert each constraint to a penalty term. Let $\lambda &gt; 0$ be a penalty weight. For a fixed torsion $t$, the squared penalty is
+Step 5 --- Read off the Q matrix entries and offset $c$ from $H$ in general closed form. Grouping terms by variable pairs $(i,j)$ and $(k,l)$ gives:
 \begin{align}
-P_t(x) = \lambda \left( \sum_{r=0}^{N_r(t)-1} x_{t,r} - 1 \right)^2.
+Q_{(i,j),(i,j)} &amp;= E_{i,j} - \lambda, \quad \forall i \in \{0,\dots,N-1\}, \, j \in \{0,\dots,M_i-1\}, \\
+Q_{(i,j),(i,l)} &amp;= \lambda, \quad \forall i \in \{0,\dots,N-1\}, \, j,l \in \{0,\dots,M_i-1\}, \, j \neq l, \\
+Q_{(i,j),(k,l)} &amp;= W_{i,j,k,l}, \quad \forall i,k \in \{0,\dots,N-1\}, \, i &lt; k, \, j \in \{0,\dots,M_i-1\}, \, l \in \{0,\dots,M_k-1\}, \\
+Q_{(i,j),(k,l)} &amp;= 0, \quad \text{otherwise}, \\
+c &amp;= \sum_{i=0}^{N-1} \lambda.
 \end{align}
-Expanding the square yields
-\begin{align}
-P_t(x) = \lambda \left( \sum_{r=0}^{N_r(t)-1} x_{t,r}^2 + \sum_{\substack{r, r&#x27;=0 \\ r \neq r&#x27;}}^{N_r(t)-1} x_{t,r} x_{t,r&#x27;} - 2 \sum_{r=0}^{N_r(t)-1} x_{t,r} + 1 \right).
-\end{align}
-Applying the idempotent property $x_{t,r}^2 = x_{t,r}$ for binary variables simplifies the expression to
-\begin{align}
-P_t(x) = \lambda \left( \sum_{r=0}^{N_r(t)-1} x_{t,r} + \sum_{\substack{r, r&#x27;=0 \\ r \neq r&#x27;}}^{N_r(t)-1} x_{t,r} x_{t,r&#x27;} - 2 \sum_{r=0}^{N_r(t)-1} x_{t,r} + 1 \right) = \lambda \left( \sum_{\substack{r, r&#x27;=0 \\ r \neq r&#x27;}}^{N_r(t)-1} x_{t,r} x_{t,r&#x27;} - \sum_{r=0}^{N_r(t)-1} x_{t,r} + 1 \right).
-\end{align}
-The resulting general penalty contribution to the Hamiltonian is $\sum_{t=0}^{N_t-1} P_t(x)$.
-
-Step 4 --- Combine objective and all penalty terms into the single QUBO Hamiltonian $H(x)$:
-\begin{align}
-H(x) = \sum_{t=0}^{N_t-1} \sum_{r=0}^{N_r(t)-1} E_{t,r} x_{t,r} + \sum_{t_1, t_2, r_1, r_2} I_{t_1, t_2, r_1, r_2} x_{t_1, r_1} x_{t_2, r_2} + \sum_{t=0}^{N_t-1} \lambda \left( \sum_{\substack{r, r&#x27;=0 \\ r \neq r&#x27;}}^{N_r(t)-1} x_{t,r} x_{t,r&#x27;} - \sum_{r=0}^{N_r(t)-1} x_{t,r} + 1 \right).
-\end{align}
-
-Step 5 --- Read off the Q matrix entries and offset $c$ from $H$ in general closed form. Grouping linear and quadratic terms yields the standard QUBO form $H(x) = \sum_{(t,r)} Q_{(t,r),(t,r)} x_{t,r} + \sum_{(t,r) &lt; (t&#x27;,r&#x27;)} Q_{(t,r),(t&#x27;,r&#x27;)} x_{t,r} x_{t&#x27;,r&#x27;} + c$, where the entries are:
-\begin{align}
-Q_{(t,r),(t,r)} &amp;= E_{t,r} - \lambda, \\
-Q_{(t,r),(t,r&#x27;)} &amp;= \lambda, \quad \text{for } r \neq r&#x27;, \\
-Q_{(t_1,r_1),(t_2,r_2)} &amp;= I_{t_1, t_2, r_1, r_2}, \quad \text{for } t_1 \neq t_2, \\
-c &amp;= N_t \lambda.
-\end{align}
-By symmetry, $Q_{(t,r),(t&#x27;,r&#x27;)} = Q_{(t&#x27;,r&#x27;),(t,r)}$.
 
 \paragraph{Penalty Weight Justification.}
-Let $W_{\max} = \max_{t,r} |E_{t,r}| + \sum_{t&#x27;, r&#x27;} |I_{t,r,t&#x27;,r&#x27;}|$. Choosing $\lambda &gt; W_{\max}$ guarantees that any violation of the constraint $\sum_r x_{t,r} = 1$ incurs a penalty of at least $\lambda$, which strictly exceeds the maximum possible reduction in the objective function achievable by selecting zero or multiple rotamers for torsion $t$. Consequently, the energy of any infeasible assignment is strictly greater than that of the optimal feasible assignment.
+The penalty weight $\lambda$ must be chosen sufficiently large to enforce feasibility. Specifically, $\lambda &gt; \max_{i,j} |E_{i,j}|$ guarantees that the energy penalty for violating any single constraint strictly exceeds the maximum possible reduction in the objective function achievable by any feasible assignment. This ensures that infeasible configurations are energetically unfavorable compared to all feasible ones.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^n$ recovers the optimal molecular conformation because the penalty terms vanish if and only if all constraints are satisfied. For feasible assignments, $H(x)$ exactly equals the original molecular energy. For infeasible assignments, the penalty contribution is at least $\lambda$, which dominates any potential decrease in the objective function from constraint violations. Therefore, the global minimum of $H(x)$ must occur at a feasible point, and among all feasible points, it corresponds to the assignment that minimizes the original energy.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal conformation because (i) for any feasible assignment, all constraint terms vanish, reducing $H(\mathbf{x})$ to the original objective function; (ii) for any infeasible assignment, at least one constraint is violated, contributing at least $\lambda$ to the total energy. Since $\lambda$ dominates the maximum possible objective gain, any infeasible solution has strictly higher energy than the optimal feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ corresponds exactly to the feasible assignment that minimizes the original molecular energy.
 
 \paragraph{Illustrative Example.}
-Consider an instance with $N_t = 2$ torsions and rotamer counts $[2, 2]$. The binary variables are indexed as $x_0 = x_{0,0}$, $x_1 = x_{0,1}$, $x_2 = x_{1,0}$, and $x_3 = x_{1,1}$. Instantiating the general formulas yields the concrete objective:
+Consider a molecule with $N=2$ torsions, where $M_0 = 2$ and $M_1 = 2$. The decision variables are $x_{0,0}, x_{0,1}, x_{1,0}, x_{1,1}$. The objective function becomes:
 \begin{align}
-H_{\text{obj}}(x) = E_{0,0}x_0 + E_{0,1}x_1 + E_{1,0}x_2 + E_{1,1}x_3 + I_{0,0,0,1}x_0x_1 + I_{1,1,0,1}x_2x_3 + (I_{0,1,0,0}+I_{1,0,0,0})x_0x_2 + (I_{0,1,0,1}+I_{1,0,0,1})x_0x_3 + (I_{0,1,1,0}+I_{1,0,1,0})x_1x_2 + (I_{0,1,1,1}+I_{1,0,1,1})x_1x_3.
+f(\mathbf{x}) = E_{0,0}x_{0,0} + E_{0,1}x_{0,1} + E_{1,0}x_{1,0} + E_{1,1}x_{1,1} + W_{0,0,1,0}x_{0,0}x_{1,0} + W_{0,0,1,1}x_{0,0}x_{1,1} + W_{0,1,1,0}x_{0,1}x_{1,0} + W_{0,1,1,1}x_{0,1}x_{1,1}.
 \end{align}
-The concrete penalty terms are:
+The penalty terms for the two torsions are:
 \begin{align}
-P_0(x) = \lambda(x_0 + x_1 - 1)^2, \quad P_1(x) = \lambda(x_2 + x_3 - 1)^2.
+\lambda \left( x_{0,0} + x_{0,1} - 1 \right)^2 + \lambda \left( x_{1,0} + x_{1,1} - 1 \right)^2.
 \end{align}
-Expanding and combining with the objective gives the resulting Hamiltonian $H(x) = \sum_{i=0}^{3} Q_{i,i} x_i + \sum_{0 \le i &lt; j \le 3} Q_{i,j} x_i x_j + c$, with the following Q matrix entries:
+Expanding and applying $x_{i,j}^2 = x_{i,j}$ yields:
 \begin{align}
-Q_{0,0} &amp;= E_{0,0} - \lambda, &amp; Q_{1,1} &amp;= E_{0,1} - \lambda, &amp; Q_{2,2} &amp;= E_{1,0} - \lambda, &amp; Q_{3,3} &amp;= E_{1,1} - \lambda, \\
-Q_{0,1} &amp;= \lambda + I_{0,0,0,1}, &amp; Q_{2,3} &amp;= \lambda + I_{1,1,0,1}, &amp; Q_{0,2} &amp;= I_{0,1,0,0} + I_{1,0,0,0}, \\
-Q_{0,3} &amp;= I_{0,1,0,1} + I_{1,0,0,1}, &amp; Q_{1,2} &amp;= I_{0,1,1,0} + I_{1,0,1,0}, &amp; Q_{1,3} &amp;= I_{0,1,1,1} + I_{1,0,1,1}, \\
-c &amp;= 2\lambda.
+\lambda \left( x_{0,0}x_{0,1} - x_{0,0} - x_{0,1} + 1 \right) + \lambda \left( x_{1,0}x_{1,1} - x_{1,0} - x_{1,1} + 1 \right).
 \end{align}
-For this small instance, the optimal assignment can be found by enumerating the $2^4 = 16$ binary vectors, evaluating $H(x)$, and selecting the $x^*$ that minimizes the energy while satisfying $\sum_{r} x_{t,r} = 1$ for $t \in \{0,1\}$. The minimum value $H(x^*)$ gives the optimal conformation energy.</pre>
+The complete QUBO Hamiltonian is:
+\begin{align}
+H(\mathbf{x}) = (E_{0,0}-\lambda)x_{0,0} + (E_{0,1}-\lambda)x_{0,1} + (E_{1,0}-\lambda)x_{1,0} + (E_{1,1}-\lambda)x_{1,1} + 2\lambda x_{0,0}x_{0,1} + 2\lambda x_{1,0}x_{1,1} + W_{0,0,1,0}x_{0,0}x_{1,0} + W_{0,0,1,1}x_{0,0}x_{1,1} + W_{0,1,1,0}x_{0,1}x_{1,0} + W_{0,1,1,1}x_{0,1}x_{1,1} + 2\lambda.
+\end{align}
+The constant offset is $c = 2\lambda$. For any concrete instance parameters $\{E_{i,j}, W_{i,j,k,l}\}$, the optimal rotamer selection $\mathbf{x}^*$ is the binary vector minimizing $H(\mathbf{x})$, and the minimum total energy is $H(\mathbf{x}^*) - c$.</pre>
 
   <script>
     function copyLatex(btn) {

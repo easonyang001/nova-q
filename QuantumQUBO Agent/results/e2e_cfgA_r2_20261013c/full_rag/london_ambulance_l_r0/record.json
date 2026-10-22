@@ -1,0 +1,109 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 186.2
+  },
+  "model": {
+   "ok": true,
+   "seconds": 279.8
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 193.5,
+   "error": "ValueError: checker failed: RuntimeError: KeyError: 'demand'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/reqcheck.py\", line 174, in _samples\n    others = [d[s_name] for i, d in enumerate(sol) if i != j and d.get(s_name) != sol[j][s_name]]\n              ~^^^^^^^^\nKeyError: 'demand'\n"
+  },
+  "data": {
+   "ok": false,
+   "seconds": 2798.2,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: in_area: no boundary found for 'Camden, Greater London'; write the area as '<area>, <city>'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 28, in load_data\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 106, in wrapped\n    return obj(*a, **kw)\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/prep/geo.py\", line 315, in in_area\n    hit = points_in_polygon(la, lo, area_polygon(a, country))\n                                    ~~~~~~~~~~~~^^^^^^^^^^^^\nValueError: in_area: no boundary found for 'Camden, Greater London'; write the area as '<area>, <city>'\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Standard p-median formulation with explicit assignment variables. M=40 zones -> 1640 binary variables. Fits CGA backend (<3600 limit) while preserving exact hard constraints and objective interactions.",
+ "schema": {
+  "sets": {
+   "zones": {
+    "meaning": "LSOA zone (serves as both demand point and candidate site)",
+    "source": "user",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "pop"
+    }
+   },
+   "demand": {
+    "meaning": "Demand zone index set (copy of zones for assignment variables)",
+    "source": "user"
+   },
+   "candidate": {
+    "meaning": "Candidate zone index set (copy of zones for station variables)",
+    "source": "user"
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "Population of each zone",
+    "index": [
+     "zones"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat": {
+    "meaning": "Latitude of zone center",
+    "index": [
+     "zones"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of zone center",
+    "index": [
+     "zones"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of ambulance stations to open",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "Lower_layer_Super_Output_Areas_December_2021_EW_Population_W.csv",
+  "Lower_layer_Super_Output_Areas_December_2021_EW_Population_W.zip",
+  "TS001_-_Number_of_usual_residents_in_households_and_communal.csv"
+ ],
+ "cost": {
+  "llm_tokens": 287876,
+  "solver_calls": null
+ },
+ "seconds": 3458.1
+}

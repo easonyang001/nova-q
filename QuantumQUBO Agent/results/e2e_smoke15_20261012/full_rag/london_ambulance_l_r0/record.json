@@ -1,0 +1,97 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 110.2
+  },
+  "model": {
+   "ok": true,
+   "seconds": 480.1
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 59.4
+  },
+  "data": {
+   "ok": false,
+   "seconds": 666.1,
+   "error": "ValueError: data preparation failed: StageTimeout: _execute_adapter 超過 180 秒；已停止這次工作，可重試或回到前一步"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Exact p-median formulation with N + N^2 binary variables. For N=65, total variables = 4290. This fits the CGA backend's stable range for dense QUBOs (~4300) as confirmed by the specification, avoiding approximation losses while keeping the direct assignment structure.",
+ "schema": {
+  "sets": {
+   "lsoa": {
+    "meaning": "LSOA identifier",
+    "source": "public"
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "Population of each LSOA",
+    "index": [
+     "lsoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "person"
+   },
+   "lat": {
+    "meaning": "Latitude of LSOA centroid",
+    "index": [
+     "lsoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of LSOA centroid",
+    "index": [
+     "lsoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of ambulance stations to open",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "2021_census_lsoa_housing_RM130_LC4202EW_csv.csv",
+  "2021_census_lsoa_housing_RM138_LC4605EW_csv.csv",
+  "2021_census_lsoa_housing_RM140_LC4604EW_csv.csv",
+  "2021_census_lsoa_labour_market_RM092_LC6207EW_csv.csv"
+ ],
+ "cost": {
+  "llm_tokens": 167827,
+  "solver_calls": null
+ },
+ "seconds": 1317.5
+}

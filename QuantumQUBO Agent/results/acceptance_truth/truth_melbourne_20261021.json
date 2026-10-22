@@ -1,0 +1,96 @@
+{
+ "melbourne_bike_tour": {
+  "centre": [
+   -37.8183,
+   144.9671
+  ],
+  "radius_m": 1000,
+  "stations": [
+   {
+    "sno": "10",
+    "sna": "St Paul's Cathedral - Swanston St / Flinders St - City",
+    "lat": -37.817189,
+    "lon": 144.967409,
+    "dist_m": 126.5
+   },
+   {
+    "sno": "25",
+    "sna": "Sandridge Bridge - Southbank",
+    "lat": -37.820836,
+    "lon": 144.962266,
+    "dist_m": 509.7
+   },
+   {
+    "sno": "47",
+    "sna": "VCAM - St Kilda Rd / Southbank Blvd - Southbank",
+    "lat": -37.824088,
+    "lon": 144.970085,
+    "dist_m": 695.0
+   },
+   {
+    "sno": "4",
+    "sna": "Arts Centre - St Kilda Road - City",
+    "lat": -37.82071559401317,
+    "lon": 144.96916472911835,
+    "dist_m": 324.1
+   },
+   {
+    "sno": "38",
+    "sna": "Aquarium - Kings Way / Flinders St - City",
+    "lat": -37.821324,
+    "lon": 144.958318,
+    "dist_m": 841.5
+   },
+   {
+    "sno": "28",
+    "sna": "Queensbridge St / Yarra River - Southbank",
+    "lat": -37.821071,
+    "lon": 144.961113,
+    "dist_m": 609.5
+   },
+   {
+    "sno": "43",
+    "sna": "Spring St / Collins St - City",
+    "lat": -37.813774,
+    "lon": 144.974054,
+    "dist_m": 791.5
+   },
+   {
+    "sno": "34",
+    "sna": "RACV - Bourke St / New Chancery Ln - City",
+    "lat": -37.81523,
+    "lon": 144.95973100000003,
+    "dist_m": 731.8
+   },
+   {
+    "sno": "6",
+    "sna": "State Library - Swanston St / Little Lonsdale St - City",
+    "lat": -37.810702,
+    "lon": 144.964417,
+    "dist_m": 877.1
+   },
+   {
+    "sno": "7",
+    "sna": "Bourke Street Mall - 205 Bourke St - City",
+    "lat": -37.813088,
+    "lon": 144.967437,
+    "dist_m": 580.3
+   },
+   {
+    "sno": "50",
+    "sna": "ACCA - Sturt St - Southbank",
+    "lat": -37.826578,
+    "lon": 144.966542,
+    "dist_m": 921.8
+   }
+  ],
+  "optional": [],
+  "snapshot": "static dataset",
+  "bbox": [
+   -38.1,
+   144.55,
+   -37.55,
+   145.3
+  ]
+ }
+}

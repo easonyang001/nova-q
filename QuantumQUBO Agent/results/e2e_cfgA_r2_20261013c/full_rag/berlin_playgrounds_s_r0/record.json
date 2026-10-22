@@ -1,0 +1,442 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 149.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 321.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 178.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1582.1
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 2017.9
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "model 修復完成"
+  },
+  {
+   "workflow": "資料修復失敗：預處理失敗：TokenBudgetExceeded: Token budget of 500000 exceeded (used 567806)"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "lor_centers": {
+    "meaning": "LOR planning area centers (candidate locations)",
+    "source": "public"
+   },
+   "blocks": {
+    "meaning": "Street blocks (demand points, currently uncovered)",
+    "source": "public"
+   },
+   "existing_playgrounds": {
+    "meaning": "Existing playground locations",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lor_lat": {
+    "meaning": "Latitude of LOR centers",
+    "index": [
+     "lor_centers"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lor_lon": {
+    "meaning": "Longitude of LOR centers",
+    "index": [
+     "lor_centers"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_lat": {
+    "meaning": "Latitude of block centers",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "block_lon": {
+    "meaning": "Longitude of block centers",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_pop": {
+    "meaning": "Population of blocks",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "playground_lat": {
+    "meaning": "Latitude of existing playgrounds",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "playground_lon": {
+    "meaning": "Longitude of existing playgrounds",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "coverage_radius": {
+    "meaning": "Coverage radius for new playgrounds",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 250,
+    "unit": "m"
+   },
+   "min_site_distance": {
+    "meaning": "Minimum distance between new playgrounds",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 500,
+    "unit": "m"
+   },
+   "num_new_sites": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3,
+    "unit": "count"
+   }
+  }
+ },
+ "data_found": [
+  "Einwohnerdichte_2019.xlsx",
+  "Einwohnerdichte_2019_Umweltatlas_-_WFS_Einwohnerdichte_2019_.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson",
+  "Lebensweltlich_orientierte_Räume_LOR_01_01_2021_Planungsräum.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "in_area"
+  ],
+  "notes": "Filtered LOR centers, existing playgrounds, and blocks to Friedrichshain-Kreuzberg using prep.in_area. Blocks filtered to only those not within 250m of any existing playground. Population data from 2019 Umweltatlas. Coordinates are WGS84.",
+  "prep_log": "**資料來源**\n\n- Einwohnerdichte 2019（www.berlin.de） <https://www.berlin.de/umweltatlas/nutzung/einwohnerdichte/2019/download/>，授權：待確認，取得 2026-10-13T10:03:08.992126+00:00\n- Einwohnerdichte 2019 (Umweltatlas) - [WFS] — Einwohnerdichte 2019 (WFS layer)（catalogue datenregister.berlin.de） <https://daten.berlin.de/datensaetze/einwohnerdichte-2019-umweltatlas-wfs-3579d6fc>，授權：待確認，取得 2026-10-13T10:05:46.756487+00:00\n- Grünanlagenbestand Berlin (einschließlich der öffentlichen Spielplätze) - [WFS] — Spielplätze (WFS layer)（catalogue datenregister.berlin.de） <https://daten.berlin.de/datensaetze/grunanlagenbestand-berlin-einschliesslich-der-offentlichen-spielplatze-wfs-737fd0a4>，授權：待確認，取得 2026-10-13T10:07:14.368601+00:00\n- Lebensweltlich orientierte Räume (LOR) (01.01.2021) — Planungsräume (WFS layer)（CKAN govdata.de） <https://govdata.de/dataset/lebensweltlich-orientierte-raume-lor-01-01-2021>，授權：待確認，取得 2026-10-13T10:09:39.873424+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter LOR centers to Friedrichshain-Kreuzberg | 542 | 36 |  |\n| Filter existing playgrounds to Friedrichshain-Kreuzberg | 1886 | 166 |  |\n| 依實際邊界保留區域 ['Friedrichshain-Kreuzberg'] | 15100 | 488 | 各區點數 {'Friedrichshain-Kreuzberg': 488} |\n| Filter blocks to Friedrichshain-Kreuzberg by area name | 15100 | 488 |  |\n| Filter blocks to uncovered (distance > 250m from existing playgrounds) | 488 | 75 |  |",
+  "flags": [],
+  "review_required": [
+   "lor_centers: 缺少實際來源對應，不能確認為公開真實資料",
+   "blocks: 缺少實際來源對應，不能確認為公開真實資料",
+   "existing_playgrounds: 缺少實際來源對應，不能確認為公開真實資料",
+   "lor_lat: 尚未聲明 unit，需求為 deg_lat",
+   "lor_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lor_lon: 尚未聲明 unit，需求為 deg_lon",
+   "lor_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_lat: 尚未聲明 unit，需求為 deg_lat",
+   "block_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_lon: 尚未聲明 unit，需求為 deg_lon",
+   "block_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_pop: 尚未聲明 unit，需求為 persons",
+   "block_pop: 缺少實際來源對應，不能確認為公開真實資料",
+   "playground_lat: 尚未聲明 unit，需求為 deg_lat",
+   "playground_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "playground_lon: 尚未聲明 unit，需求為 deg_lon",
+   "playground_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "coverage_radius: 尚未聲明 unit，需求為 m",
+   "min_site_distance: 尚未聲明 unit，需求為 m",
+   "num_new_sites: 尚未聲明 unit，需求為 count",
+   "adapter 沒有聲明這些欄位的來源與單位：block_lat, block_lon, block_pop, blocks, coverage_radius, existing_playgrounds, lor_centers, lor_lat, lor_lon, min_site_distance, num_new_sites, playground_lat, playground_lon",
+   "獨立資料核對不一致：set 'blocks' has 75 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 1473. Check which rows you keep and whether duplicates of the same place are merged",
+   "獨立資料核對不一致：parameter 'block_pop' sums to 41,527, but an independent computation from the raw tables expects 677,467. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+  ],
+  "sources": [
+   {
+    "title": "Einwohnerdichte 2019",
+    "url": "https://www.berlin.de/umweltatlas/nutzung/einwohnerdichte/2019/download/",
+    "resource_url": "https://www.berlin.de/umweltatlas/_assets/nutzung/einwohnerdichte/2018/de-abbildungen/ao606_01.xlsx?ts=1786699162",
+    "publisher": "www.berlin.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T10:03:08.992126+00:00",
+    "sha256": "25e795b23a747f5157392522abdb27875680372d6d7f0881f91148767ba4b6da",
+    "bytes": 27433
+   },
+   {
+    "title": "Einwohnerdichte 2019 (Umweltatlas) - [WFS] — Einwohnerdichte 2019 (WFS layer)",
+    "url": "https://daten.berlin.de/datensaetze/einwohnerdichte-2019-umweltatlas-wfs-3579d6fc",
+    "resource_url": "https://gdi.berlin.de/services/wfs/ua_einwohnerdichte_2019?service=WFS&version=2.0.0&request=GetFeature&typeNames=ua_einwohnerdichte_2019%3Aua_einwohnerdichte_2019&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "catalogue datenregister.berlin.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T10:05:46.756487+00:00",
+    "sha256": "a487ab6fe86b87416598a444343c6b03d5b24c64daf09c719be93f633f8c822e",
+    "bytes": 11354889
+   },
+   {
+    "title": "Grünanlagenbestand Berlin (einschließlich der öffentlichen Spielplätze) - [WFS] — Spielplätze (WFS layer)",
+    "url": "https://daten.berlin.de/datensaetze/grunanlagenbestand-berlin-einschliesslich-der-offentlichen-spielplatze-wfs-737fd0a4",
+    "resource_url": "https://gdi.berlin.de/services/wfs/gruenanlagen?service=WFS&version=2.0.0&request=GetFeature&typeNames=gruenanlagen%3Aspielplaetze&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "catalogue datenregister.berlin.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T10:07:14.368601+00:00",
+    "sha256": "925ec7741cff0bbedc2b7834c2fde4e6681e4df450224d5c16effa36d73376f1",
+    "bytes": 4540411
+   },
+   {
+    "title": "Lebensweltlich orientierte Räume (LOR) (01.01.2021) — Planungsräume (WFS layer)",
+    "url": "https://govdata.de/dataset/lebensweltlich-orientierte-raume-lor-01-01-2021",
+    "resource_url": "https://gdi.berlin.de/services/wfs/lor_2021?service=WFS&version=2.0.0&request=GetFeature&typeNames=lor_2021%3Aa_lor_plr_2021&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "CKAN govdata.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T10:09:39.873424+00:00",
+    "sha256": "a44ea4651f68e83a0005f482fa6bbdf036e53cb66c91bfe91933b5d2db81de88",
+    "bytes": 5419363
+   }
+  ],
+  "n_variables": 111,
+  "n_constraints": 88,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "lor_centers": 36,
+     "blocks": 1473,
+     "existing_playgrounds": 166
+    },
+    "totals": {
+     "block_pop": 677467.0
+    }
+   },
+   "issues": [
+    "set 'blocks' has 75 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 1473. Check which rows you keep and whether duplicates of the same place are merged",
+    "parameter 'block_pop' sums to 41,527, but an independent computation from the raw tables expects 677,467. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "issues",
+   "version": "4d9c6f6a5acef69818c1180f",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation 0.36 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 38,
+    "invalid": 38,
+    "not_comparable": 0,
+    "rank_agreement": 0.361
+   }
+  },
+  {
+   "status": "issues",
+   "version": "0878baa4fa11cc8fb92a968c",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation 0.36 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 38,
+    "invalid": 38,
+    "not_comparable": 0,
+    "rank_agreement": 0.361
+   }
+  },
+  {
+   "status": "issues",
+   "version": "0878baa4fa11cc8fb92a968c",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation 0.36 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 38,
+    "invalid": 38,
+    "not_comparable": 0,
+    "rank_agreement": 0.361
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "0878baa4fa11cc8fb92a968c",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:repaired",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "已有可行方案，達到簡單基準的品質；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 8202.0,
+  "baseline_objective": 8202.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "existing_playgrounds",
+    "mapping": "coordinates within 200 m",
+    "entity_set_declared": true,
+    "instance_entities": 166,
+    "mapped": 38,
+    "duplicates": [
+     "Boxhagener Platz",
+     "Lausitzer Platz",
+     "Oranienplatz",
+     "Pettenkofer Straße",
+     "Reichenberger Straße Ost",
+     "Samariterviertel",
+     "Traveplatz",
+     "Urbanstraße",
+     "Wassertorplatz",
+     "Wismarplatz",
+     "Wrangelkiez"
+    ],
+    "missing_real_entities": 14,
+    "missing_examples": [
+     "Askanischer Platz",
+     "Moritzplatz",
+     "Prinzenstraße",
+     "Gleisdreieck",
+     "Rathaus Yorckstraße",
+     "Viktoriapark",
+     "Reichenberger Straße West",
+     "Barnimkiez",
+     "Friedenstraße",
+     "Richard-Sorge-Viertel"
+    ],
+    "unmapped_ids": [
+     "00008100:00146b68",
+     "00008100:00146b69",
+     "00008100:00146b6d",
+     "00008100:00146b70",
+     "00008100:00146b72",
+     "00008100:00146b75",
+     "00008100:00146b7e",
+     "00008100:00146b7f",
+     "00008100:00146b80",
+     "00008100:00146b81"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "resident_totals": {
+     "lor_lat": 1890,
+     "lor_lon": 483,
+     "block_lat": 3938,
+     "block_lon": 1007,
+     "block_pop": 41527,
+     "playground_lat": 8716,
+     "playground_lon": 2229
+    },
+    "resident_truth": {
+     "all": 290380,
+     "not_near_a_playground": 40673
+    }
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "blocks"
+     ],
+     [
+      "lor_centers"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 13,
+    "error": "ValueError: decision variables do not name the real entities"
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 567806,
+  "solver_calls": 1
+ },
+ "seconds": 4249.2
+}

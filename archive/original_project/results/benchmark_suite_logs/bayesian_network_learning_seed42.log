@@ -1,0 +1,65 @@
+Benchmark    : bayesian_network_learning
+Test input   : benchmarks\bayesian_network_learning\sample_cases.txt (cases built after formulation)
+Seed         : 42
+[00:38:34] === Pipeline START | run_id=bayesian_network_learning_42_c7ec63af ===
+[00:38:34] Benchmark : bayesian_network_learning  |  seed=42
+[00:38:34] Models    : planner_agent=qwen/qwen3.6-35b-a3b
+[00:38:34]             formulizer_agent=qwen/qwen3.6-35b-a3b
+[00:38:34]             judge_agent=qwen/qwen3.6-35b-a3b
+[00:38:34]             coder_agent=qwen/qwen3-coder-next
+[00:38:34] Cache     : disabled
+[00:38:34] [Stage 1] Planner � attempt 1/1
+[00:39:34] [Stage 1] Planner OK � 1 vars, 2 constraints
+[00:39:34] [Stage 1b] Judge � checking spec matches NL ...
+[00:39:59] [Stage 1b] Spec verification PASSED
+[00:39:59] [Stage 2] Formulizer � attempt 1/1
+[00:40:39] [Stage 2] Formulation OK � n_vars=9, 9 obj terms, 2 penalty groups
+[00:40:39] [Stage 2b] Judge � checking QUBO formulation ...
+[00:40:49] [Stage 2b] Formulation verification PASSED
+[00:40:49] [Stage 2.5] Building test cases from user input ...
+[00:42:14] [Stage 2.5] Wrote 2 case(s) to transcript, loaded 2 total
+[00:42:14] [Stage 3] Coder � attempt 1/1
+[00:42:26] [Stage 3] Code generated and compiled OK
+[00:42:26] [Stage 3b] Test Runner � running 2 pre-computed test cases ...
+[00:42:26] [Stage 3b] Tests: 0/2 passed (0%)  failure_class=coding_error
+[00:42:26] [Stage 3b] Instance 0 error: [n3_k2] Q shape (7, 7) does not match expected (12,12)
+[00:42:26] [Stage 3b] Instance 1 error: [n4_k4] Q shape (13, 13) does not match expected (24,24)
+[00:42:26] === Pipeline FAILED � code exhausted all retries ===
+[00:42:26] Finalizing | status=failed | tokens=37539 | cost=$0.0267 | wall=231.8s
+
+Status:       failed
+Iterations:   3
+Wall time:    231.8s
+Tokens used:  37539
+Verification: {'passed': 0, 'total': 2}
+Failure modes: ['coding_error']
+
+Error trace:
+Code failed after max retries. Last failure: coding_error
+
+Full result:
+{
+  "run_id": "bayesian_network_learning_42_c7ec63af",
+  "benchmark": "bayesian_network_learning",
+  "seed": 42,
+  "status": "failed",
+  "n_iterations": 3,
+  "wall_time_s": 231.78389811515808,
+  "models_used": {
+    "planner_agent": "qwen/qwen3.6-35b-a3b",
+    "formulizer_agent": "qwen/qwen3.6-35b-a3b",
+    "judge_agent": "qwen/qwen3.6-35b-a3b",
+    "coder_agent": "qwen/qwen3-coder-next",
+    "debugger_agent": "qwen/qwen3.6-35b-a3b"
+  },
+  "tokens_used": 37539,
+  "cost_used": 0.026686094250000004,
+  "verification": {
+    "passed": 0,
+    "total": 2
+  },
+  "error_trace": "Code failed after max retries. Last failure: coding_error",
+  "failure_modes": [
+    "coding_error"
+  ]
+}

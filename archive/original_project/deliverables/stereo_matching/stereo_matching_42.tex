@@ -1,0 +1,87 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Stereo Matching Disparity Assignment}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Stereo Matching Disparity Assignment}
+
+\paragraph{Problem Statement.}
+Given a set of pixels $\mathcal{P}$ and a discrete set of disparity labels $\mathcal{D}$, the goal is to assign exactly one disparity label to each pixel such that the total stereo energy is minimized. The energy consists of a data fidelity term, which penalizes assigning a disparity to a pixel based on image evidence, and a smoothness term, which penalizes discontinuities between neighboring pixels. Formally, we seek an assignment that minimizes the sum of selected data costs plus the sum of smoothness penalties between all adjacent pixel pairs.
+
+\paragraph{Decision Variables.}
+For each pixel $p \in \mathcal{P}$ and each disparity label $d \in \mathcal{D}$, introduce a binary decision variable $x_{p,d} \in \{0,1\}$. The variable $x_{p,d}$ equals $1$ if and only if pixel $p$ is assigned disparity $d$, and $0$ otherwise. The set of all decision variables is $\{x_{p,d} \mid p \in \mathcal{P}, d \in \mathcal{D}\}$.
+
+\paragraph{QUBO Derivation.}
+Let $c_{p,d}$ denote the data cost for assigning disparity $d$ to pixel $p$. Let $\mathcal{E}$ denote the set of adjacent pixel pairs, and let $s_{p,q,d,d'}$ denote the smoothness penalty between disparities $d$ and $d'$ for neighboring pixels $p$ and $q$.
+
+\textbf{Step 1 --- Original Objective.}
+The minimization objective is:
+\begin{align}
+    \min_{x} \quad E(x) = \sum_{p \in \mathcal{P}} \sum_{d \in \mathcal{D}} c_{p,d} x_{p,d} + \sum_{(p,q) \in \mathcal{E}} \sum_{d \in \mathcal{D}} \sum_{d' \in \mathcal{D}} s_{p,q,d,d'} x_{p,d} x_{q,d'}.
+\end{align}
+
+\textbf{Step 2 --- Constraints.}
+Each pixel must be assigned exactly one disparity:
+\begin{align}
+    \sum_{d \in \mathcal{D}} x_{p,d} = 1 \quad \forall p \in \mathcal{P}.
+\end{align}
+
+\textbf{Step 3 --- Penalty Conversion.}
+Introduce a penalty weight $\lambda > 0$ and add the squared constraint violations to the objective:
+\begin{align}
+    H_{\text{pen}}(x) = \lambda \sum_{p \in \mathcal{P}} \left( \sum_{d \in \mathcal{D}} x_{p,d} - 1 \right)^2.
+\end{align}
+Expanding the square for a fixed pixel $p$:
+\begin{align}
+    \left( \sum_{d \in \mathcal{D}} x_{p,d} - 1 \right)^2 &= \sum_{d \in \mathcal{D}} x_{p,d}^2 + \sum_{d \in \mathcal{D}} \sum_{d' \in \mathcal{D}, d \neq d'} x_{p,d} x_{p,d'} - 2 \sum_{d \in \mathcal{D}} x_{p,d} + 1.
+\end{align}
+Using the idempotent property $x_{p,d}^2 = x_{p,d}$ for binary variables:
+\begin{align}
+    &= \sum_{d \in \mathcal{D}} x_{p,d} + \sum_{d \neq d'} x_{p,d} x_{p,d'} - 2 \sum_{d \in \mathcal{D}} x_{p,d} + 1 \\
+    &= \sum_{d \neq d'} x_{p,d} x_{p,d'} - \sum_{d \in \mathcal{D}} x_{p,d} + 1.
+\end{align}
+Since $\sum_{d \neq d'} x_{p,d} x_{p,d'} = 2 \sum_{d < d'} x_{p,d} x_{p,d'}$, the penalty contribution for pixel $p$ simplifies to:
+\begin{align}
+    \lambda \left( 2 \sum_{d < d'} x_{p,d} x_{p,d'} - \sum_{d \in \mathcal{D}} x_{p,d} + 1 \right).
+\end{align}
+
+\textbf{Step 4 --- Combined Hamiltonian.}
+Adding the objective and penalty terms yields the full QUBO Hamiltonian:
+\begin{align}
+    H(x) = \sum_{p \in \mathcal{P}} \sum_{d \in \mathcal{D}} c_{p,d} x_{p,d} + \sum_{(p,q) \in \mathcal{E}} \sum_{d,d' \in \mathcal{D}} s_{p,q,d,d'} x_{p,d} x_{q,d'} + \lambda \sum_{p \in \mathcal{P}} \left( 2 \sum_{d < d'} x_{p,d} x_{p,d'} - \sum_{d \in \mathcal{D}} x_{p,d} + 1 \right).
+\end{align}
+
+\textbf{Step 5 --- Q Matrix Entries and Offset.}
+Grouping linear and quadratic terms gives the closed-form expressions for the QUBO coefficients:
+\begin{align}
+    Q_{(p,d),(p,d)} &= c_{p,d} - \lambda, \\
+    Q_{(p,d),(p,d')} &= 2\lambda \quad \text{for } d \neq d', \\
+    Q_{(p,d),(q,d')} &= s_{p,q,d,d'} \quad \text{for } (p,q) \in \mathcal{E}, \\
+    c &= \lambda |\mathcal{P}|.
+\end{align}
+All other entries are zero. The Hamiltonian is expressed as $H(x) = \sum_{i,j} Q_{i,j} x_i x_j + c$.
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any constraint violation is strictly more costly than the maximum possible reduction in the objective function. A sufficient condition is:
+\begin{align}
+    \lambda > \max_{p \in \mathcal{P}, d \in \mathcal{D}} |c_{p,d}| + \sum_{(p,q) \in \mathcal{E}} \sum_{d \in \mathcal{D}} \sum_{d' \in \mathcal{D}} |s_{p,q,d,d'}|.
+\end{align}
+This guarantees that the energy penalty for assigning zero or multiple disparities to a pixel dominates any potential gain from the data or smoothness terms, thereby enforcing feasibility at the optimum.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^{|\mathcal{P}| \times |\mathcal{D}|}$ recovers the optimal disparity assignment because any feasible solution satisfies all constraints, yielding zero penalty and exactly the original stereo energy $E(x)$. Any infeasible solution violates at least one exactly-one constraint, incurring a penalty strictly greater than the maximum possible objective value of any feasible assignment. Consequently, the global minimum of $H(x)$ must be feasible and correspond to the assignment that minimizes the original stereo energy.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $|\mathcal{P}| = 2$ pixels ($\mathcal{P} = \{0,1\}$), $|\mathcal{D}| = 3$ disparities ($\mathcal{D} = \{0,1,2\}$), and a single neighbor pair $\mathcal{E} = \{(0,1)\}$. The decision variables are $x_{0,0}, x_{0,1}, x_{0,2}, x_{1,0}, x_{1,1}, x_{1,2}$. Using the general formulas with penalty weight $\lambda$, the Hamiltonian expands to:
+\begin{align}
+    H(x) &= \sum_{d=0}^{2} (c_{0,d} - \lambda) x_{0,d} + \sum_{d=0}^{2} (c_{1,d} - \lambda) x_{1,d} \nonumber \\
+    &\quad + 2\lambda (x_{0,0}x_{0,1} + x_{0,0}x_{0,2} + x_{0,1}x_{0,2}) + 2\lambda (x_{1,0}x_{1,1} + x_{1,0}x_{1,2} + x_{1,1}x_{1,2}) \nonumber \\
+    &\quad + \sum_{d=0}^{2} \sum_{d'=0}^{2} s_{0,1,d,d'} x_{0,d} x_{1,d'} + 2\lambda.
+\end{align}
+The corresponding Q matrix entries are $Q_{(0,d),(0,d)} = c_{0,d} - \lambda$, $Q_{(1,d),(1,d)} = c_{1,d} - \lambda$, $Q_{(0,d),(0,d')} = 2\lambda$, $Q_{(1,d),(1,d')} = 2\lambda$ for $d \neq d'$, and $Q_{(0,d),(1,d')} = s_{0,1,d,d'}$. The constant offset is $c = 2\lambda$. Minimizing this quadratic polynomial over binary assignments yields the optimal disparity map and its minimum stereo energy for this instance.
+
+\end{document}

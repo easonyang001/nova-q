@@ -1,0 +1,241 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 120.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 496.4
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 47.4
+  },
+  "data": {
+   "ok": true,
+   "seconds": 351.5
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.2
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 432.0
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.3
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position Encoding TSP (n^2 variables). Rationale: The specification requires a closed tour visiting every station exactly once. Position encoding (x[i,t] = 1 if station i is at position t) naturally enforces 'visit each station once' and 'each position has one station' via simple linear constraints. Crucially, it inherently prevents subtours because the sequence is linear with a wrap-around edge, satisfying the 'single tour' requirement without auxiliary MTZ variables. Size: For N stations, variables = N^2. With N ~ 45-60, N^2 is approx 2,025 - 3,600. This fits within the CGA backend limit of ",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "YouBike stations within 800m of Daan Station",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Tour sequence positions (0 to N-1)",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "daan_lat": {
+    "meaning": "Latitude of Daan MRT Station (reference center)",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 25.033,
+    "unit": "deg_lat"
+   },
+   "daan_lon": {
+    "meaning": "Longitude of Daan MRT Station (reference center)",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 121.5436,
+    "unit": "deg_lon"
+   },
+   "radius_m": {
+    "meaning": "Search radius in meters",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 800,
+    "unit": "m"
+   }
+  }
+ },
+ "data_found": [
+  "YouBike2_0臺北市公共自行車即時資訊.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 800m of Daan MRT Station (lat 25.033, lon 121.5436). Included all stations regardless of operational status. Station IDs are 'sno' codes. Positions are indexed P0 to P(N-1).",
+  "prep_log": "**資料來源**\n\n- YouBike2.0臺北市公共自行車即時資訊（政府資料開放平台） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-13T03:03:28.667473+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (25.033, 121.5436) 800 公尺內的資料 | 1819 | 38 |  |",
+  "flags": [],
+  "review_required": [
+   "daan_lat: 尚未聲明 unit，需求為 deg_lat",
+   "daan_lon: 尚未聲明 unit，需求為 deg_lon",
+   "radius_m: 尚未聲明 unit，需求為 m"
+  ],
+  "sources": [
+   {
+    "title": "YouBike2.0臺北市公共自行車即時資訊",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T03:03:28.667473+00:00",
+    "sha256": "8b533e4761d0550cd449ae61cf929abf6589644ce22a406e43376e55ef8290ad",
+    "bytes": 952824
+   }
+  ],
+  "n_variables": 1444,
+  "n_constraints": 76,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "stations": 38
+    },
+    "totals": {
+     "lat": 951.2581999999999,
+     "lon": 4618.69114
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "f4d9ff00b1435def61106cd7",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 59,
+    "invalid": 59,
+    "not_comparable": 0,
+    "rank_agreement": 0.967
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "f4d9ff00b1435def61106cd7",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.06664435464447446,
+  "objective": 0.19931482367847767,
+  "baseline_objective": 0.26595917832295213
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (YouBike2_0臺北市公共自行車即時資訊.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 38,
+    "mapped": 38,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.992,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 38,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 21333.42584311755,
+    "reference_quality": 7426.4082799077005,
+    "gap_vs_reference": 1.8726
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 142660,
+  "solver_calls": 3
+ },
+ "seconds": 1448.3
+}

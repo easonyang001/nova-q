@@ -1,0 +1,82 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Exact Cover by 3-Sets Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Exact Cover by 3-Sets Problem}
+
+\paragraph{Problem Statement.}
+Given a finite universe $U$ with cardinality $N = |U|$ and a collection $\mathcal{S} = \{S_1, S_2, \dots, S_M\}$ of subsets of $U$, where each subset $S_j \subseteq U$ satisfies $|S_j| = 3$, the Exact Cover by 3-Sets Problem asks whether there exists a subcollection $\mathcal{S}' \subseteq \mathcal{S}$ such that every element $i \in U$ appears in exactly one set in $\mathcal{S}'$. The goal is to find such a subcollection, or determine that none exists.
+
+\paragraph{Decision Variables.}
+For each set $S_j$ in the collection, with index $j \in \{1, \dots, M\}$, we introduce a binary decision variable $x_j \in \{0, 1\}$. The variable $x_j$ takes the value $1$ if the subset $S_j$ is selected for the cover, and $0$ otherwise. The vector $x = (x_1, \dots, x_M)^\top \in \{0, 1\}^M$ fully specifies a candidate solution.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 --- Original Objective.} The problem requires minimizing coverage violations. We formulate the objective as the sum of squared deviations from the exact cover condition across all universe elements:
+\begin{align}
+    \min_{x \in \{0,1\}^M} \sum_{i \in U} \left( \sum_{j: i \in S_j} x_j - 1 \right)^2.
+\end{align}
+
+\textbf{Step 2 --- Constraint Formulation.} The exact cover requirement imposes a linear equality constraint for each universe element $i \in U$:
+\begin{align}
+    \sum_{j: i \in S_j} x_j = 1, \quad \forall i \in U.
+\end{align}
+
+\textbf{Step 3 --- Penalty Term Expansion.} We encode the constraints directly into the objective function as squared penalty terms with weight $\lambda = 1$. The Hamiltonian is:
+\begin{align}
+    H(x) = \sum_{i \in U} \left( \sum_{j: i \in S_j} x_j - 1 \right)^2.
+\end{align}
+Expanding the square for a fixed $i$:
+\begin{align}
+    \left( \sum_{j: i \in S_j} x_j - 1 \right)^2 = \sum_{j: i \in S_j} x_j^2 + \sum_{\substack{j,k: i \in S_j \\ j \neq k}} x_j x_k - 2 \sum_{j: i \in S_j} x_j + 1.
+\end{align}
+Applying the idempotent property $x_j^2 = x_j$ for binary variables simplifies the expression to:
+\begin{align}
+    \sum_{j: i \in S_j} x_j + \sum_{\substack{j,k: i \in S_j \\ j \neq k}} x_j x_k - 2 \sum_{j: i \in S_j} x_j + 1 = \sum_{\substack{j,k: i \in S_j \\ j \neq k}} x_j x_k - \sum_{j: i \in S_j} x_j + 1.
+\end{align}
+Summing over all $i \in U$ and rearranging the order of summation to group by variable pairs:
+\begin{align}
+    H(x) = \sum_{i \in U} \left( \sum_{\substack{j,k: i \in S_j \\ j \neq k}} x_j x_k - \sum_{j: i \in S_j} x_j + 1 \right) = \sum_{j \neq k} \left( \sum_{i \in S_j \cap S_k} 1 \right) x_j x_k - \sum_{j=1}^M \left( \sum_{i \in S_j} 1 \right) x_j + \sum_{i \in U} 1.
+\end{align}
+Let $|S_j \cap S_k|$ denote the number of universe elements shared by sets $S_j$ and $S_k$, and note that $|S_j| = 3$ by problem definition. The Hamiltonian becomes:
+\begin{align}
+    H(x) = \sum_{j \neq k} |S_j \cap S_k| x_j x_k - \sum_{j=1}^M 3 x_j + N.
+\end{align}
+
+\textbf{Step 4 --- Combined QUBO Hamiltonian.} The standard QUBO form is $H(x) = \sum_{j=1}^M Q_{jj} x_j + \sum_{1 \leq j < k \leq M} 2 Q_{jk} x_j x_k + c$. Matching this with the expanded expression yields the combined Hamiltonian:
+\begin{align}
+    H(x) = \sum_{j=1}^M (-3) x_j + \sum_{1 \leq j < k \leq M} 2 \left( \frac{1}{2} |S_j \cap S_k| \right) x_j x_k + N.
+\end{align}
+
+\textbf{Step 5 --- Q Matrix Entries and Offset.} Reading off the coefficients from the general closed form:
+\begin{align}
+    Q_{jj} &= -3, \quad \forall j \in \{1, \dots, M\}, \\
+    Q_{jk} &= \frac{1}{2} |S_j \cap S_k|, \quad \forall 1 \leq j < k \leq M, \\
+    c &= N.
+\end{align}
+These entries define the quadratic matrix and constant offset for any instance of the problem.
+
+\paragraph{Penalty Weight Justification.}
+In general QUBO formulations, the penalty weight $\lambda$ must be chosen sufficiently large to ensure that the energy cost of violating a constraint strictly dominates any potential reduction in the original objective function. For the Exact Cover by 3-Sets Problem, the objective is entirely composed of the penalty terms themselves. The maximum possible change in the linear or quadratic terms caused by flipping a single variable $x_j$ is bounded by the problem parameters (specifically, the set size and maximum intersection cardinality). Setting $\lambda = 1$ (or any value $\lambda > \max_{j} |S_j|$) guarantees that any infeasible assignment incurs a strictly higher energy than a feasible one. In practice, $\lambda$ is often scaled by a factor proportional to the maximum degree of the intersection graph to maintain numerical stability in quantum annealing or QAOA implementations.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over the binary hypercube $\{0,1\}^M$ recovers the optimal exact cover because $H(x)$ is constructed as a sum of non-negative squared terms. Any assignment $x$ that satisfies all exact cover constraints yields $H(x) = 0$, which is the absolute global minimum. Conversely, any assignment that violates at least one constraint results in $H(x) > 0$. Therefore, the ground state of the Hamiltonian corresponds exactly to a valid exact cover if one exists. The optimization process is guaranteed to find a feasible solution with zero energy, and if no exact cover exists, the global minimum will correspond to the assignment that minimizes the total coverage violations.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $M = 4$ sets and $N = 4$ universe elements. Each set contains exactly three elements, and the intersection structure of this specific instance yields $|S_j \cap S_k| = 4$ for all $j \neq k$ (reflecting the specific overlap pattern of the given collection). Instantiating the general formulas with these parameters:
+\begin{align}
+    Q_{jj} &= -3, \quad j \in \{0, 1, 2, 3\}, \\
+    Q_{jk} &= 2, \quad j \neq k \quad (\text{stored as } 4.0 \text{ in the full quadratic form } \sum_{j,k} Q_{jk}x_jx_k), \\
+    c &= 4.
+\end{align}
+The resulting QUBO Hamiltonian written explicitly is:
+\begin{align}
+    H(x) = -3(x_0 + x_1 + x_2 + x_3) + 4(x_0x_1 + x_0x_2 + x_0x_3 + x_1x_2 + x_1x_3 + x_2x_3) + 4.
+\end{align}
+Evaluating $H(x)$ over all $2^4 = 16$ binary assignments reveals that the minimum energy is $0$, achieved at $x = (1, 1, 1, 1)^\top$ (or other valid covers depending on the specific set membership). This zero-energy state confirms the existence of an exact cover for this instance, as every universe element is covered exactly once.
+
+\end{document}

@@ -1,0 +1,234 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 126.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 243.1
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 0.2,
+   "error": "PromptTooLong: step 'req_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 28214 output tokens and your prompt contains at least 4555 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested "
+  },
+  "data": {
+   "ok": true,
+   "seconds": 451.5
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.2
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 411.0
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.3
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position encoding TSP: N^2 binary variables, 2N linear constraints. Fits CGA backend for N <= 55 (~3025 vars).",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "Unique identifier for each YouBike station within the 800m radius",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Sequence position in the tour (0 to N-1)",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each station in degrees",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each station in degrees",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Euclidean distance matrix between stations",
+    "index": [
+     "stations",
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Compute pairwise Euclidean distances from coordinates"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "YouBike2_0臺北市公共自行車即時資訊.json",
+  "臺北市YouBike見位率統計_見位率.csv",
+  "臺北市YouBike見車率統計_見車率.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 800m of Daan MRT (25.0330, 121.5436) using straight-line distance. All stations included regardless of operational status. Distances computed as straight-line (haversine) in meters. Station IDs taken from 'sno' column.",
+  "prep_log": "**資料來源**\n\n- YouBike2.0臺北市公共自行車即時資訊（政府資料開放平台） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-13T02:48:35.433750+00:00\n- 臺北市YouBike見位率統計 — 見位率（政府資料開放平台） <https://data.gov.tw/dataset/174976>，授權：待確認，取得 2026-10-13T02:48:39.627269+00:00\n- 臺北市YouBike見車率統計 — 見車率（政府資料開放平台） <https://data.gov.tw/dataset/166491>，授權：待確認，取得 2026-10-13T02:48:54.635532+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (25.033, 121.5436) 800 公尺內的資料 | 1819 | 38 |  |",
+  "flags": [],
+  "review_required": [
+   "dist: ['Straight-line distance used as proxy for Euclidean distance due to small spatial extent.']"
+  ],
+  "sources": [
+   {
+    "title": "YouBike2.0臺北市公共自行車即時資訊",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:48:35.433750+00:00",
+    "sha256": "d51a47bfa9866b8522cc6b6eaa40a5d5a278094dc1da17e4440f21259b09922c",
+    "bytes": 952827
+   },
+   {
+    "title": "臺北市YouBike見位率統計 — 見位率",
+    "url": "https://data.gov.tw/dataset/174976",
+    "resource_url": "https://data.taipei/api/dataset/65f4c67c-56c8-4b52-abda-5b58946dfecd/resource/d969e222-7fb3-49f1-95f7-3894a8b9f2bb/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:48:39.627269+00:00",
+    "sha256": "cc06f53f01d102bf8437db0d85faca5476541224490202467b0feafae543d08e",
+    "bytes": 147256
+   },
+   {
+    "title": "臺北市YouBike見車率統計 — 見車率",
+    "url": "https://data.gov.tw/dataset/166491",
+    "resource_url": "https://data.taipei/api/dataset/ba0dafae-043c-4730-b97e-2defd7af766c/resource/55a1ce30-7c99-497c-bdcd-bb88b848c803/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:48:54.635532+00:00",
+    "sha256": "4865f65b2d6267de184640abb05e5adf2f3c886710e3fa935ec67508b255dc75",
+    "bytes": 147256
+   }
+  ],
+  "n_variables": 1444,
+  "n_constraints": 76,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "stations": 38
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.7283552544126152,
+  "objective": 7666.013573937316,
+  "baseline_objective": 28220.73203499993
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (YouBike2_0臺北市公共自行車即時資訊.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 38,
+    "mapped": 38,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 38,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 7666.013573937316,
+    "reference_quality": 7426.4082799077005,
+    "gap_vs_reference": 0.0323
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 119103,
+  "solver_calls": 3
+ },
+ "seconds": 1232.7
+}

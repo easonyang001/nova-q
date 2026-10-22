@@ -1,0 +1,31 @@
+You write ONE Python function that says what to draw for a solution of an optimisation model. The system draws it.
+
+The model (already written and validated) uses this data:
+DATA_SCHEMA = {schema}
+
+A small example instance (lists may be shortened):
+{sample}
+
+describe_solution() for a solution of that instance returns:
+{described}
+
+The solution vector x has {n_vars} binary variables named (first ones): {var_names}
+
+def visualize(data: dict, x: list) -> dict:
+    # WHAT to draw for a 0/1 solution x (the system draws it). Return exactly one of:
+    # {"type": "map", "title": str, "points": [{"x": float, "y": float, "label": str, "group": str}, ...],
+    #  "links": [[i, j], ...]}            # location problems; group "selected" marks chosen sites; links optional
+    # {"type": "schedule", "title": str, "rows": [str], "cols": [str], "cells": [[str]]}
+    #                                     # scheduling: cells[r][c] = what row r does in column c, "" = nothing
+    # {"type": "routes", "title": str, "nodes": [{"x": float, "y": float, "label": str, "depot": bool}],
+    #  "routes": [[node index, ...], ...], "closed": bool}   # routing: each route as an ordered list of nodes
+    # {"type": "graph", "title": str, "nodes": [{"label": str, "group": str}], "edges": [[i, j], ...],
+    #  "highlight": [[i, j], ...]}        # graph problems (max-cut, independent set, partitioning, network design);
+    #                                     # node x/y optional; group = side / colour; highlight = cut or chosen edges
+    # {"type": "selection", "title": str, "items": [{"label": str, "value": float, "selected": bool, "cost": float}]}
+    #                                     # choosing a subset of items (knapsack, feature selection, portfolio assets)
+    # Use coordinates from the data when there are any. Pick the type that shows the decision most directly.
+
+Rules: standard library + numpy only; read everything from `data` and `x`; never hard-code numbers from the example.
+{previous_feedback}
+Output: Python code only (the function, plus imports if needed), in a single ```python ... ``` block.

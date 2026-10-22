@@ -1,0 +1,9 @@
+{"mode": "mgpu", "n_qubits": 29, "gpus": 1, "layers": 2, "s_per_evaluation": 1.9791464805603027, "ok": true}
+{"mode": "mgpu", "n_qubits": 30, "gpus": 1, "layers": 2, "s_per_evaluation": 4.337235927581787, "ok": true}
+{"mode": "mgpu", "n_qubits": 31, "gpus": 1, "layers": 2, "s_per_evaluation": 9.311630725860596, "ok": true}
+{"mode": "mgpu", "n_qubits": 32, "gpus": 1, "layers": 2, "s_per_evaluation": 19.79506742954254, "ok": true}
+{"mode": "mgpu", "n_qubits": 33, "gpus": 1, "layers": 2, "ok": false, "error": "RuntimeError: requested size is too big"}
+{"mode": "mgpu", "n_qubits": 29, "gpus": 2, "layers": 2, "s_per_evaluation": 7.449993133544922, "ok": true}
+{"mode": "mgpu", "n_qubits": 30, "gpus": 2, "layers": 2, "s_per_evaluation": 15.351208448410034, "ok": true}
+{"mode": "mgpu", "n_qubits": 31, "gpus": 2, "layers": 2, "s_per_evaluation": 32.72636532783508, "ok": true}
+{"mode": "mgpu", "n_qubits": 32, "gpus": 2, "layers": 2, "ok": false, "error": "RuntimeError: cudaErrorMemoryAllocation"}

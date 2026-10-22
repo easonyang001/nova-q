@@ -10,85 +10,63 @@
 \subsection*{Legal Document Extractive Summarization}
 
 \paragraph{Problem Statement.}
-Given a legal document partitioned into $N$ candidate sentences, the goal is to select exactly $K$ sentences to form an extractive summary. Each sentence $i \in \{0, 1, \dots, N-1\}$ is assigned an importance weight $w_i \geq 0$, and each unordered pair of distinct sentences $(i,j)$ with $0 \leq i < j < N$ is assigned a redundancy penalty $p_{ij} \geq 0$ that applies if both sentences are simultaneously selected. The objective is to maximize the total summary score, defined as the sum of importance scores of the selected sentences minus the sum of redundancy penalties incurred between all selected pairs.
+Given a legal document partitioned into $N$ candidate sentences, the goal is to construct an extractive summary of exactly $K$ sentences. Each sentence $i \in \{0, \dots, N-1\}$ is assigned an importance score $w_i \geq 0$. Additionally, each pair of distinct sentences $(i, j)$ with $0 \leq i < j \leq N-1$ is assigned a redundancy penalty $p_{ij} \geq 0$ reflecting the degree to which they cover overlapping legal points. The objective is to select a subset of exactly $K$ sentences that maximizes the total importance score while minimizing the total redundancy among the selected sentences.
 
 \paragraph{Decision Variables.}
-For each candidate sentence $i \in \{0, 1, \dots, N-1\}$, introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ equals $1$ if sentence $i$ is included in the extractive summary, and $0$ otherwise. The complete solution is represented by the vector $x = (x_0, x_1, \dots, x_{N-1}) \in \{0, 1\}^N$.
+For each candidate sentence $i \in \{0, \dots, N-1\}$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ equals $1$ if sentence $i$ is included in the summary, and $0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-Step 1 --- Original Objective and Sign Flip.
-The original problem is a maximization:
+\textbf{Step 1.} The original maximization objective is converted to a minimization problem by negating the objective function:
 \begin{align}
-\max_{x \in \{0,1\}^N} \sum_{i=0}^{N-1} w_i x_i - \sum_{0 \leq i < j < N} p_{ij} x_i x_j.
-\end{align}
-Following QUBO convention, we convert this to a minimization problem by negating the objective:
-\begin{align}
-\min_{x \in \{0,1\}^N} -\sum_{i=0}^{N-1} w_i x_i + \sum_{0 \leq i < j < N} p_{ij} x_i x_j.
+    \min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} w_i x_i + \sum_{0 \leq i < j \leq N-1} p_{ij} x_i x_j \right).
 \end{align}
 
-Step 2 --- Constraint Formulation.
-The requirement to select exactly $K$ sentences is expressed as a cardinality constraint:
+\textbf{Step 2.} The exactly-$K$ selection constraint is expressed algebraically as:
 \begin{align}
-\sum_{i=0}^{N-1} x_i = K.
+    \sum_{i=0}^{N-1} x_i = K.
 \end{align}
 
-Step 3 --- Quadratic Penalty Expansion.
-The constraint is enforced via a quadratic penalty term with coefficient $A > 0$:
+\textbf{Step 3.} Following QUBO conventions, the equality constraint is enforced via a quadratic penalty term with weight $A > 0$:
 \begin{align}
-A \left( \sum_{i=0}^{N-1} x_i - K \right)^2.
+    \mathcal{P}(x) = A \left( \sum_{i=0}^{N-1} x_i - K \right)^2.
 \end{align}
 Expanding the square yields:
 \begin{align}
-\left( \sum_{i=0}^{N-1} x_i - K \right)^2 = \left( \sum_{i=0}^{N-1} x_i \right)^2 - 2K \sum_{i=0}^{N-1} x_i + K^2.
+    \mathcal{P}(x) = A \left( \sum_{i=0}^{N-1} x_i^2 + 2 \sum_{0 \leq i < j \leq N-1} x_i x_j - 2K \sum_{i=0}^{N-1} x_i + K^2 \right).
 \end{align}
-Using the algebraic identity $\left( \sum_{i=0}^{N-1} x_i \right)^2 = \sum_{i=0}^{N-1} x_i^2 + 2 \sum_{0 \leq i < j < N} x_i x_j$ and the idempotent property of binary variables $x_i^2 = x_i$, we obtain:
+Applying the idempotent property $x_i^2 = x_i$ for binary variables simplifies the quadratic self-interaction terms:
 \begin{align}
-\left( \sum_{i=0}^{N-1} x_i - K \right)^2 = \sum_{i=0}^{N-1} x_i + 2 \sum_{0 \leq i < j < N} x_i x_j - 2K \sum_{i=0}^{N-1} x_i + K^2.
+    \mathcal{P}(x) = A \left( (1 - 2K) \sum_{i=0}^{N-1} x_i + 2 \sum_{0 \leq i < j \leq N-1} x_i x_j + K^2 \right).
 \end{align}
-Collecting linear terms gives the general penalty contribution:
+Distributing $A$ gives the general penalty contribution to the Hamiltonian:
 \begin{align}
-A \left[ (1 - 2K) \sum_{i=0}^{N-1} x_i + 2 \sum_{0 \leq i < j < N} x_i x_j + K^2 \right].
+    \mathcal{P}(x) = A(1 - 2K) \sum_{i=0}^{N-1} x_i + 2A \sum_{0 \leq i < j \leq N-1} x_i x_j + A K^2.
 \end{align}
 
-Step 4 --- Combined QUBO Hamiltonian.
-Adding the negated objective and the expanded penalty term yields the full QUBO Hamiltonian $H(x)$:
+\textbf{Step 4.} Combining the negated objective from Step 1 with the expanded penalty from Step 3 yields the full QUBO Hamiltonian $H(x)$:
 \begin{align}
-H(x) = \sum_{i=0}^{N-1} \left( A(1 - 2K) - w_i \right) x_i + \sum_{0 \leq i < j < N} \left( p_{ij} + 2A \right) x_i x_j + A K^2.
+    H(x) = \sum_{i=0}^{N-1} \left[ -w_i + A(1 - 2K) \right] x_i + \sum_{0 \leq i < j \leq N-1} \left[ p_{ij} + 2A \right] x_i x_j + A K^2.
 \end{align}
 
-Step 5 --- Q Matrix Entries and Offset.
-Reading off the coefficients from $H(x)$, the upper-triangular QUBO matrix entries $Q_{i,j}$ and constant offset $c$ are given by:
+\textbf{Step 5.} Reading off the coefficients from the general closed form of $H(x)$, the upper-triangular entries of the QUBO matrix $Q$ and the constant offset $c$ are:
 \begin{align}
-Q_{i,i} &= A(1 - 2K) - w_i, \quad \text{for } i \in \{0, \dots, N-1\}, \\
-Q_{i,j} &= p_{ij} + 2A, \quad \text{for } 0 \leq i < j < N, \\
-Q_{i,j} &= 0, \quad \text{for } i > j, \\
-c &= A K^2.
+    Q_{i,i} &= -w_i + A(1 - 2K), \quad \text{for } i \in \{0, \dots, N-1\}, \\
+    Q_{i,j} &= p_{ij} + 2A, \quad \text{for } 0 \leq i < j \leq N-1, \\
+    c &= A K^2.
 \end{align}
+The matrix is symmetric, so $Q_{j,i} = Q_{i,j}$ for $i > j$, and all unspecified entries are zero.
 
 \paragraph{Penalty Weight Justification.}
-The penalty coefficient $A$ must be chosen large enough to ensure that any violation of the cardinality constraint incurs an energy cost strictly greater than the maximum possible improvement in the original objective function. The maximum change in the negated objective from flipping a single variable is bounded by $N \max_{i} |w_i| + N(N-1) \max_{i,j} |p_{ij}|$. Therefore, selecting $A > N \max_{i} |w_i| + N(N-1) \max_{i,j} |p_{ij}|$ guarantees that the quadratic penalty dominates any feasible objective gain, forcing the optimizer to prefer feasible solutions over infeasible ones.
+The penalty weight $A$ must be chosen sufficiently large to ensure that any violation of the exactly-$K$ constraint results in an energy increase that strictly dominates any potential gain in the objective function. The maximum possible reduction in the original objective (or increase in the negated objective) from adding or removing a single sentence is bounded by $\max_{i} w_i$. Therefore, selecting $A > \max_{i} w_i$ guarantees that the quadratic penalty term outweighs any feasible objective improvement, forcing the optimizer to prioritize constraint satisfaction over marginal relevance gains.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal extractive summary because feasible assignments satisfying $\sum_{i=0}^{N-1} x_i = K$ incur zero penalty, meaning their energy exactly equals the negated summary score. Infeasible assignments violate the cardinality constraint and incur a penalty of at least $A$. By construction, $A$ exceeds the maximum possible reduction in the objective function achievable by any constraint violation. Consequently, the global minimum of $H(x)$ cannot occur at an infeasible point, and must instead correspond to a feasible assignment that minimizes the negated objective, which is equivalent to maximizing the original summary score.
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal summary because the penalty term is strictly non-negative and vanishes if and only if $\sum_{i} x_i = K$. For any feasible solution satisfying the constraint, $H(x)$ evaluates exactly to the negated objective function. For any infeasible solution, the penalty term $A(\sum_{i} x_i - K)^2$ adds a positive constant that, by the choice of $A$, exceeds the maximum possible difference between any two feasible objective values. Consequently, the global minimum of $H(x)$ must occur at a feasible point, and among feasible points, $H(x)$ is minimized exactly when the original objective is maximized.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=3$ candidate sentences and a target summary length of $K=2$. Let the importance weights be $w_0=10$, $w_1=12$, $w_2=9$, and the redundancy penalties be $p_{01}=3$, $p_{02}=2$, $p_{12}=4$. We set the penalty weight to $A=100$.
+Consider a concrete instance with $N = 3$ candidate sentences and a target summary length of $K = 2$. Let the importance scores be $w_0 = 0.7$, $w_1 = 0.5$, $w_2 = 0.8$, and the redundancy penalties be $p_{01} = 0.1$, $p_{02} = 0.2$, $p_{12} = 0.05$. Setting the penalty weight to $A = 10$ (which satisfies $A > \max_i w_i$), we instantiate the general formulas. The linear coefficients become $Q_{0,0} = -0.7 + 10(1-4) = -30.7$, $Q_{1,1} = -0.5 - 30 = -30.5$, and $Q_{2,2} = -0.8 - 30 = -30.8$. The quadratic coefficients become $Q_{0,1} = 0.1 + 20 = 20.1$, $Q_{0,2} = 0.2 + 20 = 20.2$, and $Q_{1,2} = 0.05 + 20 = 20.05$. The constant offset is $c = 10 \cdot 2^2 = 40$. The resulting Hamiltonian is:
+\begin{align}
+    H(x) &= -30.7 x_0 - 30.5 x_1 - 30.8 x_2 + 20.1 x_0 x_1 + 20.2 x_0 x_2 + 20.05 x_1 x_2 + 40.
+\end{align}
+Evaluating $H(x)$ over all binary vectors with exactly two ones yields the following energies: $H(1,1,0) = -1.1$, $H(1,0,1) = -1.3$, and $H(0,1,1) = -1.25$. The global minimum occurs at $x^* = (1, 0, 1)$, corresponding to selecting sentences $\{0, 2\}$. The maximum summary score is $0.7 + 0.8 - 0.2 = 1.3$, confirming that the QUBO correctly identifies the optimal extractive summary.
 
-The concrete maximization objective is:
-\begin{align}
-\max \; 10x_0 + 12x_1 + 9x_2 - 3x_0x_1 - 2x_0x_2 - 4x_1x_2.
-\end{align}
-The concrete penalty term expands to:
-\begin{align}
-100 \left[ (1-4)(x_0+x_1+x_2) + 2(x_0x_1+x_0x_2+x_1x_2) + 4 \right] = -300(x_0+x_1+x_2) + 200(x_0x_1+x_0x_2+x_1x_2) + 400.
-\end{align}
-Combining these yields the concrete QUBO Hamiltonian:
-\begin{align}
-H(x) = -310x_0 - 312x_1 - 309x_2 + 203x_0x_1 + 202x_0x_2 + 204x_1x_2 + 400.
-\end{align}
-For feasible solutions where $x_0+x_1+x_2=2$, the penalty contribution vanishes and $H(x)$ reduces to the negated objective. Evaluating the three feasible binary vectors:
-\begin{align}
-H(1,1,0) &= -19, \quad H(1,0,1) = -17, \quad H(0,1,1) = -17.
-\end{align}
-The global minimum is $-19$ at $x^* = (1,1,0)$. Thus, the optimal extractive summary consists of sentences $0$ and $1$, achieving a maximum summary score of $19$.
 \end{document}

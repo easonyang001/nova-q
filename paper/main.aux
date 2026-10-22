@@ -1,0 +1,193 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{aramon2019digital}
+\citation{lucas2014ising,glover2019tutorial}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
+\newlabel{sec:intro}{{1}{1}{Introduction}{section.1}{}}
+\newlabel{sec:intro@cref}{{[section][1][]1}{[1][1][]1}}
+\citation{verma2020penalty,ayodele2022penalty,pelofske2025comparing}
+\citation{mondal2026quantumqubo}
+\citation{ramamonjison2023nl4opt,ahmaditeshnizi2024optimus,xiao2024chainofexperts}
+\@writefile{toc}{\contentsline {paragraph}{This paper.}{2}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Research question.}{2}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Contributions.}{2}{section*.3}\protected@file@percent }
+\citation{ramamonjison2023nl4opt}
+\citation{ahmaditeshnizi2024optimus}
+\citation{xiao2024chainofexperts}
+\citation{mondal2026quantumqubo}
+\citation{llmqubo2025}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{3}{section.2}\protected@file@percent }
+\newlabel{sec:related}{{2}{3}{Related Work}{section.2}{}}
+\newlabel{sec:related@cref}{{[section][2][]2}{[1][3][]3}}
+\@writefile{toc}{\contentsline {paragraph}{LLMs for optimization modelling.}{3}{section*.4}\protected@file@percent }
+\citation{lucas2014ising}
+\citation{glover2019tutorial}
+\citation{verma2020penalty}
+\citation{ayodele2022penalty}
+\citation{penaltyml2025bisection,formulationautotuning2026}
+\citation{montanez2024unbalanced}
+\citation{pyquboDocs}
+\citation{qhyperDocs}
+\citation{kaiwuDocs}
+\citation{akiba2019optuna}
+\citation{pelofske2025comparing}
+\citation{aramon2019digital}
+\citation{koch2025qoblib}
+\citation{akiba2019optuna}
+\citation{wang2026cim}
+\citation{yao2023react}
+\citation{qwen3report2025}
+\citation{kwon2023vllm}
+\citation{osm}
+\citation{luxen2011osrm}
+\@writefile{toc}{\contentsline {paragraph}{QUBO formulation and penalty weights.}{4}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Reusable penalty-search software.}{4}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Annealing hardware and parameter tuning.}{4}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Closest work: LLM agents with hardware in the loop.}{4}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Agents, tools and local models.}{4}{section*.9}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Classes of model inputs and the system's behaviour for each.}}{5}{table.1}\protected@file@percent }
+\newlabel{tab:dataclasses}{{1}{5}{Classes of model inputs and the system's behaviour for each}{table.1}{}}
+\newlabel{tab:dataclasses@cref}{{[table][1][]1}{[1][5][]5}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Problem Setting and Design Principles}{5}{section.3}\protected@file@percent }
+\newlabel{sec:setting}{{3}{5}{Problem Setting and Design Principles}{section.3}{}}
+\newlabel{sec:setting@cref}{{[section][3][]3}{[1][4][]5}}
+\@writefile{toc}{\contentsline {paragraph}{Task.}{5}{section*.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Operational success and model verification.}{5}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Three classes of model inputs.}{5}{section*.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Design principles.}{5}{section*.13}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Illustrative end-to-end facility-selection workflow. A confirmed request becomes a typed binary model and schema, a prepared public-data instance, a QUBO and a checked decision. Coverage variables prevent double-counting; QUBO variables include decision and encoding auxiliaries. Checker evidence supports bounded repairs, not a guarantee of correctness. Tables, coordinates, maps and bit assignments are schematic examples.}}{6}{figure.1}\protected@file@percent }
+\newlabel{fig:arch}{{1}{6}{Illustrative end-to-end facility-selection workflow. A confirmed request becomes a typed binary model and schema, a prepared public-data instance, a QUBO and a checked decision. Coverage variables prevent double-counting; QUBO variables include decision and encoding auxiliaries. Checker evidence supports bounded repairs, not a guarantee of correctness. Tables, coordinates, maps and bit assignments are schematic examples}{figure.1}{}}
+\newlabel{fig:arch@cref}{{[figure][1][]1}{[1][6][]6}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}System}{6}{section.4}\protected@file@percent }
+\newlabel{sec:system}{{4}{6}{System}{section.4}{}}
+\newlabel{sec:system@cref}{{[section][4][]4}{[1][6][]6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Clarification}{6}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Modeling}{7}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Data acquisition and preprocessing}{7}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Typed data interface and administrative joins.}{8}{section*.14}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Independent data computation.}{8}{section*.15}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Acquisition safeguards.}{8}{section*.16}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Requirement Checker and decision identities.}{8}{section*.17}\protected@file@percent }
+\citation{montanez2024unbalanced}
+\citation{verma2020penalty}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Illustrative data inspection, requirement inspection and external acceptance judging. Tables, formulations, evaluation values and check marks are schematic examples, not experimental results. Agents receive bounded raw-table profiles and write code that operates on full tables; the Requirement Checker does not see the formulation. Helper optimization is used where supported. Checker agreement is evidence rather than a correctness guarantee; held-out judge truth is not supplied to runtime agents.}}{9}{figure.2}\protected@file@percent }
+\newlabel{fig:verificationlayers}{{2}{9}{Illustrative data inspection, requirement inspection and external acceptance judging. Tables, formulations, evaluation values and check marks are schematic examples, not experimental results. Agents receive bounded raw-table profiles and write code that operates on full tables; the Requirement Checker does not see the formulation. Helper optimization is used where supported. Checker agreement is evidence rather than a correctness guarantee; held-out judge truth is not supplied to runtime agents}{figure.2}{}}
+\newlabel{fig:verificationlayers@cref}{{[figure][2][]2}{[1][9][]9}}
+\@writefile{toc}{\contentsline {paragraph}{Optional retrieval of modelling patterns.}{9}{section*.18}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Encodings, guardrails and the tuning loop}{9}{subsection.4.4}\protected@file@percent }
+\citation{pyquboDocs}
+\citation{qhyperDocs}
+\citation{kaiwuDocs}
+\@writefile{toc}{\contentsline {paragraph}{Parameterized compilation and diagnostics.}{10}{section*.19}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Penalty-only search policies.}{10}{section*.20}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Stopping and checkpoint recovery.}{10}{section*.21}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Recovery across data, modelling and solving}{10}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:recovery}{{4.5}{10}{Recovery across data, modelling and solving}{subsection.4.5}{}}
+\newlabel{sec:recovery@cref}{{[subsection][5][4]4.5}{[1][10][]10}}
+\citation{aramon2019digital}
+\citation{qwen3report2025}
+\citation{kwon2023vllm}
+\citation{mondal2026quantumqubo}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Backends and serving}{11}{subsection.4.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Problem-Level Verification of LLM-Written QUBOs}{11}{section.5}\protected@file@percent }
+\newlabel{sec:verification}{{5}{11}{Problem-Level Verification of LLM-Written QUBOs}{section.5}{}}
+\newlabel{sec:verification@cref}{{[section][5][]5}{[1][11][]11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}The bitstring protocol and its failure modes}{11}{subsection.5.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Evidence routes failures to the relevant stage. A repaired version must pass checks before activation. Proven infeasibility avoids an annealer submission; a timed-out preflight does not prove infeasibility. A validated baseline may be delivered when annealing fails or trails it. Repairs and solver calls are bounded.}}{12}{figure.3}\protected@file@percent }
+\newlabel{fig:recoveryroutes}{{3}{12}{Evidence routes failures to the relevant stage. A repaired version must pass checks before activation. Proven infeasibility avoids an annealer submission; a timed-out preflight does not prove infeasibility. A validated baseline may be delivered when annealing fails or trails it. Repairs and solver calls are bounded}{figure.3}{}}
+\newlabel{fig:recoveryroutes@cref}{{[figure][3][]3}{[1][11][]12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Problem-level verification}{12}{subsection.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Verification protocols on the 100 QuantumQUBO Agent benchmarks (seed 42). The authors' run used remote models; ours use Qwen3.6-35B-A3B locally. Problem-level: three repeated runs.}}{13}{table.2}\protected@file@percent }
+\newlabel{tab:verification}{{2}{13}{Verification protocols on the 100 QuantumQUBO Agent benchmarks (seed 42). The authors' run used remote models; ours use Qwen3.6-35B-A3B locally. Problem-level: three repeated runs}{table.2}{}}
+\newlabel{tab:verification@cref}{{[table][2][]2}{[1][13][]13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Results}{13}{subsection.5.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Single runs are not reliable.}{13}{section*.22}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Experiments}{13}{section.6}\protected@file@percent }
+\newlabel{sec:experiments}{{6}{13}{Experiments}{section.6}{}}
+\newlabel{sec:experiments@cref}{{[section][6][]6}{[1][13][]13}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces One solve per category of the first valid model, small synthetic instances (12 to 144 variables). Gap to the exact optimum where known; otherwise the objective (lower is better unless noted).}}{14}{table.3}\protected@file@percent }
+\newlabel{tab:suite}{{3}{14}{One solve per category of the first valid model, small synthetic instances (12 to 144 variables). Gap to the exact optimum where known; otherwise the objective (lower is better unless noted)}{table.3}{}}
+\newlabel{tab:suite@cref}{{[table][3][]3}{[1][14][]14}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Twelve problem categories, end to end}{14}{subsection.6.1}\protected@file@percent }
+\newlabel{sec:suite}{{6.1}{14}{Twelve problem categories, end to end}{subsection.6.1}{}}
+\newlabel{sec:suite@cref}{{[subsection][1][6]6.1}{[1][13][]14}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Scaling of a GPU annealer on routing}{14}{subsection.6.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Mean gaps on frozen models, three repetitions per policy. Budgets differ across backends; these results do not establish hardware superiority.}}{15}{table.4}\protected@file@percent }
+\newlabel{tab:backendkeyresults}{{4}{15}{Mean gaps on frozen models, three repetitions per policy. Budgets differ across backends; these results do not establish hardware superiority}{table.4}{}}
+\newlabel{tab:backendkeyresults@cref}{{[table][4][]4}{[1][15][]15}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}LLM-driven tuning versus baselines}{15}{subsection.6.3}\protected@file@percent }
+\newlabel{sec:tuningcomparison}{{6.3}{15}{LLM-driven tuning versus baselines}{subsection.6.3}{}}
+\newlabel{sec:tuningcomparison@cref}{{[subsection][3][6]6.3}{[1][14][]15}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Penalty tuning is a secondary step}{15}{subsection.6.4}\protected@file@percent }
+\newlabel{sec:penaltysummary}{{6.4}{15}{Penalty tuning is a secondary step}{subsection.6.4}{}}
+\newlabel{sec:penaltysummary@cref}{{[subsection][4][6]6.4}{[1][15][]15}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Frozen-model backend comparison}{15}{subsection.6.5}\protected@file@percent }
+\newlabel{sec:additionalexperiments}{{6.5}{15}{Frozen-model backend comparison}{subsection.6.5}{}}
+\newlabel{sec:additionalexperiments@cref}{{[subsection][5][6]6.5}{[1][15][]15}}
+\newlabel{sec:dwavehybrid}{{6.5}{15}{Frozen-model backend comparison}{subsection.6.5}{}}
+\newlabel{sec:dwavehybrid@cref}{{[subsection][5][6]6.5}{[1][15][]15}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.6}Mechanisms for a small local model}{16}{subsection.6.6}\protected@file@percent }
+\newlabel{sec:mechanisms}{{6.6}{16}{Mechanisms for a small local model}{subsection.6.6}{}}
+\newlabel{sec:mechanisms@cref}{{[subsection][6][6]6.6}{[1][15][]16}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.7}Real data}{16}{subsection.6.7}\protected@file@percent }
+\newlabel{sec:realdata}{{6.7}{16}{Real data}{subsection.6.7}{}}
+\newlabel{sec:realdata@cref}{{[subsection][7][6]6.7}{[1][16][]16}}
+\@writefile{toc}{\contentsline {paragraph}{Specified-source pilots.}{16}{section*.23}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.8}Autonomous real-data acceptance: protocol}{16}{subsection.6.8}\protected@file@percent }
+\newlabel{sec:autonomousprotocol}{{6.8}{16}{Autonomous real-data acceptance: protocol}{subsection.6.8}{}}
+\newlabel{sec:autonomousprotocol@cref}{{[subsection][8][6]6.8}{[1][16][]16}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Development cases. Truth is computed from official raw files by separate code; the London and Berlin references are exact MILP optima.}}{17}{table.5}\protected@file@percent }
+\newlabel{tab:devcases}{{5}{17}{Development cases. Truth is computed from official raw files by separate code; the London and Berlin references are exact MILP optima}{table.5}{}}
+\newlabel{tab:devcases@cref}{{[table][5][]5}{[1][16][]17}}
+\@writefile{toc}{\contentsline {paragraph}{Mechanism comparisons.}{17}{section*.24}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{External acceptance criteria.}{17}{section*.25}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Design of the autonomous acceptance comparison, not completed experimental results. Five development families each have two scales. The ladder identifies the added mechanism in each pipeline configuration; the separate web-lookup arm retains data acquisition. The direct baseline uses different tools and download limits, so its comparison with the pipeline cannot isolate agent count. Joint success requires all three acceptance outcomes.}}{18}{figure.4}\protected@file@percent }
+\newlabel{fig:acceptancedesign}{{4}{18}{Design of the autonomous acceptance comparison, not completed experimental results. Five development families each have two scales. The ladder identifies the added mechanism in each pipeline configuration; the separate web-lookup arm retains data acquisition. The direct baseline uses different tools and download limits, so its comparison with the pipeline cannot isolate agent count. Joint success requires all three acceptance outcomes}{figure.4}{}}
+\newlabel{fig:acceptancedesign@cref}{{[figure][4][]4}{[1][17][]18}}
+\@writefile{toc}{\contentsline {paragraph}{Freezing, preregistration and held-out cases.}{18}{section*.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Development observations.}{19}{section*.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Limitations and Open Work}{19}{section.7}\protected@file@percent }
+\newlabel{sec:limitations}{{7}{19}{Limitations and Open Work}{section.7}{}}
+\newlabel{sec:limitations@cref}{{[section][7][]7}{[1][19][]19}}
+\bibstyle{plainnat}
+\bibdata{references}
+\bibcite{ahmaditeshnizi2024optimus}{{1}{2024}{{AhmadiTeshnizi et~al.}}{{AhmadiTeshnizi, Gao, and Udell}}}
+\bibcite{akiba2019optuna}{{2}{2019}{{Akiba et~al.}}{{Akiba, Sano, Yanase, Ohta, and Koyama}}}
+\bibcite{aramon2019digital}{{3}{2019}{{Aramon et~al.}}{{Aramon, Rosenberg, Valiante, Miyazawa, Tamura, and Katzgraber}}}
+\bibcite{ayodele2022penalty}{{4}{2022}{{Ayodele et~al.}}{{}}}
+\bibcite{glover2019tutorial}{{5}{2019}{{Glover et~al.}}{{Glover, Kochenberger, and Du}}}
+\bibcite{koch2025qoblib}{{6}{2025}{{Koch et~al.}}{{}}}
+\bibcite{kwon2023vllm}{{7}{2023}{{Kwon et~al.}}{{}}}
+\bibcite{lucas2014ising}{{8}{2014}{{Lucas}}{{}}}
+\bibcite{luxen2011osrm}{{9}{2011}{{Luxen and Vetter}}{{}}}
+\bibcite{formulationautotuning2026}{{10}{2026}{{Mizuki et~al.}}{{Mizuki, Katagiri, Mukunoki, and Hoshino}}}
+\bibcite{mondal2026quantumqubo}{{11}{2026}{{Mondal and Parvez}}{{}}}
+\bibcite{montanez2024unbalanced}{{12}{2022}{{Monta{\~n}ez-Barrera et~al.}}{{}}}
+\bibcite{osm}{{13}{2026}{{OpenStreetMap contributors}}{{}}}
+\bibcite{pelofske2025comparing}{{14}{2025}{{Pelofske}}{{}}}
+\bibcite{pyquboDocs}{{15}{n.d.}{{PyQUBO project}}{{}}}
+\bibcite{kaiwuDocs}{{16}{n.d.}{{QBOSON}}{{}}}
+\bibcite{qhyperDocs}{{17}{n.d.}{{QHyper project}}{{}}}
+\bibcite{qwen3report2025}{{18}{2025}{{Qwen Team}}{{}}}
+\bibcite{ramamonjison2023nl4opt}{{19}{2023}{{Ramamonjison et~al.}}{{}}}
+\bibcite{penaltyml2025bisection}{{20}{2025}{{Rusn\'{a}kov\'{a} et~al.}}{{Rusn\'{a}kov\'{a}, Chovanec, and Gazda}}}
+\bibcite{verma2020penalty}{{21}{2020}{{Verma and Lewis}}{{}}}
+\bibcite{wang2026cim}{{22}{2026}{{Wang and Lu}}{{}}}
+\bibcite{xiao2024chainofexperts}{{23}{2024}{{Xiao et~al.}}{{}}}
+\bibcite{yao2023react}{{24}{2023}{{Yao et~al.}}{{}}}
+\bibcite{llmqubo2025}{{25}{2025}{{Zhang et~al.}}{{Zhang, Emu, and Choudhury}}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}Reproducibility settings}{23}{appendix.A}\protected@file@percent }
+\newlabel{app:details}{{A}{23}{Reproducibility settings}{appendix.A}{}}
+\newlabel{app:details@cref}{{[appendix][1][2147483647]A}{[1][23][]23}}
+\@writefile{toc}{\contentsline {paragraph}{Frozen-model comparisons.}{23}{section*.29}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Settings of the frozen-model comparisons.}}{23}{table.6}\protected@file@percent }
+\newlabel{tab:solverprotocol}{{6}{23}{Settings of the frozen-model comparisons}{table.6}{}}
+\newlabel{tab:solverprotocol@cref}{{[table][6][2147483647]6}{[1][23][]23}}
+\@writefile{toc}{\contentsline {paragraph}{Statistics and references.}{23}{section*.30}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Ancillary solver checks.}{23}{section*.31}\protected@file@percent }
+\newlabel{sec:integrationchecks}{{A}{23}{Functional validation}{section*.32}{}}
+\newlabel{sec:integrationchecks@cref}{{[appendix][1][2147483647]A}{[1][23][]23}}
+\@writefile{toc}{\contentsline {paragraph}{Functional validation.}{23}{section*.32}\protected@file@percent }
+\gdef \@abspage@last{23}

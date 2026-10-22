@@ -1,0 +1,277 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 379.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1903.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 160.0
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1312.8
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 337.0
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.3
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP encoding. N^2 variables. For N=60, 3600 variables. Fits CGA backend.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike stations within 800m of Da'an Station",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "positions": {
+    "meaning": "The sequence position in the inspection tour",
+    "source": "mock"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the YouBike station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between site i and site j",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "政府資料開放平臺.json",
+  "臺北市YouBike見位率統計_見位率.csv",
+  "臺北市YouBike見車率統計_見車率.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "merge_same_place",
+   "within_radius"
+  ],
+  "notes": "\n1. Used the '政府資料開放平臺' table as the primary source for YouBike station data.\n2. Filtered stations to keep only those within a 800m straight-line radius of Da'an Station (25.0330, 121.5436) using prep.within_radius.\n3. Applied prep.merge_same_place to ensure each physical location is represented by a single station entry, merging stations with the same name and close coordinates.\n4. Dropped rows with missing essential data (coordinates, IDs, or names).\n5. Generated a pairwise distance matrix using prep.haversine_matrix based on the filtered station coordinates.\n6. Created a mock 'positions' set as a sequence of integers from 0 to N-1 to satisfy the TSP model requirements.\n",
+  "prep_log": "**資料來源**\n\n- 政府資料開放平臺（data.gov.tw） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-13T11:10:45.524084+00:00\n- 臺北市YouBike見位率統計 — 見位率（政府資料開放平台） <https://data.gov.tw/dataset/174976>，授權：待確認，取得 2026-10-13T11:10:47.405933+00:00\n- 臺北市YouBike見車率統計 — 見車率（政府資料開放平台） <https://data.gov.tw/dataset/166491>，授權：待確認，取得 2026-10-13T11:10:48.659904+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (25.033, 121.5436) 800 公尺內的資料 | 1819 | 38 |  |\n| Filter by radius (800m from Da'an Station) | 1819 | 38 |  |\n| 合併同名且相距 150 m 內的同一地點 | 38 | 38 | 合併 0 筆 |\n| Merge same place stations | 38 | 38 |  |",
+  "flags": [],
+  "review_required": [
+   "sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "positions: ['Mock set created to represent tour sequence positions']",
+   "site_name: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist: ['Calculated using Haversine formula for straight-line distance']"
+  ],
+  "sources": [
+   {
+    "title": "政府資料開放平臺",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T11:10:45.524084+00:00",
+    "sha256": "aace099eb30093bfbf9fa60ef06ef44d44282cbf806f111dec7cd2a172c5744e",
+    "bytes": 952792
+   },
+   {
+    "title": "臺北市YouBike見位率統計 — 見位率",
+    "url": "https://data.gov.tw/dataset/174976",
+    "resource_url": "https://data.taipei/api/dataset/65f4c67c-56c8-4b52-abda-5b58946dfecd/resource/d969e222-7fb3-49f1-95f7-3894a8b9f2bb/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T11:10:47.405933+00:00",
+    "sha256": "cc06f53f01d102bf8437db0d85faca5476541224490202467b0feafae543d08e",
+    "bytes": 147256
+   },
+   {
+    "title": "臺北市YouBike見車率統計 — 見車率",
+    "url": "https://data.gov.tw/dataset/166491",
+    "resource_url": "https://data.taipei/api/dataset/ba0dafae-043c-4730-b97e-2defd7af766c/resource/55a1ce30-7c99-497c-bdcd-bb88b848c803/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T11:10:48.659904+00:00",
+    "sha256": "4865f65b2d6267de184640abb05e5adf2f3c886710e3fa935ec67508b255dc75",
+    "bytes": 147256
+   }
+  ],
+  "n_variables": 1444,
+  "n_constraints": 76,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 38
+    },
+    "totals": {
+     "lat": 951.2581999999999,
+     "lon": 4618.69114
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "811e67ecaa4aafd91a40ca7b",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 59,
+    "invalid": 59,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "811e67ecaa4aafd91a40ca7b",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.7366670544898722,
+  "objective": 7431.448491228556,
+  "baseline_objective": 28220.73203499993
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (政府資料開放平臺.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 38,
+    "mapped": 38,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 38,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 7431.448491228556,
+    "reference_quality": 7426.4082799077005,
+    "gap_vs_reference": 0.0007
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 142310,
+  "solver_calls": 3
+ },
+ "seconds": 4093.6
+}

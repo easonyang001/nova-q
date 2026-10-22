@@ -1,15 +1,8 @@
-[11:36:46] === Zero-Shot START | run_id=zs_max_cut_42_d521f44f ===
-[11:36:46]   Model : qwen/qwen3-coder-next
-[11:36:46]   Sending zero-shot prompt (8 cases available) ...
-[11:36:49]   Code extracted and compiled OK
-[11:36:49]   Running 8 test cases ...
-[11:36:49]   Tests: 0/8 passed (0%)  failure_class=formulation_error
-[11:36:49]   Instance 0 error: [n3_triangle] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 6 correct optimal bitstring(s). Check pe
-[11:36:49]   Instance 1 error: [n4_complete] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 6 correct optimal bitstring(s). Check pe
-[11:36:49]   Instance 2 error: [n4_cycle] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check penal
-[11:36:49]   Instance 3 error: [n5_weighted] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check pe
-[11:36:49]   Instance 4 error: [n6_star] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check penalt
-[11:36:49]   Instance 5 error: [n6_weighted] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check pe
-[11:36:49]   Instance 6 error: [n7_irregular] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check p
-[11:36:49]   Instance 7 error: [n8_weighted] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check pe
-[11:36:49] Finalizing | status=failed | tokens=929 | cost=$0.0003 | wall=3.0s
+[15:48:03] === Direct Method START | run_id=zs_max_cut_42_d4dd8744 ===
+[15:48:03]   Model : qwen/qwen3.6-35b-a3b
+[15:48:03]   Sending direct-method prompt (8 cases available) ...
+[15:48:42]   Code extracted and compiled OK
+[15:48:42]   Running 8 test cases ...
+[15:48:42]   Tests: 8/8 passed (100%)  failure_class=success
+[15:48:42] === Direct Method SUCCESS ===
+[15:48:42] Finalizing | status=success | tokens=6430 | cost=$0.0000 | wall=39.0s

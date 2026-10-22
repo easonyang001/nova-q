@@ -1,0 +1,85 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Credit Scorecard Combination Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Credit Scorecard Combination Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ candidate scorecards, each associated with an expected revenue contribution $R_i \ge 0$ for $i \in \{0, 1, \dots, N-1\}$, and a symmetric pairwise overlap penalty matrix $P_{ij} \ge 0$ (with $P_{ii} = 0$), the objective is to select exactly $K$ scorecards such that the total expected revenue minus the total pairwise overlap penalties is maximized.
+
+\paragraph{Decision Variables.}
+For each candidate scorecard $i \in \{0, 1, \dots, N-1\}$, we introduce a binary decision variable $x_i \in \{0,1\}$. The variable $x_i$ takes the value $1$ if scorecard $i$ is selected, and $0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1.} The original problem is a maximization task. To cast it into the standard QUBO minimization framework, we negate the objective function:
+\begin{align}
+    \min_{\mathbf{x} \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} R_i x_i + \sum_{0 \le i < j \le N-1} P_{ij} x_i x_j \right).
+\end{align}
+
+\textbf{Step 2.} The selection constraint requires that exactly $K$ variables are set to $1$:
+\begin{align}
+    \sum_{i=0}^{N-1} x_i = K.
+\end{align}
+
+\textbf{Step 3.} We enforce the constraint using a quadratic penalty term with weight $\lambda > 0$:
+\begin{align}
+    H_{\text{pen}}(\mathbf{x}) = \lambda \left( \sum_{i=0}^{N-1} x_i - K \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_i^2 = x_i$ for binary variables yields:
+\begin{align}
+    H_{\text{pen}}(\mathbf{x}) &= \lambda \left( \sum_{i=0}^{N-1} x_i^2 - 2K \sum_{i=0}^{N-1} x_i + K^2 \right) \\
+    &= \lambda \left( \sum_{i=0}^{N-1} x_i - 2K \sum_{i=0}^{N-1} x_i + K^2 \right) \\
+    &= \sum_{i=0}^{N-1} \lambda(1 - 2K) x_i + \lambda \sum_{i \neq j} x_i x_j + \lambda K^2.
+\end{align}
+Since the quadratic sum over distinct indices counts each pair twice, we rewrite $\sum_{i \neq j} x_i x_j = 2 \sum_{0 \le i < j \le N-1} x_i x_j$. Thus, the penalty contribution becomes:
+\begin{align}
+    H_{\text{pen}}(\mathbf{x}) = \sum_{i=0}^{N-1} \lambda(1 - 2K) x_i + \sum_{0 \le i < j \le N-1} 2\lambda x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 4.} Combining the negated objective and the penalty term gives the total QUBO Hamiltonian $H(\mathbf{x})$:
+\begin{align}
+    H(\mathbf{x}) &= \sum_{i=0}^{N-1} \left( -R_i + \lambda(1 - 2K) \right) x_i + \sum_{0 \le i < j \le N-1} \left( P_{ij} + 2\lambda \right) x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 5.} Reading off the coefficients from the general form $H(\mathbf{x}) = \sum_{i} Q_{i,i} x_i + \sum_{i < j} Q_{i,j} x_i x_j + c$, the QUBO matrix entries and constant offset are:
+\begin{align}
+    Q_{i,i} &= -R_i + \lambda(1 - 2K), \quad \text{for } i \in \{0, \dots, N-1\}, \\
+    Q_{i,j} &= P_{ij} + 2\lambda, \quad \text{for } 0 \le i < j \le N-1, \\
+    c &= \lambda K^2.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight is set to $\lambda = \max_{i} R_i + 1$. This choice guarantees that any violation of the cardinality constraint incurs an energy cost strictly greater than the maximum possible improvement achievable in the objective function. Specifically, the maximum gain from altering a single variable in the objective is bounded by $\max_i R_i$. Since the penalty for deviating from exactly $K$ selections is at least $\lambda$, and $\lambda > \max_i R_i$, the optimizer is strictly incentivized to satisfy the constraint.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ recovers the optimal solution to the original problem. For any feasible assignment where $\sum_i x_i = K$, the penalty term vanishes, and $H(\mathbf{x})$ exactly equals the negated objective function. For any infeasible assignment, the penalty term contributes at least $\lambda$ to the energy. Because $\lambda$ exceeds the maximum possible reduction in the objective term, any infeasible solution has strictly higher energy than the best feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must occur at a feasible point that minimizes the original objective.
+
+\paragraph{Illustrative Example.}
+Consider a small instance with $N=3$ candidate scorecards and $K=2$ required selections. Let the revenues be $R_0 = 10$, $R_1 = 15$, and $R_2 = 12$. Let the overlap penalties be $P_{01} = 2$, $P_{02} = 3$, and $P_{12} = 1$. The penalty weight is $\lambda = \max\{10, 15, 12\} + 1 = 16$.
+
+The concrete objective function to minimize is:
+\begin{align}
+    \min \left( -10x_0 - 15x_1 - 12x_2 + 2x_0x_1 + 3x_0x_2 + 1x_1x_2 \right).
+\end{align}
+The concrete penalty term expands to:
+\begin{align}
+    16(x_0 + x_1 + x_2 - 2)^2 = -32x_0 - 32x_1 - 32x_2 + 32x_0x_1 + 32x_0x_2 + 32x_1x_2 + 64.
+\end{align}
+Combining these yields the resulting Hamiltonian:
+\begin{align}
+    H(x_0, x_1, x_2) &= -58x_0 - 63x_1 - 60x_2 + 34x_0x_1 + 35x_0x_2 + 33x_1x_2 + 64.
+\end{align}
+Enumerating the feasible solutions (where exactly two variables are $1$):
+\begin{itemize}
+    \item $x = (1,1,0)$: $H = -58 - 63 + 34 + 64 = -23$.
+    \item $x = (1,0,1)$: $H = -58 - 60 + 35 + 64 = -19$.
+    \item $x = (0,1,1)$: $H = -63 - 60 + 33 + 64 = -26$.
+\end{itemize}
+The global minimum occurs at $x^* = (0,1,1)$ with energy $H(x^*) = -26$, corresponding to selecting scorecards $1$ and $2$ for a maximum net revenue of $26$.
+
+\end{document}

@@ -1,0 +1,116 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 204.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 601.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 189.0
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1992.7,
+   "error": "ValueError: data preparation failed: RuntimeError: SyntaxError: positional argument follows keyword argument (<model>, line 92)\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 166, in _execute_adapter\n    exec(compile(code, \"<model>\", \"exec\"), ns)\n         ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<model>\", line 92\n    )\n    ^\nSyntaxError: positional argument follows keyword argument\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP encoding (mp-position-tour). For N sites, we use N^2 binary variables x_{i,p}. For a realistic instance of 30 sites, this is 900 variables, which fits well within the CGA GPU annealer's 3,600 variable limit and maintains high solution quality.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike stations within 800m of Daan Station, including Daan Station itself",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "positions": {
+    "meaning": "The sequence order in the tour (0 to N-1)",
+    "source": "mock"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   },
+   "daan_site_id": {
+    "meaning": "The ID of the site corresponding to Daan Station",
+    "index": [],
+    "type": "text",
+    "source": "user"
+   }
+  }
+ },
+ "data_found": [
+  "YouBike2_0臺北市公共自行車即時資訊.json"
+ ],
+ "cost": {
+  "llm_tokens": 134670,
+  "solver_calls": null
+ },
+ "seconds": 2987.5
+}

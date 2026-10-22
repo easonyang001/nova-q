@@ -1,0 +1,147 @@
+{
+ "case": "berlin_playgrounds_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 87.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 248.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 29.7
+  },
+  "data": {
+   "ok": false,
+   "seconds": 874.7,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: Block population data is missing from the provided tables.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 93, in load_data\nValueError: DATA GAP: Block population data is missing from the provided tables.\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "Exact binary formulation with auxiliary coverage indicators. Variables: |J| + |U|. Constraints: 1 cardinality + |U| coverage. Fits backend (< 600 vars for realistic Berlin instance).",
+ "schema": {
+  "sets": {
+   "candidates": {
+    "meaning": "LOR planning area centers in the three districts",
+    "source": "public"
+   },
+   "blocks": {
+    "meaning": "City blocks (Quartiere) in the three districts",
+    "source": "public"
+   },
+   "existing": {
+    "meaning": "Existing playgrounds in Berlin",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat_cand": {
+    "meaning": "Latitude of candidate centers",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "unit": "deg_lat",
+    "source": "public"
+   },
+   "lon_cand": {
+    "meaning": "Longitude of candidate centers",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "unit": "deg_lon",
+    "source": "public"
+   },
+   "lat_block": {
+    "meaning": "Latitude of block centers",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "unit": "deg_lat",
+    "source": "public"
+   },
+   "lon_block": {
+    "meaning": "Longitude of block centers",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "unit": "deg_lon",
+    "source": "public"
+   },
+   "pop": {
+    "meaning": "Population of each block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "unit": "persons",
+    "source": "public"
+   },
+   "lat_existing": {
+    "meaning": "Latitude of existing playgrounds",
+    "index": [
+     "existing"
+    ],
+    "type": "number",
+    "unit": "deg_lat",
+    "source": "public"
+   },
+   "lon_existing": {
+    "meaning": "Longitude of existing playgrounds",
+    "index": [
+     "existing"
+    ],
+    "type": "number",
+    "unit": "deg_lon",
+    "source": "public"
+   },
+   "threshold": {
+    "meaning": "Coverage radius in meters",
+    "index": [],
+    "type": "number",
+    "unit": "m",
+    "source": "user",
+    "value": 250
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "Blockseiten_des_Regionalen_Bezugssystems_RBS_-_WFS_Blockseit.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson",
+  "Spielplätze_Berlin.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 217671,
+  "solver_calls": null
+ },
+ "seconds": 1241.3
+}

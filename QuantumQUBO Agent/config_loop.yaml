@@ -1,0 +1,65 @@
+# Execution-feedback loop (docs/research_spec.md §5, §7, §8). Every number here is a default, not a commitment.
+
+workflow:
+  max_repairs: 2              # outer data/model recovery attempts; never relax confirmed hard constraints
+  preflight_time_s: 2         # cheap conventional feasibility/quality baseline; optimum is optional
+  quality_tolerance: 0.01     # acceptable relative difference from a feasible baseline
+  data_search_rounds: 2
+  max_downloads: 4
+
+penalty_search:
+  compiler: pyqubo           # placeholders reuse a compiled Hamiltonian; native remains available
+  max_multiplier: 16        # finite upper bound for each penalty
+  grid_points: 3
+  max_grid_candidates: 4096  # lazy enumeration bound; solver-call budget still applies
+  cem_population: 4
+  cem_elite_fraction: 0.5
+
+loop:
+  max_solver_calls: 10        # §8.2 solver-call budget per problem
+  patience: 3                 # stop after K rounds without improvement
+  gap_target: 0.0             # stop once gap to the reference is <= this (needs a reference)
+  guardrail_retries: 2        # §8.1 step 3: invalid proposal -> return errors, retry N times, then fallback
+  penalty_floor_factor: 1.0   # penalty weight must be >= factor * penalty_lower_bound
+  stop_after_feasible_count: null # optional Kaiwu-style count of rounds with feasible solutions
+
+# Tighter-than-hardware limits on "effort" parameters, applied to EVERY policy (keeps comparisons budget-matched
+# and protects hardware quota). Backend ranges from describe() still apply.
+param_caps:
+  sa:         {num_reads: 1000, num_sweeps: 20000}
+  dwave_qpu:  {num_reads: 1000, annealing_time: 200.0}
+  dwave_hybrid: {time_limit: 10.0}
+  fujitsu_da: {time_limit_sec: 10}
+  cga:        {timeout: 60}
+
+agents:
+  mode: multi                 # multi = Configurator / Diagnoser / Refiner; single = one agent plays every role
+  encoding_agent: true        # spec v0.2: Encoding Agent picks encodings for IR problems; false = fixed defaults
+  model: null                 # null -> LLM_MODEL env var (the local vLLM model)
+  temperature: 0.0
+  schema_retries: 1           # re-ask once with the validation error, then fall back to the rule policy
+  max_tokens_per_run: 400000
+  history_rounds: 6           # how many past rounds are shown to the agents
+
+rag:
+  enabled: true
+  stores: [backend_docs, formulation_patterns, tuning, experience]   # remove one to ablate it
+  top_k: 4
+  knowledge_dir: knowledge
+  experience_path: results/experience.jsonl
+  write_experience: true      # §7.1: the experience store is written automatically
+  exclude_instance_ids: []    # §7.3 test split: these instances never appear in retrieval
+  experience_backends: null   # §7.3 / RQ3: restrict which backends' experience is retrievable (null = all)
+
+# §8.3 "do not burn hardware quota". Cumulative across sessions via the ledger; real calls beyond it are refused.
+hardware_budget:
+  ledger: results/hardware_ledger.jsonl
+  # Fujitsu quota: 300 DA-minutes per month. Re-enabled 2026-10-04 at the user's request for the urban-planning
+  # project, with a 60-minute safety cap (20% of the monthly quota); raise it here when needed.
+  fujitsu_da: {max_calls: 300, max_solver_time_s: 3600}
+  dwave_qpu:  {max_calls: 500, max_solver_time_s: 30}     # QPU access time; ~25-30 ms per 100-read call
+  dwave_hybrid: {max_calls: 81, max_solver_time_s: 810}   # 27 conditions, <=3 submissions each, 10 seconds/call
+  cga:        {max_calls: 100000, max_solver_time_s: 10000000}   # no quota (user, 2026-10-06): CGA is the primary backend
+
+logging:
+  loop_log: results/loop_runs.jsonl

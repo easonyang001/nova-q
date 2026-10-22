@@ -2,78 +2,76 @@
 \usepackage{amsmath, amssymb}
 \usepackage[margin=1in]{geometry}
 \setlength{\parskip}{6pt}
-\title{QUBO Formulation: Binary SVM Training Toy Problem}
+\title{QUBO Formulation: Binary Support Vector Machine Candidate Selection}
 \date{}
 \begin{document}
 \maketitle
 
-\subsection*{Binary SVM Training Toy Problem}
+\subsection*{Binary Support Vector Machine Candidate Selection}
 
 \paragraph{Problem Statement.}
-Given a finite set of $N$ candidate models, each associated with a precomputed classification loss $\ell_j$ and a regularization penalty $r_j$ for $j \in \{0, \dots, N-1\}$, the task is to select exactly one candidate that minimizes the total regularized score. The objective is to find the candidate index $j^*$ such that $\ell_{j^*} + r_{j^*}$ is minimized.
+Given a set of $N$ candidate models, each associated with a precomputed regularized hinge-loss score $s_j$ for $j \in \{0, \dots, N-1\}$, the task is to select exactly one candidate such that the total score is minimized. The total score is defined as the sum of the classification loss and the regularization penalty, which are precomputed constants for each candidate.
 
 \paragraph{Decision Variables.}
-Introduce binary selection variables $x_j \in \{0,1\}$ for each candidate $j \in \{0, \dots, N-1\}$. The variable $x_j = 1$ indicates that candidate $j$ is selected, and $x_j = 0$ otherwise.
+For each candidate $j \in \{0, \dots, N-1\}$, introduce a binary decision variable $x_j \in \{0, 1\}$. The variable $x_j$ acts as a selection indicator, where $x_j = 1$ denotes that candidate $j$ is chosen, and $x_j = 0$ otherwise. All variables are mutually exclusive selection indicators.
 
 \paragraph{QUBO Derivation.}
-Step 1 --- The original objective function in general notation is:
+\textbf{Step 1 --- Objective Function.} The original optimization problem is to minimize the weighted sum of candidate scores:
 \begin{align}
-\min_{x} \sum_{j=0}^{N-1} (\ell_j + r_j) x_j.
+  \min \quad \sum_{j=0}^{N-1} s_j x_j.
 \end{align}
 
-Step 2 --- The selection constraint requires that exactly one candidate is chosen:
+\textbf{Step 2 --- Constraint.} The requirement to select exactly one candidate is expressed as:
 \begin{align}
-\sum_{j=0}^{N-1} x_j = 1.
+  \sum_{j=0}^{N-1} x_j = 1.
 \end{align}
 
-Step 3 --- We convert the constraint to a quadratic penalty term with weight $\lambda > 0$. 
-(a) The squared penalty is written as:
+\textbf{Step 3 --- Penalty Term Expansion.} To incorporate the constraint into the objective, we construct a quadratic penalty term with weight $\lambda > 0$:
 \begin{align}
-P(x) = \lambda \left( \sum_{j=0}^{N-1} x_j - 1 \right)^2.
+  P(\mathbf{x}) = \lambda \left( \sum_{j=0}^{N-1} x_j - 1 \right)^2.
 \end{align}
-(b) Expanding the square yields:
+Expanding the square yields:
 \begin{align}
-P(x) = \lambda \left( \sum_{j=0}^{N-1} x_j^2 + \sum_{j \neq k} x_j x_k - 2 \sum_{j=0}^{N-1} x_j + 1 \right).
+  P(\mathbf{x}) = \lambda \left( \sum_{j=0}^{N-1} x_j^2 - 2\sum_{j=0}^{N-1} x_j + 1 + \sum_{j \neq k} x_j x_k \right).
 \end{align}
-Using the idempotent property $x_j^2 = x_j$ for binary variables, we collect terms:
+Applying the idempotent property $x_j^2 = x_j$ for binary variables simplifies the diagonal terms:
 \begin{align}
-P(x) = \lambda \left( \sum_{j=0}^{N-1} x_j + \sum_{j \neq k} x_j x_k - 2 \sum_{j=0}^{N-1} x_j + 1 \right) = \lambda \left( -\sum_{j=0}^{N-1} x_j + \sum_{j \neq k} x_j x_k + 1 \right).
+  P(\mathbf{x}) = \lambda \left( \sum_{j=0}^{N-1} x_j - 2\sum_{j=0}^{N-1} x_j + 1 + \sum_{j \neq k} x_j x_k \right) = \lambda \left( \sum_{j \neq k} x_j x_k - \sum_{j=0}^{N-1} x_j + 1 \right).
 \end{align}
-(c) The resulting general penalty contribution to the Hamiltonian is therefore $\lambda \left( -\sum_{j=0}^{N-1} x_j + \sum_{j \neq k} x_j x_k + 1 \right)$.
-
-Step 4 --- Combining the objective and the penalty term gives the single QUBO Hamiltonian $H(x)$:
+In standard QUBO notation, off-diagonal interactions are summed over ordered pairs $j < k$, where $\sum_{j \neq k} x_j x_k = 2 \sum_{0 \leq j < k \leq N-1} x_j x_k$. Thus, the penalty contribution becomes:
 \begin{align}
-H(x) = \sum_{j=0}^{N-1} (\ell_j + r_j) x_j + \lambda \left( -\sum_{j=0}^{N-1} x_j + \sum_{j \neq k} x_j x_k + 1 \right).
+  P(\mathbf{x}) = \lambda \left( 2 \sum_{0 \leq j < k \leq N-1} x_j x_k - \sum_{j=0}^{N-1} x_j + 1 \right).
 \end{align}
 
-Step 5 --- Reading off the QUBO parameters from $H(x)$ in general closed form:
+\textbf{Step 4 --- Combined Hamiltonian.} Adding the objective and penalty terms gives the full QUBO Hamiltonian:
 \begin{align}
-Q_{j,j} &= \ell_j + r_j - \lambda, \quad \text{for } j \in \{0, \dots, N-1\}, \\
-Q_{j,k} &= 2\lambda, \quad \text{for } j, k \in \{0, \dots, N-1\}, \ j \neq k, \\
-c &= \lambda.
+  H(\mathbf{x}) = \sum_{j=0}^{N-1} s_j x_j + \lambda \left( 2 \sum_{0 \leq j < k \leq N-1} x_j x_k - \sum_{j=0}^{N-1} x_j + 1 \right).
+\end{align}
+
+\textbf{Step 5 --- Q Matrix Entries and Offset.} Collecting coefficients for linear and quadratic terms yields the general closed-form expressions for the QUBO matrix $Q$ and constant offset $c$:
+\begin{align}
+  Q_{jj} &= s_j - \lambda, \quad \forall j \in \{0, \dots, N-1\}, \\
+  Q_{jk} &= 2\lambda, \quad \forall 0 \leq j < k \leq N-1, \\
+  c &= \lambda.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-Let $\Lambda = \max_{j \in \{0, \dots, N-1\}} (\ell_j + r_j)$. We set $\lambda = \Lambda + 1$. The maximum possible value of the original objective function over any feasible assignment is $\Lambda$. If the constraint is violated, the term $\left( \sum_{j=0}^{N-1} x_j - 1 \right)^2$ evaluates to at least $1$, incurring a penalty of at least $\lambda$. Since $\lambda > \Lambda$, the energy cost of any infeasible configuration strictly exceeds the maximum possible objective gain achievable by any feasible configuration. Therefore, the global minimum of $H(x)$ cannot occur at an infeasible point.
+The penalty weight $\lambda$ must be chosen such that any violation of the exactly-one constraint incurs an energy cost strictly greater than the maximum possible reduction in the objective function. Since the objective is a linear combination of scores $s_j$, the maximum gain from selecting an infeasible configuration (e.g., selecting zero or multiple candidates) is bounded by $\max_j |s_j|$. Therefore, setting $\lambda > \max_j |s_j|$ guarantees that infeasible states are energetically unfavorable. In practice, a sufficiently large constant such as $\lambda = 10000$ is employed to dominate typical hinge-loss magnitudes, ensuring constraint satisfaction without altering the relative ordering of feasible solutions.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution because the penalty weight $\lambda$ is chosen to strictly dominate any feasible objective improvement. For any feasible assignment (where exactly one $x_j=1$), the penalty term vanishes, and $H(x)$ reduces exactly to the original objective function. For any infeasible assignment, the penalty term contributes at least $\lambda$, which exceeds the maximum possible value of the original objective. Consequently, the global minimum of $H(x)$ must occur at a feasible point, and among feasible points, $H(x)$ is identical to the original objective, guaranteeing that the minimizer corresponds to the candidate with the lowest regularized score.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ recovers the optimal candidate selection because feasible solutions satisfy $\sum_{j=0}^{N-1} x_j = 1$, rendering the penalty term identically zero. Consequently, the Hamiltonian reduces to the original objective function over the feasible subspace. For infeasible solutions, the penalty term evaluates to at least $\lambda$, which, by construction, exceeds any potential decrease in the objective term. Thus, the global minimum of $H(\mathbf{x})$ must reside in the feasible region and correspond to the candidate with the lowest regularized hinge-loss score.
 
 \paragraph{Illustrative Example.}
-Consider an instance with $N=2$ candidates. Let the precomputed scores be $\ell_0 + r_0 = 0.5$ and $\ell_1 + r_1 = 0.2$. The maximum score is $\Lambda = 0.5$, so we choose $\lambda = 0.5 + 1 = 1.5$. Substituting these values into the general QUBO parameters yields:
+Consider an instance with $N=3$ candidates and precomputed scores $s_0 = 12.5$, $s_1 = 8.3$, and $s_2 = 15.7$. Setting $\lambda = 10000$, the concrete objective is $12.5 x_0 + 8.3 x_1 + 15.7 x_2$. The concrete penalty terms expand to $10000 \left( 2x_0 x_1 + 2x_0 x_2 + 2x_1 x_2 - x_0 - x_1 - x_2 + 1 \right)$. The resulting Hamiltonian is:
 \begin{align}
-Q_{0,0} &= 0.5 - 1.5 = -1.0, \\
-Q_{1,1} &= 0.2 - 1.5 = -1.3, \\
-Q_{0,1} = Q_{1,0} &= 2(1.5) = 3.0, \\
-c &= 1.5.
+  H(\mathbf{x}) = 12.5 x_0 + 8.3 x_1 + 15.7 x_2 + 10000 \left( 2x_0 x_1 + 2x_0 x_2 + 2x_1 x_2 - x_0 - x_1 - x_2 + 1 \right).
 \end{align}
-The resulting Hamiltonian is $H(x) = -x_0 - 1.3x_1 + 3x_0x_1 + 1.5$. Evaluating $H(x)$ over all $2^2 = 4$ binary assignments gives:
+The corresponding QUBO matrix entries and offset are:
 \begin{align}
-H(0,0) &= 1.5, \\
-H(1,0) &= -1.0 + 1.5 = 0.5, \\
-H(0,1) &= -1.3 + 1.5 = 0.2, \\
-H(1,1) &= -2.3 + 3.0 + 1.5 = 2.2.
+  Q_{00} &= -9987.5, & Q_{11} &= -9991.7, & Q_{22} &= -9984.3, \\
+  Q_{01} &= 20000, & Q_{02} &= 20000, & Q_{12} &= 20000, \\
+  c &= 10000.
 \end{align}
-The global minimum is $0.2$ at $x = (0,1)$, correctly selecting candidate $1$ with the lowest regularized score.
+Evaluating the three feasible configurations yields energies $H(1,0,0) = -9975.0$, $H(0,1,0) = -9983.2$, and $H(0,0,1) = -9968.6$. The global minimum occurs at $\mathbf{x}^* = (0, 1, 0)$ with energy $-9983.2$, correctly identifying candidate 1 as the optimal selection.
 
 \end{document}

@@ -1,69 +1,149 @@
 Benchmark    : amplify_benchmark_job_selection
-Test input   : benchmarks\amplify_benchmark_job_selection\sample_cases.txt (cases built after formulation)
+Test input   : benchmarks/amplify_benchmark_job_selection/sample_cases.txt (cases built after formulation)
 Seed         : 42
-[00:20:07] === Pipeline START | run_id=amplify_benchmark_job_selection_42_428aa2ed ===
-[00:20:07] Benchmark : amplify_benchmark_job_selection  |  seed=42
-[00:20:07] Models    : planner_agent=qwen/qwen3.6-35b-a3b
-[00:20:07]             formulizer_agent=qwen/qwen3.6-35b-a3b
-[00:20:07]             judge_agent=qwen/qwen3.6-35b-a3b
-[00:20:07]             coder_agent=qwen/qwen3-coder-next
-[00:20:07] Cache     : disabled
-[00:20:07] [Stage 1] Planner � attempt 1/1
-[00:20:26] [Stage 1] Planner OK � 1 vars, 1 constraints
-[00:20:26] [Stage 1b] Judge � checking spec matches NL ...
-[00:20:40] [Stage 1b] Spec verification PASSED
-[00:20:40] [Stage 2] Formulizer � attempt 1/1
-[00:21:10] [Stage 2] Formulation OK � n_vars=3, 6 obj terms, 1 penalty groups
-[00:21:10] [Stage 2b] Judge � checking QUBO formulation ...
-[00:21:22] [Stage 2b] Formulation verification PASSED
-[00:21:22] [Stage 2.5] Building test cases from user input ...
-[00:22:25] [Stage 2.5] Wrote 2 case(s) to transcript, loaded 2 total
-[00:22:25] [Stage 3] Coder � attempt 1/1
-[00:22:46] [Stage 3] Code generated and compiled OK
-[00:22:46] [Stage 3b] Test Runner � running 2 pre-computed test cases ...
-[00:22:46] [Stage 3b] Tests: 0/2 passed (0%)  failure_class=coding_error
-[00:22:46] [Stage 3b] Instance 0 error: [n4_budget5] build_qubo raised: Traceback (most recent call last):
-  File "D:\ICML 2026 Workshop AI4Research\qubo_auto\qubo_auto\verification\test_runner.py", line 47, in _run_single
-    Q, offset = b
-[00:22:46] [Stage 3b] Instance 1 error: [n4_budget6] build_qubo raised: Traceback (most recent call last):
-  File "D:\ICML 2026 Workshop AI4Research\qubo_auto\qubo_auto\verification\test_runner.py", line 47, in _run_single
-    Q, offset = b
-[00:22:46] === Pipeline FAILED � code exhausted all retries ===
-[00:22:46] Finalizing | status=failed | tokens=26292 | cost=$0.0194 | wall=158.8s
+[15:23:32] === Pipeline START | run_id=amplify_benchmark_job_selection_42_93259b89 ===
+[15:23:32] Benchmark : amplify_benchmark_job_selection  |  seed=42
+[15:23:32] Models    : planner_agent=qwen3.6-35b-a3b
+[15:23:32]             formulizer_agent=qwen3.6-35b-a3b
+[15:23:32]             judge_agent=qwen3.6-35b-a3b
+[15:23:32]             coder_agent=qwen3.6-35b-a3b
+[15:23:32] Cache     : disabled
+[15:23:32] [Stage 1] Planner — attempt 1/3
+[15:23:59] [Stage 1] Planner OK — 1 vars, 1 constraints
+[15:23:59] [Stage 1b] Judge — checking spec matches NL ...
+[15:24:14] [Stage 1b] Spec verification PASSED
+[15:24:14] [Stage 2] Formulizer — attempt 1/3
+[15:25:02] [Stage 2] Formulation OK — n_vars=3, 6 obj terms, 1 penalty groups
+[15:25:02] [Stage 2b] Judge — checking QUBO formulation ...
+[15:25:26] [Stage 2b] Formulation verification PASSED
+[15:25:26] [Stage 2.5] Building test cases from user input ...
+[15:25:51] [Stage 2.5] Wrote 2 case(s) to transcript, loaded 2 total
+[15:25:51] [Stage 3] Coder — attempt 1/4
+[15:29:32] [Stage 3] Coder EXCEPTION: Could not extract Python code from coder response:
 
-Status:       failed
+[15:29:32] [Stage 3] Coder — attempt 2/4
+[15:30:03] [Stage 3] Code generated and compiled OK
+[15:30:03] [Stage 3b] Test Runner — running 2 pre-computed test cases ...
+[15:30:03] [Stage 3b] Tests: 0/2 passed (0%)  failure_class=formulation_error
+[15:30:03] [Stage 3b] Instance 0 error: [n4_case1] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check penal
+[15:30:03] [Stage 3b] Instance 1 error: [n4_case2] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check penal
+[15:30:03] [Stage 3b] Structural error — looping back to Formulizer ...
+[15:30:43] [Stage 3b] Re-formulation done, re-verifying ...
+[15:31:00] [Stage 3b] Re-formulation passed verification
+[15:31:00] [Stage 3] Coder — attempt 3/4
+[15:31:34] [Stage 3] Code generated and compiled OK
+[15:31:34] [Stage 3b] Test Runner — running 2 pre-computed test cases ...
+[15:31:34] [Stage 3b] Tests: 2/2 passed (100%)  failure_class=success
+[15:31:34] === Pipeline SUCCESS ===
+[15:31:34] Finalizing | status=success | tokens=85479 | cost=$0.0000 | wall=482.2s
+
+Status:       success
 Iterations:   3
-Wall time:    158.8s
-Tokens used:  26292
-Verification: {'passed': 0, 'total': 2}
-Failure modes: ['coding_error']
+Wall time:    482.2s
+Tokens used:  85479
+Verification: {'passed': 2, 'total': 2}
+Failure modes: ['coding_error', 'formulation_error']
 
-Error trace:
-Code failed after max retries. Last failure: coding_error
+[latex] Generating LaTeX deliverable (model=qwen3.6-35b-a3b) ...
+[latex] Saved to deliverables/amplify_benchmark_job_selection/amplify_benchmark_job_selection_42.tex
+
+============================================================
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+
+\title{QUBO Formulation: Benchmark Job Selection Problem}
+\date{}
+
+\begin{document}
+\maketitle
+
+\subsection*{Benchmark Job Selection Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ candidate benchmark jobs, each associated with a coverage value $v_i$, a runtime $t_i$, and pairwise overlap penalties $p_{ij}$ for $i,j \in \{0,\dots,N-1\}$, the goal is to select a subset of jobs that maximizes the total coverage value minus the sum of pairwise overlap penalties, subject to a total compute-time budget $T$.
+
+\paragraph{Decision Variables.}
+For each candidate job $i \in \{0,\dots,N-1\}$, introduce a binary decision variable $x_i \in \{0,1\}$, where $x_i = 1$ indicates that job $i$ is selected for execution, and $x_i = 0$ indicates it is not.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- The original maximization objective is $\max_{\mathbf{x} \in \{0,1\}^N} \sum_{i=0}^{N-1} v_i x_i - \sum_{0 \le i < j \le N-1} p_{ij} x_i x_j$. Since QUBO solvers minimize energy, we negate the objective to obtain the minimization form:
+\begin{align}
+\min_{\mathbf{x} \in \{0,1\}^N} \sum_{i=0}^{N-1} (-v_i) x_i + \sum_{0 \le i < j \le N-1} p_{ij} x_i x_j.
+\end{align}
+
+Step 2 --- The compute-time budget constraint is $\sum_{i=0}^{N-1} t_i x_i \le T$. Following standard QUBO practice for inequality constraints without explicit slack variables, we enforce it via a quadratic penalty term:
+\begin{align}
+\lambda \left( \sum_{i=0}^{N-1} t_i x_i - T \right)^2,
+\end{align}
+where $\lambda > 0$ is a penalty weight.
+
+Step 3 --- Expanding the penalty term using the idempotent property $x_i^2 = x_i$ for binary variables:
+\begin{align}
+\lambda \left( \sum_{i=0}^{N-1} t_i x_i - T \right)^2 &= \lambda \left[ \left( \sum_{i=0}^{N-1} t_i x_i \right)^2 - 2T \sum_{i=0}^{N-1} t_i x_i + T^2 \right] \\
+&= \lambda \left[ \sum_{i=0}^{N-1} t_i^2 x_i^2 + \sum_{0 \le i < j \le N-1} 2 t_i t_j x_i x_j - 2T \sum_{i=0}^{N-1} t_i x_i + T^2 \right] \\
+&= \sum_{i=0}^{N-1} \lambda (t_i^2 - 2T t_i) x_i + \sum_{0 \le i < j \le N-1} 2\lambda t_i t_j x_i x_j + \lambda T^2.
+\end{align}
+
+Step 4 --- Combining the negated objective and the expanded penalty yields the total QUBO Hamiltonian $H(\mathbf{x})$:
+\begin{align}
+H(\mathbf{x}) &= \sum_{i=0}^{N-1} (-v_i) x_i + \sum_{0 \le i < j \le N-1} p_{ij} x_i x_j + \sum_{i=0}^{N-1} \lambda (t_i^2 - 2T t_i) x_i + \sum_{0 \le i < j \le N-1} 2\lambda t_i t_j x_i x_j + \lambda T^2.
+\end{align}
+
+Step 5 --- Collecting coefficients for each monomial $x_i x_j$ gives the symmetric QUBO matrix entries $Q_{i,j}$ and constant offset $c$:
+\begin{align}
+Q_{i,i} &= -v_i + \lambda (t_i^2 - 2T t_i), \quad \text{for } i \in \{0,\dots,N-1\}, \\
+Q_{i,j} &= p_{ij} + 2\lambda t_i t_j, \quad \text{for } 0 \le i < j \le N-1, \\
+Q_{i,j} &= 0, \quad \text{for } i > j, \\
+c &= \lambda T^2.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the compute-time budget incurs an energy cost strictly greater than the maximum possible improvement in the objective function. The maximum possible gain from the objective is bounded by $\sum_{i=0}^{N-1} v_i$. The smallest positive deviation from the budget $T$ for binary variables is $\min_{i} t_i$ (assuming integer runtimes) or generally the minimum step size in the linear combination $\sum t_i x_i$. Therefore, a safe lower bound is $\lambda > \frac{\sum_{i=0}^{N-1} v_i}{(\min_{i} t_i)^2}$. This guarantees that infeasible solutions are strictly penalized relative to any feasible solution.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ recovers the optimal benchmark selection because the quadratic penalty term dominates the objective for infeasible configurations. For any feasible assignment where $\sum t_i x_i \le T$, the penalty term evaluates to $\lambda(T - \sum t_i x_i)^2 \ge 0$, and the Hamiltonian reduces to the negated original objective plus a constant. For any infeasible assignment where $\sum t_i x_i > T$, the penalty term grows quadratically with the violation magnitude. Since $\lambda$ exceeds the ratio of the maximum objective gain to the minimum violation squared, the energy of any infeasible solution strictly exceeds that of the best feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must correspond to a feasible assignment that maximizes the original coverage objective.
+
+\paragraph{Illustrative Example.}
+Consider an instance with $N=4$ candidate jobs. Let the coverage values be $v_0=10, v_1=8, v_2=12, v_3=6$. Let all pairwise overlap penalties be $p_{ij}=2$. Let the runtimes be $t_0=3, t_1=4, t_2=5, t_3=2$, with a compute budget $T=8$. Choosing $\lambda=100$ satisfies the justification bound. Instantiating the general formulas yields the concrete objective terms: $-10x_0 - 8x_1 - 12x_2 - 6x_3 + 2x_0x_1 + 2x_0x_2 + 2x_0x_3 + 2x_1x_2 + 2x_1x_3 + 2x_2x_3$. The concrete penalty expansion becomes $\sum_{i=0}^3 100(t_i^2 - 16t_i)x_i + \sum_{0\le i<j\le 3} 200 t_i t_j x_i x_j + 6400$. Substituting the runtime values, the linear penalty coefficients are $-3900, -4800, -5500, -2800$ for $x_0, x_1, x_2, x_3$ respectively, and the quadratic penalty coefficients are $200t_it_j$. Combining these with the objective terms gives the full Hamiltonian:
+\begin{align}
+H(\mathbf{x}) &= -3910x_0 - 4808x_1 - 5512x_2 - 2806x_3 + 2402x_0x_1 + 3002x_0x_2 + 1202x_0x_3 + 4002x_1x_2 + 1602x_1x_3 + 2002x_2x_3 + 6400.
+\end{align}
+Enumerating all $2^4=16$ binary assignments reveals that the optimal selection is $x^* = (1,0,1,0)$, corresponding to jobs 0 and 2. This selection respects the budget ($3+5=8 \le 8$) and achieves a maximum benchmark value of $10+12-2=20$. The corresponding minimum energy is $H(\mathbf{x}^*) = -3910 - 5512 + 3002 + 6400 = 0$.
+
+\end{document}
+============================================================
+
+[html] Saved to amplify_benchmark_job_selection/amplify_benchmark_job_selection_42.html
+[view] Opening amplify_benchmark_job_selection_42.html ...
+[pdf] Compiling amplify_benchmark_job_selection_42.tex ...
+[pdf] PDF also saved to amplify_benchmark_job_selection/amplify_benchmark_job_selection_42.pdf
 
 Full result:
 {
-  "run_id": "amplify_benchmark_job_selection_42_428aa2ed",
+  "run_id": "amplify_benchmark_job_selection_42_93259b89",
   "benchmark": "amplify_benchmark_job_selection",
   "seed": 42,
-  "status": "failed",
+  "status": "success",
   "n_iterations": 3,
-  "wall_time_s": 158.8399519920349,
+  "wall_time_s": 482.24296259880066,
   "models_used": {
-    "planner_agent": "qwen/qwen3.6-35b-a3b",
-    "formulizer_agent": "qwen/qwen3.6-35b-a3b",
-    "judge_agent": "qwen/qwen3.6-35b-a3b",
-    "coder_agent": "qwen/qwen3-coder-next",
-    "debugger_agent": "qwen/qwen3.6-35b-a3b"
+    "planner_agent": "qwen3.6-35b-a3b",
+    "formulizer_agent": "qwen3.6-35b-a3b",
+    "judge_agent": "qwen3.6-35b-a3b",
+    "coder_agent": "qwen3.6-35b-a3b",
+    "debugger_agent": "qwen3.6-35b-a3b"
   },
-  "tokens_used": 26292,
-  "cost_used": 0.019422061850000002,
+  "tokens_used": 85479,
+  "cost_used": 0.0,
   "verification": {
-    "passed": 0,
+    "passed": 2,
     "total": 2
   },
-  "error_trace": "Code failed after max retries. Last failure: coding_error",
+  "error_trace": "",
   "failure_modes": [
-    "coding_error"
+    "coding_error",
+    "formulation_error"
   ]
 }

@@ -10,96 +10,79 @@
 \subsection*{Quantum-Circuit Qubit Allocation}
 
 \paragraph{Problem Statement.}
-Given a set of logical qubits $L$, a set of physical qubits $P$, and a hardware coupling graph that defines the connectivity and fidelity between physical qubits, the task is to assign each logical qubit to a distinct physical qubit. Let $G \subseteq L \times L$ denote the set of logical qubit pairs that participate in two-qubit gates, and let $C_{p,q}$ denote the penalty cost associated with mapping a logical pair to physical qubits $p$ and $q$. The goal is to find a one-to-one mapping that minimizes the total penalty incurred by two-qubit gates mapped onto distant or low-fidelity physical pairs.
+Given a set of logical qubits $L$, a set of physical qubits $P$, and a hardware coupling graph characterized by pairwise penalties $W_{p,q}$ for mapping logical interactions to physical pairs $(p,q)$, the objective is to determine a one-to-one assignment of logical qubits to physical qubits. The assignment must minimize the total penalty incurred by two-qubit gates, where $W_{p,q}$ typically encodes hardware distance or inverse gate fidelity. If $|L| > |P|$, the problem is infeasible.
 
 \paragraph{Decision Variables.}
-For each logical qubit $l \in L$ and physical qubit $p \in P$, we define a binary decision variable $x_{l,p} \in \{0,1\}$. The variable $x_{l,p}$ equals $1$ if logical qubit $l$ is mapped to physical qubit $p$, and $0$ otherwise. The total number of variables is $|L| \times |P|$.
+For each logical qubit $l \in L$ and physical qubit $p \in P$, introduce a binary variable $x_{l,p} \in \{0,1\}$, where $x_{l,p} = 1$ if logical qubit $l$ is mapped to physical qubit $p$, and $x_{l,p} = 0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 --- Objective Function.}
-The objective is to minimize the total penalty for two-qubit gates mapped to physical pairs. This is expressed as:
+\textbf{Step 1 -- Objective Function.} The original optimization problem minimizes the total allocation cost:
 \begin{align}
-\min_{x} \quad J(x) = \sum_{(l_i, l_j) \in G} \sum_{p \in P} \sum_{q \in P} C_{p,q} x_{l_i,p} x_{l_j,q}.
+\min_{x} \quad C(x) = \sum_{(i,j) \in E_{\text{log}}} \sum_{p \in P} \sum_{q \in P} W_{p,q} \, x_{i,p} \, x_{j,q},
+\end{align}
+where $E_{\text{log}}$ denotes the set of logical two-qubit gate edges. Diagonal terms $W_{p,p}$ are set to a sufficiently large constant to discourage self-mapping.
+
+\textbf{Step 2 -- Constraints.} The assignment must satisfy two sets of constraints:
+\begin{align}
+\sum_{p \in P} x_{l,p} = 1 \quad \forall l \in L, \tag{C1}
+\end{align}
+\begin{align}
+\sum_{l \in L} x_{l,p} \le 1 \quad \forall p \in P. \tag{C2}
 \end{align}
 
-\textbf{Step 2 --- Constraints.}
-The mapping must satisfy two fundamental constraints. First, each logical qubit must be assigned to exactly one physical qubit:
+\textbf{Step 3 -- Penalty Terms.} We convert the constraints into quadratic penalty terms using a positive weight $\lambda$.
+
+For (C1), we use the standard squared penalty:
 \begin{align}
-\sum_{p \in P} x_{l,p} = 1, \quad \forall l \in L.
+P_1(x) = \lambda \sum_{l \in L} \left( \sum_{p \in P} x_{l,p} - 1 \right)^2.
 \end{align}
-Second, each physical qubit can host at most one logical qubit:
+Expanding the square and applying the idempotent property $x_{l,p}^2 = x_{l,p}$ yields:
 \begin{align}
-\sum_{l \in L} x_{l,p} \le 1, \quad \forall p \in P.
+P_1(x) &= \lambda \sum_{l \in L} \left( \sum_{p \in P} x_{l,p}^2 + 2 \sum_{p < q} x_{l,p} x_{l,q} - 2 \sum_{p \in P} x_{l,p} + 1 \right) \nonumber \\
+&= \lambda \sum_{l \in L} \left( 1 - \sum_{p \in P} x_{l,p} + 2 \sum_{p < q} x_{l,p} x_{l,q} \right).
 \end{align}
 
-\textbf{Step 3 --- Penalty Term Conversion.}
-We convert the constraints into quadratic penalty terms added to the objective. Let $\lambda > 0$ be a penalty weight.
-
-(a) For the logical assignment constraint, we introduce:
+For (C2), we use the inequality penalty form $\lambda \sum_p (\sum_l x_{l,p})(\sum_l x_{l,p} - 1)$, which naturally enforces the $\le 1$ condition without linear or constant terms:
 \begin{align}
-H_{\text{C1}}(x) = \lambda \sum_{l \in L} \left( \sum_{p \in P} x_{l,p} - 1 \right)^2.
-\end{align}
-(b) Expanding the square and applying the idempotent property $x_{l,p}^2 = x_{l,p}$ for binary variables yields:
-\begin{align}
-\left( \sum_{p \in P} x_{l,p} - 1 \right)^2 &= \sum_{p \in P} x_{l,p}^2 - 2 \sum_{p \in P} x_{l,p} + 1 \nonumber \\
-&= \sum_{p \in P} x_{l,p} - 2 \sum_{p \in P} x_{l,p} + 1 \nonumber \\
-&= 1 - \sum_{p \in P} x_{l,p}.
-\end{align}
-(c) The resulting general penalty contribution is:
-\begin{align}
-H_{\text{C1}}(x) = \lambda \sum_{l \in L} \left( 1 - \sum_{p \in P} x_{l,p} \right) = \lambda n_L - \lambda \sum_{l \in L} \sum_{p \in P} x_{l,p}.
+P_2(x) = \lambda \sum_{p \in P} \left( \sum_{l \in L} x_{l,p} \right) \left( \sum_{l \in L} x_{l,p} - 1 \right) = \lambda \sum_{p \in P} \sum_{l \neq l'} x_{l,p} x_{l',p}.
 \end{align}
 
-For the physical capacity constraint, we penalize any assignment where two or more logical qubits occupy the same physical qubit:
+\textbf{Step 4 -- Combined Hamiltonian.} The full QUBO Hamiltonian $H(x)$ is the sum of the objective and penalty terms:
 \begin{align}
-H_{\text{C2}}(x) = \lambda \sum_{p \in P} \left( \sum_{l \in L} x_{l,p} \right)^2.
-\end{align}
-Expanding and applying idempotence:
-\begin{align}
-\left( \sum_{l \in L} x_{l,p} \right)^2 &= \sum_{l \in L} x_{l,p}^2 + \sum_{l \in L} \sum_{l' \in L, l' \neq l} x_{l,p} x_{l',p} \nonumber \\
-&= \sum_{l \in L} x_{l,p} + \sum_{l \neq l' \in L} x_{l,p} x_{l',p}.
-\end{align}
-The resulting penalty contribution is:
-\begin{align}
-H_{\text{C2}}(x) = \lambda \sum_{p \in P} \left( \sum_{l \in L} x_{l,p} + \sum_{l \neq l' \in L} x_{l,p} x_{l',p} \right).
+H(x) = C(x) + P_1(x) + P_2(x).
 \end{align}
 
-\textbf{Step 4 --- Combined QUBO Hamiltonian.}
-Summing the objective and penalty terms gives the total Hamiltonian $H(x)$:
+\textbf{Step 5 -- Q Matrix and Offset.} Reading off the coefficients from $H(x)$, the QUBO matrix entries $Q_{(l,p),(l',p')}$ and constant offset $c$ are given by:
 \begin{align}
-H(x) = \sum_{(l_i, l_j) \in G} \sum_{p \in P} \sum_{q \in P} C_{p,q} x_{l_i,p} x_{l_j,q} + \lambda \sum_{l \in L} \sum_{p \in P} x_{l,p} + \lambda \sum_{p \in P} \sum_{l \neq l' \in L} x_{l,p} x_{l',p} + \lambda n_L.
+Q_{(l,p),(l,p)} &= -\lambda, \\
+Q_{(l,p),(l,q)} &= 2\lambda \quad \text{for } p \neq q, \\
+Q_{(l,p),(l',p)} &= \lambda \quad \text{for } l \neq l', \\
+Q_{(i,p),(j,q)} &= W_{p,q} \quad \text{for } (i,j) \in E_{\text{log}}, \\
+c &= \lambda |L|.
 \end{align}
-Note that the linear terms from $H_{\text{C1}}$ and $H_{\text{C2}}$ cancel exactly, leaving only quadratic and constant terms.
-
-\textbf{Step 5 --- Q Matrix Entries and Offset.}
-Reading off the coefficients from $H(x) = \sum_{i \le j} Q_{ij} x_i x_j + c$, we obtain the following closed-form expressions for the QUBO matrix entries and offset:
-\begin{align}
-Q_{(l_i,p), (l_j,q)} &= C_{p,q} & \text{if } (l_i, l_j) \in G \text{ and } (l_i,p) \neq (l_j,q), \\
-Q_{(l,p), (l',p)} &= \lambda & \text{if } l \neq l', \\
-Q_{(l,p), (l,p)} &= 0 & \text{for all } l \in L, p \in P, \\
-c &= \lambda n_L.
-\end{align}
+All other entries are zero.
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen such that any constraint violation incurs a cost strictly greater than the maximum possible reduction in the objective function. The objective function is bounded by $|G| \cdot \max_{p,q} |C_{p,q}|$. Therefore, setting $\lambda > |G| \cdot \max_{p,q} |C_{p,q}|$ guarantees that the energy of any infeasible configuration exceeds that of the optimal feasible configuration, ensuring that the optimizer prioritizes feasibility over objective minimization.
+Let $W_{\max} = \max_{p,q} |W_{p,q}|$ and let $d_{\max}$ be the maximum degree of any logical qubit in $E_{\text{log}}$. Violating a single constraint can at best reduce the objective cost by an amount bounded by $d_{\max} W_{\max}$. To guarantee that any infeasible assignment has strictly higher energy than the optimal feasible assignment, the penalty weight must satisfy:
+\begin{align}
+\lambda > d_{\max} \cdot W_{\max}.
+\end{align}
+In practice, a conservative choice such as $\lambda > 2 \max_{p,q} |W_{p,q}|$ or $\lambda = 100$ (for normalized $W_{p,q} \in [0,1]$) is sufficient to dominate any feasible objective improvement.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over the binary hypercube $\{0,1\}^{|L| \times |P|}$ recovers the optimal qubit allocation because feasible mappings satisfy all constraints, yielding zero penalty terms and reducing $H(x)$ to the original objective $J(x)$. Conversely, any infeasible assignment violates at least one constraint, incurring a penalty strictly larger than the maximum possible objective gain from that violation. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment with the minimum allocation cost.
+Minimizing $H(x)$ over $\{0,1\}^{|L| \times |P|}$ recovers the optimal allocation because $H(x) = C(x)$ for all feasible $x$, and $H(x) > C(x)$ for all infeasible $x$. Specifically, any violation of (C1) or (C2) introduces a penalty term strictly greater than $\lambda$. Since $\lambda$ is chosen to exceed the maximum possible reduction in $C(x)$ achievable by violating constraints, the global minimum of $H(x)$ cannot occur at an infeasible point. Consequently, the ground state of $H(x)$ corresponds exactly to a feasible mapping that minimizes the original allocation cost.
 
 \paragraph{Illustrative Example.}
-Consider a small instance with $n_L = 2$ logical qubits ($L = \{0,1\}$) and $n_P = 2$ physical qubits ($P = \{0,1\}$). Suppose there is a single two-qubit gate between logical qubits $0$ and $1$, so $G = \{(0,1)\}$. The variable mapping is $x_{0,0} \to x_0$, $x_{1,0} \to x_1$, $x_{0,1} \to x_2$, $x_{1,1} \to x_3$. Using the general formulas with penalty weight $\lambda = 100$ and offset $c = 200$, the objective terms are:
+Consider a small instance with $|L| = 3$ logical qubits, $|P| = 3$ physical qubits, and logical edges $E_{\text{log}} = \{(0,1), (0,2), (1,2)\}$. Let all hardware penalties be uniform, $W_{p,q} = 1$ for $p \neq q$, and $W_{p,p} = 10$. Set $\lambda = 100$. The objective becomes:
 \begin{align}
-H_{\text{obj}} = C_{0,0} x_0 x_1 + C_{0,1} x_0 x_3 + C_{1,0} x_1 x_2 + C_{1,1} x_2 x_3.
+C(x) = \sum_{(i,j) \in \{(0,1),(0,2),(1,2)\}} \sum_{p=0}^{2} \sum_{q=0}^{2} W_{p,q} \, x_{i,p} x_{j,q}.
 \end{align}
 The penalty terms expand to:
 \begin{align}
-H_{\text{C1}} &= 100(1 - x_0 - x_2) + 100(1 - x_1 - x_3) = 200 - 100(x_0 + x_1 + x_2 + x_3), \\
-H_{\text{C2}} &= 100(x_0 x_2 + x_1 x_3) + 100(x_0 + x_2) + 100(x_1 + x_3).
+P_1(x) = 100 \sum_{l=0}^{2} \left( 1 - \sum_{p=0}^{2} x_{l,p} + 2 \sum_{0 \le p < q \le 2} x_{l,p} x_{l,q} \right),
 \end{align}
-Combining these, the linear terms cancel, yielding the full Hamiltonian:
 \begin{align}
-H(x) = C_{0,0} x_0 x_1 + C_{0,1} x_0 x_3 + C_{1,0} x_1 x_2 + C_{1,1} x_2 x_3 + 100 x_0 x_2 + 100 x_1 x_3 + 200.
+P_2(x) = 100 \sum_{p=0}^{2} \sum_{0 \le l < l' \le 2} x_{l,p} x_{l',p}.
 \end{align}
-The optimal mapping assigns logical qubit $0$ to physical qubit $0$ and logical qubit $1$ to physical qubit $1$ (i.e., $x_0=1, x_3=1$, others $0$), yielding an energy of $C_{0,1} + 200$. Alternatively, mapping $0 \to 1$ and $1 \to 0$ gives $C_{1,0} + 200$. The minimum energy corresponds to the physical pair with the lowest gate penalty, demonstrating how the QUBO formulation correctly encodes the allocation task.
-
+The full Hamiltonian $H(x) = C(x) + P_1(x) + P_2(x)$ contains $3 \times 3 = 9$ binary variables. The constant offset is $c = 100 \times 3 = 300$. The optimal solution maps logical qubits $\{0,1,2\}$ to physical qubits $\{0,1,2\}$ in a permutation that aligns logical edges with the lowest physical penalties (e.g., $x_{0,0}=x_{1,1}=x_{2,2}=1$, yielding $C(x)=3$ and total energy $H(x)=303$). Any deviation from a valid permutation incurs a penalty of at least $100$, strictly increasing the energy.
 \end{document}

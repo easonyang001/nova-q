@@ -1,0 +1,241 @@
+{
+ "case": "melbourne_bike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 367.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 480.0
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 0.2,
+   "error": "ValueError: checker failed: requirement checker unavailable: PromptTooLong: step 'req_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 28546 output tokens and your prompt contains at least 4223 inpu"
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1507.6
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 6628.2
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "model 修復完成"
+  }
+ ],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP encoding (mp-position-tour). For N stations, it uses N^2 binary variables. For a realistic instance of N=50, this is 2,500 variables, which fits the Local SA backend comfortably.",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "A bike share station within 1km of Flinders Street Station",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "positions": {
+    "meaning": "The sequence index in the inspection tour",
+    "source": "mock"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "name": {
+    "meaning": "Name of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "stations",
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "compute pairwise distance matrix"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Bike_Share_Dock_Locations_Bike_Share_Dock_Locations_CSV.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "to_number",
+   "within_radius"
+  ],
+  "notes": "",
+  "prep_log": "**資料來源**\n\n- Bike Share Dock Locations — Bike Share Dock Locations CSV（catalogue data.gov.au） <https://data.gov.au/data/dataset/bike-share-dock-locations>，授權：待確認，取得 2026-10-21T06:57:47.312802+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 數字清理 location | 50 | 50 | 50 個值無法轉成數字 |\n| 只保留距離 (-37.8183, 144.9671) 1000 公尺內的資料 | 50 | 11 |  |\n| drop_missing {\"columns\": [\"lat\", \"lon\"]} | 11 | 11 |  |",
+  "flags": [],
+  "review_required": [
+   "stations: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "name: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, name, positions, stations"
+  ],
+  "sources": [
+   {
+    "title": "Bike Share Dock Locations — Bike Share Dock Locations CSV",
+    "url": "https://data.gov.au/data/dataset/bike-share-dock-locations",
+    "resource_url": "https://data.melbourne.vic.gov.au/api/v2/catalog/datasets/bike-share-dock-locations/exports/csv?delimiter=%2C",
+    "publisher": "catalogue data.gov.au",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-21T06:57:47.312802+00:00",
+    "sha256": "33495c5ffa4afb2c3cbf748eb350bd57e18129e534f6e2319c58ab211e842502",
+    "bytes": 5755
+   }
+  ],
+  "n_variables": 121,
+  "n_constraints": 22,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "stations": 11
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:invalid",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:repaired",
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.22134995080674047,
+  "objective": 6808.699175711595,
+  "baseline_objective": 8744.235209085164
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 11,
+    "mapped": 11,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 11,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 11,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 6808.699175711595,
+    "reference_quality": 5311.023956558629,
+    "gap_vs_reference": 0.282
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 371362,
+  "solver_calls": 3
+ },
+ "seconds": 8983.5
+}

@@ -1,65 +1,155 @@
 Benchmark    : knapsack
-Test input   : benchmarks\knapsack\sample_cases.txt (cases built after formulation)
+Test input   : benchmarks/knapsack/sample_cases.txt (cases built after formulation)
 Seed         : 42
-[02:56:37] === Pipeline START | run_id=knapsack_42_7e687139 ===
-[02:56:37] Benchmark : knapsack  |  seed=42
-[02:56:37] Models    : planner_agent=qwen/qwen3.6-35b-a3b
-[02:56:37]             formulizer_agent=qwen/qwen3.6-35b-a3b
-[02:56:37]             judge_agent=qwen/qwen3.6-35b-a3b
-[02:56:37]             coder_agent=qwen/qwen3-coder-next
-[02:56:37] Cache     : disabled
-[02:56:37] [Stage 1] Planner � attempt 1/1
-[02:57:02] [Stage 1] Planner OK � 1 vars, 1 constraints
-[02:57:02] [Stage 1b] Judge � checking spec matches NL ...
-[02:57:12] [Stage 1b] Spec verification PASSED
-[02:57:12] [Stage 2] Formulizer � attempt 1/1
-[02:58:24] [Stage 2] Formulation OK � n_vars=5, 3 obj terms, 1 penalty groups
-[02:58:24] [Stage 2b] Judge � checking QUBO formulation ...
-[02:58:38] [Stage 2b] Formulation verification PASSED
-[02:58:38] [Stage 2.5] Building test cases from user input ...
-[02:58:53] [Stage 2.5] Wrote 3 case(s) to transcript, loaded 3 total
-[02:58:53] [Stage 3] Coder � attempt 1/1
-[02:59:19] [Stage 3] Code generated and compiled OK
-[02:59:19] [Stage 3b] Test Runner � running 3 pre-computed test cases ...
-[02:59:19] [Stage 3b] Tests: 0/3 passed (0%)  failure_class=coding_error
-[02:59:19] [Stage 3b] Instance 0 error: [n3_case1] Q shape (5, 5) does not match expected (3,3)
-[02:59:19] [Stage 3b] Instance 1 error: [n4_case3] Q shape (7, 7) does not match expected (4,4)
-[02:59:19] [Stage 3b] Instance 2 error: [n5_large_case2] Q shape (9, 9) does not match expected (5,5)
-[02:59:19] === Pipeline FAILED � code exhausted all retries ===
-[02:59:19] Finalizing | status=failed | tokens=24389 | cost=$0.0173 | wall=162.1s
+[15:31:25] === Pipeline START | run_id=knapsack_42_9380ac3a ===
+[15:31:25] Benchmark : knapsack  |  seed=42
+[15:31:25] Models    : planner_agent=qwen3.6-35b-a3b
+[15:31:25]             formulizer_agent=qwen3.6-35b-a3b
+[15:31:25]             judge_agent=qwen3.6-35b-a3b
+[15:31:25]             coder_agent=qwen3.6-35b-a3b
+[15:31:25] Cache     : disabled
+[15:31:25] [Stage 1] Planner — attempt 1/3
+[15:31:45] [Stage 1] Planner OK — 1 vars, 1 constraints
+[15:31:45] [Stage 1b] Judge — checking spec matches NL ...
+[15:31:52] [Stage 1b] Spec verification PASSED
+[15:31:52] [Stage 2] Formulizer — attempt 1/3
+[15:32:25] [Stage 2] Formulation OK — n_vars=5, 3 obj terms, 1 penalty groups
+[15:32:25] [Stage 2b] Judge — checking QUBO formulation ...
+[15:32:40] [Stage 2b] Formulation verification PASSED
+[15:32:40] [Stage 2.5] Building test cases from user input ...
+[15:33:19] [Stage 2.5] Wrote 3 case(s) to transcript, loaded 3 total
+[15:33:19] [Stage 3] Coder — attempt 1/4
+[15:36:58] [Stage 3] Coder EXCEPTION: Could not extract Python code from coder response:
 
-Status:       failed
-Iterations:   3
-Wall time:    162.1s
-Tokens used:  24389
-Verification: {'passed': 0, 'total': 3}
+[15:36:58] [Stage 3] Coder — attempt 2/4
+[15:38:12] [Stage 3] Code generated and compiled OK
+[15:38:12] [Stage 3b] Test Runner — running 3 pre-computed test cases ...
+[15:38:12] [Stage 3b] Tests: 3/3 passed (100%)  failure_class=success
+[15:38:12] === Pipeline SUCCESS ===
+[15:38:12] Finalizing | status=success | tokens=68150 | cost=$0.0000 | wall=406.9s
+
+Status:       success
+Iterations:   2
+Wall time:    406.9s
+Tokens used:  68150
+Verification: {'passed': 3, 'total': 3}
 Failure modes: ['coding_error']
 
-Error trace:
-Code failed after max retries. Last failure: coding_error
+[latex] Generating LaTeX deliverable (model=qwen3.6-35b-a3b) ...
+[latex] Saved to deliverables/knapsack/knapsack_42.tex
+
+============================================================
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: 0/1 Knapsack Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{0/1 Knapsack Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ items indexed by $i \in \{0, \dots, N-1\}$, each item $i$ has an associated weight $w_i \in \mathbb{R}_{\ge 0}$ and value $v_i \in \mathbb{R}_{\ge 0}$. A knapsack has a maximum weight capacity $W \in \mathbb{R}_{\ge 0}$. The objective is to select a subset of items to maximize the total value of the selected items, subject to the constraint that the total weight of the selected items does not exceed $W$.
+
+\paragraph{Decision Variables.}
+For each item $i \in \{0, \dots, N-1\}$, we introduce a binary decision variable $x_i \in \{0,1\}$, where $x_i = 1$ indicates that item $i$ is selected, and $x_i = 0$ otherwise. To handle the inequality constraint in a quadratic unconstrained binary optimization (QUBO) framework, we introduce $m = \lceil \log_2 W \rceil$ binary slack variables $s_j \in \{0,1\}$ for $j \in \{0, \dots, m-1\}$. These slack variables represent the unused capacity $W - \sum_{i=0}^{N-1} w_i x_i$ in binary form, such that $\sum_{j=0}^{m-1} 2^j s_j$ equals the slack.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1.} The original problem is a maximization of total value. Converting to a minimization problem suitable for QUBO yields the objective function:
+\begin{align}
+  \min_{x} \quad -\sum_{i=0}^{N-1} v_i x_i.
+\end{align}
+
+\textbf{Step 2.} The weight capacity constraint is expressed as an equality by introducing the binary slack variables:
+\begin{align}
+  \sum_{i=0}^{N-1} w_i x_i + \sum_{j=0}^{m-1} 2^j s_j = W.
+\end{align}
+
+\textbf{Step 3.} We convert the equality constraint into a penalty term by squaring the deviation from $W$ and scaling by a penalty weight $\lambda > 0$:
+\begin{align}
+  P(x,s) = \lambda \left( \sum_{i=0}^{N-1} w_i x_i + \sum_{j=0}^{m-1} 2^j s_j - W \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $z^2 = z$ for all binary variables $z \in \{x_0, \dots, x_{N-1}, s_0, \dots, s_{m-1}\}$, we obtain:
+\begin{align}
+  P(x,s) &= \lambda \left[ \sum_{i=0}^{N-1} w_i^2 x_i + \sum_{j=0}^{m-1} (2^j)^2 s_j - 2W \sum_{i=0}^{N-1} w_i x_i - 2W \sum_{j=0}^{m-1} 2^j s_j \right. \nonumber \\
+  &\quad \left. + 2 \sum_{0 \le i < k \le N-1} w_i w_k x_i x_k + 2 \sum_{i=0}^{N-1} \sum_{j=0}^{m-1} w_i 2^j x_i s_j + 2 \sum_{0 \le j < l \le m-1} 2^j 2^l s_j s_l + W^2 \right].
+\end{align}
+Collecting terms by variable type yields the general penalty contribution:
+\begin{align}
+  P(x,s) &= \lambda \left[ \sum_{i=0}^{N-1} (w_i^2 - 2W w_i) x_i + \sum_{j=0}^{m-1} (2^{2j} - 2W 2^j) s_j \right. \nonumber \\
+  &\quad \left. + 2 \sum_{0 \le i < k \le N-1} w_i w_k x_i x_k + 2 \sum_{i=0}^{N-1} \sum_{j=0}^{m-1} w_i 2^j x_i s_j + 2 \sum_{0 \le j < l \le m-1} 2^{j+l} s_j s_l + W^2 \right].
+\end{align}
+
+\textbf{Step 4.} The complete QUBO Hamiltonian $H(x,s)$ is the sum of the negated objective and the penalty term:
+\begin{align}
+  H(x,s) = -\sum_{i=0}^{N-1} v_i x_i + P(x,s).
+\end{align}
+
+\textbf{Step 5.} Reading off the coefficients from $H(x,s)$, the QUBO matrix entries $Q$ and constant offset $c$ are given by:
+\begin{align}
+  Q_{i,i} &= -v_i + \lambda(w_i^2 - 2W w_i), & i \in \{0, \dots, N-1\}, \\
+  Q_{j,j} &= \lambda(2^{2j} - 2W 2^j), & j \in \{0, \dots, m-1\}, \\
+  Q_{i,k} &= 2\lambda w_i w_k, & 0 \le i < k \le N-1, \\
+  Q_{i,j} &= 2\lambda w_i 2^j, & i \in \{0, \dots, N-1\}, \ j \in \{0, \dots, m-1\}, \\
+  Q_{j,l} &= 2\lambda 2^{j+l}, & 0 \le j < l \le m-1, \\
+  c &= \lambda W^2.
+\end{align}
+The QUBO is then defined as $\min_{x,s \in \{0,1\}^{N+m}} \left( \sum_{p \le q} Q_{p,q} z_p z_q + c \right)$, where $z$ denotes the concatenated vector of $x$ and $s$ variables.
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the capacity constraint incurs an energy cost strictly greater than the maximum possible gain in the objective function. The maximum total value achievable by any subset of items is bounded by $\sum_{i=0}^{N-1} v_i$. Therefore, selecting $\lambda > \sum_{i=0}^{N-1} v_i$ guarantees that the penalty for any infeasible configuration dominates any potential improvement in the objective value, forcing the global minimum to reside within the feasible region.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x,s)$ over $\{0,1\}^{N+m}$ recovers the optimal solution to the original knapsack problem. For any feasible assignment, the slack variables can be chosen to exactly satisfy the equality constraint, making the penalty term $P(x,s)$ vanish. Consequently, $H(x,s)$ reduces to the negated objective, and minimizing $H$ is equivalent to maximizing the total value. For any infeasible assignment, the penalty term is strictly positive. By the choice of $\lambda$, the energy of any infeasible solution exceeds the energy of the best feasible solution. Thus, the global minimum of $H$ must correspond to a feasible configuration that maximizes the original objective.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N=3$ items, weights $w_0, w_1, w_2$, values $v_0, v_1, v_2$, and capacity $W=5$. Here, $m = \lceil \log_2 5 \rceil = 2$, yielding $n = N + m = 5$ binary variables. The variables are indexed as $x_0, x_1, x_2$ (indices $0,1,2$) and $s_0, s_1$ (indices $3,4$). Substituting $W=5$ and $m=2$ into the general formulas yields the following concrete QUBO coefficients:
+\begin{align}
+  Q_{0,0} &= -v_0 + \lambda(w_0^2 - 10w_0), & Q_{1,1} &= -v_1 + \lambda(w_1^2 - 10w_1), & Q_{2,2} &= -v_2 + \lambda(w_2^2 - 10w_2), \\
+  Q_{3,3} &= \lambda(1 - 10), & Q_{4,4} &= \lambda(4 - 20), \\
+  Q_{0,1} &= 2\lambda w_0 w_1, & Q_{0,2} &= 2\lambda w_0 w_2, & Q_{1,2} &= 2\lambda w_1 w_2, \\
+  Q_{0,3} &= 2\lambda w_0, & Q_{0,4} &= 4\lambda w_0, & Q_{1,3} &= 2\lambda w_1, & Q_{1,4} &= 4\lambda w_1, \\
+  Q_{2,3} &= 2\lambda w_2, & Q_{2,4} &= 4\lambda w_2, & Q_{3,4} &= 4\lambda, \\
+  c &= 25\lambda.
+\end{align}
+The resulting Hamiltonian is explicitly:
+\begin{align}
+  H(x,s) &= -\sum_{i=0}^{2} v_i x_i + \lambda \left( \sum_{i=0}^{2} w_i x_i + s_0 + 2s_1 - 5 \right)^2.
+\end{align}
+For a specific numerical instantiation, let $w = (2, 3, 4)$, $v = (3, 4, 5)$, and $\lambda = 100$. The optimal selection is $x_0=1, x_1=1, x_2=0$ (total weight $5$, total value $7$), with slack $s_0=1, s_1=0$. The minimum energy is $H^* = -7 + 100(0)^2 = -7$.
+
+\end{document}
+============================================================
+
+[html] Saved to knapsack/knapsack_42.html
+[view] Opening knapsack_42.html ...
+[pdf] Compiling knapsack_42.tex ...
+[pdf] PDF also saved to knapsack/knapsack_42.pdf
 
 Full result:
 {
-  "run_id": "knapsack_42_7e687139",
+  "run_id": "knapsack_42_9380ac3a",
   "benchmark": "knapsack",
   "seed": 42,
-  "status": "failed",
-  "n_iterations": 3,
-  "wall_time_s": 162.13029289245605,
+  "status": "success",
+  "n_iterations": 2,
+  "wall_time_s": 406.86483550071716,
   "models_used": {
-    "planner_agent": "qwen/qwen3.6-35b-a3b",
-    "formulizer_agent": "qwen/qwen3.6-35b-a3b",
-    "judge_agent": "qwen/qwen3.6-35b-a3b",
-    "coder_agent": "qwen/qwen3-coder-next",
-    "debugger_agent": "qwen/qwen3.6-35b-a3b"
+    "planner_agent": "qwen3.6-35b-a3b",
+    "formulizer_agent": "qwen3.6-35b-a3b",
+    "judge_agent": "qwen3.6-35b-a3b",
+    "coder_agent": "qwen3.6-35b-a3b",
+    "debugger_agent": "qwen3.6-35b-a3b"
   },
-  "tokens_used": 24389,
-  "cost_used": 0.017251895750000003,
+  "tokens_used": 68150,
+  "cost_used": 0.0,
   "verification": {
-    "passed": 0,
+    "passed": 3,
     "total": 3
   },
-  "error_trace": "Code failed after max retries. Last failure: coding_error",
+  "error_trace": "",
   "failure_modes": [
     "coding_error"
   ]

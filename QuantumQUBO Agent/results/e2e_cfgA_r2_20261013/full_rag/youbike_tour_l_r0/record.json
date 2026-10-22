@@ -1,0 +1,234 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 126.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 335.8
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 0.2,
+   "error": "PromptTooLong: step 'req_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 28486 output tokens and your prompt contains at least 4283 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested "
+  },
+  "data": {
+   "ok": true,
+   "seconds": 331.1
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.2
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 430.6
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position encoding x[i,t] with n^2 variables. Fits CGA backend (up to ~3600 vars) for n<=60. No subtour constraints needed due to one-hot structure.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Set of locations to visit, including the start point (Daan MRT) and all YouBike stations within 800m",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Sequence positions in the tour (0 to n-1)",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site in degrees",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site in degrees",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "distance_matrix": {
+    "meaning": "Euclidean distance between sites in meters",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Compute pairwise Haversine distances from coordinates"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "政府資料開放平臺.json",
+  "臺北捷運車站出入口座標.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 800m of Daan MRT. Daan MRT coordinates derived from average of exits in '臺北捷運車站出入口座標'. Distance matrix computed via Haversine.",
+  "prep_log": "**資料來源**\n\n- 政府資料開放平臺（data.gov.tw） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-13T03:10:31.383283+00:00\n- 臺北捷運車站出入口座標（政府資料開放平台） <https://data.gov.tw/dataset/128428>，授權：待確認，取得 2026-10-13T03:10:34.850087+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Extract Daan MRT centroid | 390 | 1 | Centroid of 6 exits |\n| 只保留距離 (25.033414071666666, 121.54289406666668) 800 公尺內的資料 | 1819 | 36 |  |\n| Filter YouBike within 800m | 1819 | 36 | Radius filter |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "distance_matrix: 尚未聲明 unit，需求為 m",
+   "distance_matrix: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：distance_matrix, lat, lon, positions, sites"
+  ],
+  "sources": [
+   {
+    "title": "政府資料開放平臺",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T03:10:31.383283+00:00",
+    "sha256": "870b21198044eb282a2cb80383a6826e46e379c56211169833c7a390f66ce1de",
+    "bytes": 952830
+   },
+   {
+    "title": "臺北捷運車站出入口座標",
+    "url": "https://data.gov.tw/dataset/128428",
+    "resource_url": "https://data.taipei/api/dataset/cfa4778c-62c1-497b-b704-756231de348b/resource/307a7f61-e302-4108-a817-877ccbfca7c1/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T03:10:34.850087+00:00",
+    "sha256": "134d8488c240fb23e04535db6a94da73006f890c83617eeedaa9b26c9f120015",
+    "bytes": 17633
+   }
+  ],
+  "n_variables": 1369,
+  "n_constraints": 74,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 37
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.6769406209182725,
+  "objective": 7709.625597172812,
+  "baseline_objective": 23864.422754376785
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (政府資料開放平臺.json)",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 37,
+    "mapped": 33,
+    "duplicates": [],
+    "missing_real_entities": 5,
+    "missing_examples": [
+     "YouBike2.0_捷運科技大樓站",
+     "YouBike2.0_成功國宅",
+     "YouBike2.0_敦化南路二段103巷口",
+     "YouBike2.0_四維路170巷口",
+     "YouBike2.0_捷運科技大樓站(2號出口)"
+    ],
+    "unmapped_ids": [
+     "Daan_MRT",
+     "500101130",
+     "500101133",
+     "500101213"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "structure": "37 decision entities but only 33 map to real ones: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 37,
+    "required_stations_missing": 5,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 6730.941240969005
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 124699,
+  "solver_calls": 3
+ },
+ "seconds": 1224.5
+}

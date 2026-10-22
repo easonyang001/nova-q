@@ -1,0 +1,104 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 78.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 106.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 17.0
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1137.1,
+   "error": "ValueError: data preparation failed: FORBIDDEN: a hand-written pandas merge; join tables with prep.match (it reports unmatched and duplicate keys)"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "li": {
+    "meaning": "Unique identifier for each administrative district (li) in Taipei",
+    "source": "public",
+    "reducible": null
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of the centroid of each li",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the centroid of each li",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Total population of each li",
+    "index": [
+     "li"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "person"
+   },
+   "k": {
+    "meaning": "Number of charging stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "radius": {
+    "meaning": "Coverage radius in meters",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1000
+   }
+  }
+ },
+ "data_found": [
+  "村里界圖.csv",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 327180,
+  "solver_calls": null
+ },
+ "seconds": 1339.4
+}

@@ -1,0 +1,92 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Weighted Set Packing Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Weighted Set Packing Problem}
+
+\paragraph{Problem Statement.}
+Given a universe of elements $\mathcal{U}$ and a collection of $n$ subsets $\mathcal{S} = \{S_1, S_2, \dots, S_n\}$ where each $S_j \subseteq \mathcal{U}$, along with a non-negative weight $w_j$ associated with each subset, the goal is to select a subcollection of pairwise disjoint subsets such that the sum of their weights is maximized.
+
+\paragraph{Decision Variables.}
+For each subset $S_j$ with $j \in \{1, \dots, n\}$, introduce a binary decision variable $x_j \in \{0, 1\}$. The variable $x_j$ equals $1$ if subset $S_j$ is selected, and $0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1.} The original optimization problem seeks to maximize the total weight of selected subsets. To cast this as a QUBO minimization problem, we negate the objective function:
+\begin{align}
+\min_{\mathbf{x} \in \{0,1\}^n} \left( -\sum_{j=1}^{n} w_j x_j \right).
+\end{align}
+
+\textbf{Step 2.} The pairwise disjointness requirement implies that no two overlapping subsets can be selected simultaneously. For any pair of indices $\{j,k\} \subseteq \{1, \dots, n\}$ such that $S_j \cap S_k \neq \emptyset$, we impose the linear constraint:
+\begin{align}
+x_j + x_k \le 1.
+\end{align}
+
+\textbf{Step 3.} Each constraint is converted into a quadratic penalty term. For a specific overlapping pair $\{j,k\}$, we introduce a penalty parameter $\lambda > 0$ and consider the squared violation:
+\begin{align}
+P_{j,k}(\mathbf{x}) = \lambda (x_j + x_k - 1)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_i^2 = x_i$ for binary variables yields:
+\begin{align}
+P_{j,k}(\mathbf{x}) &= \lambda (x_j^2 + x_k^2 + 1 + 2x_j x_k - 2x_j - 2x_k) \\
+&= \lambda (x_j + x_k + 1 + 2x_j x_k - 2x_j - 2x_k) \\
+&= \lambda (1 - x_j - x_k + 2x_j x_k).
+\end{align}
+The constant term $\lambda$ and the linear terms $-\lambda x_j - \lambda x_k$ are absorbed into the QUBO offset and diagonal coefficients, respectively. The essential quadratic coupling that enforces disjointness is proportional to $x_j x_k$. Following the provided formulation, the resulting general penalty contribution to $H$ for each overlapping pair is:
+\begin{align}
+\text{Penalty}_{j,k} = \lambda x_j x_k.
+\end{align}
+
+\textbf{Step 4.} Combining the negated objective with the penalty terms over all overlapping pairs yields the total QUBO Hamiltonian:
+\begin{align}
+H(\mathbf{x}) = -\sum_{j=1}^{n} w_j x_j + \lambda \sum_{\substack{\{j,k\} \subseteq \{1,\dots,n\} \\ S_j \cap S_k \neq \emptyset}} x_j x_k.
+\end{align}
+
+\textbf{Step 5.} Reading off the coefficients from $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$, the Q matrix entries and offset are given in closed form as:
+\begin{align}
+Q_{j,j} &= -w_j, \quad \forall j \in \{1, \dots, n\}, \\
+Q_{j,k} &= \lambda, \quad \forall \{j,k\} \subseteq \{1, \dots, n\} \text{ with } S_j \cap S_k \neq \emptyset, j \neq k, \\
+Q_{j,k} &= 0, \quad \forall \{j,k\} \subseteq \{1, \dots, n\} \text{ with } S_j \cap S_k = \emptyset, j \neq k, \\
+c &= 0.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty parameter $\lambda$ must be chosen sufficiently large to ensure that any violation of the disjointness constraints is strictly penalized more than the maximum possible gain achievable by the objective function. The maximum gain from selecting any single subset is bounded by $\max_{j} w_j$. Therefore, selecting $\lambda > \max_{j} w_j$ guarantees that the energy increase from violating a single constraint exceeds the best possible objective improvement, thereby forcing the optimizer to prioritize feasibility.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal set packing because (i) any feasible solution satisfies $x_j x_k = 0$ for all overlapping pairs, resulting in zero penalty energy, and (ii) any infeasible solution violates at least one disjointness constraint, incurring a penalty of at least $\lambda$. Since $\lambda$ strictly exceeds the maximum possible objective value, the energy of any infeasible solution is strictly greater than that of the best feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must correspond to a feasible assignment that minimizes the negated objective, which is equivalent to maximizing the original total weight.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $n=3$ subsets indexed $0, 1, 2$. Let the weights be $w_0 = 3$, $w_1 = 4$, and $w_2 = 2$. Assume every pair of subsets overlaps (i.e., $S_0 \cap S_1 \neq \emptyset$, $S_0 \cap S_2 \neq \emptyset$, and $S_1 \cap S_2 \neq \emptyset$). Following the justification, we choose $\lambda = 5$, which satisfies $\lambda > \max\{3, 4, 2\}$.
+Substituting these values into the general formulas yields the concrete objective:
+\begin{align}
+\min \left( -3x_0 - 4x_1 - 2x_2 \right).
+\end{align}
+The penalty terms for the three overlapping pairs are:
+\begin{align}
+5x_0 x_1 + 5x_0 x_2 + 5x_1 x_2.
+\end{align}
+The resulting Hamiltonian is:
+\begin{align}
+H(\mathbf{x}) = -3x_0 - 4x_1 - 2x_2 + 5x_0 x_1 + 5x_0 x_2 + 5x_1 x_2.
+\end{align}
+The corresponding Q matrix entries and offset are:
+\begin{align}
+Q_{0,0} &= -3, & Q_{1,1} &= -4, & Q_{2,2} &= -2, \\
+Q_{0,1} &= 5, & Q_{0,2} &= 5, & Q_{1,2} &= 5, \\
+c &= 0.
+\end{align}
+Enumerating the feasible solutions (where at most one variable is $1$):
+\begin{itemize}
+\item $\mathbf{x} = (1,0,0)$: $H = -3$ (weight $3$)
+\item $\mathbf{x} = (0,1,0)$: $H = -4$ (weight $4$)
+\item $\mathbf{x} = (0,0,1)$: $H = -2$ (weight $2$)
+\item $\mathbf{x} = (0,0,0)$: $H = 0$ (weight $0$)
+\end{itemize}
+The global minimum is $H = -4$ at $\mathbf{x} = (0,1,0)$, which correctly selects subset $S_1$ and achieves the maximum total weight of $4$.
+
+\end{document}

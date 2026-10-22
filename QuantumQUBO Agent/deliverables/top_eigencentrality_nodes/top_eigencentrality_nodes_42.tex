@@ -10,71 +10,60 @@
 \subsection*{Top Eigencentrality Node Selection Problem}
 
 \paragraph{Problem Statement.}
-Given a graph $G=(V, E)$ with $N = |V|$ nodes, a target integer $\tau \in \{1, \dots, N\}$, and pre-computed eigencentrality scores $c_i$ for each node $i \in V$, the Top Eigencentrality Node Selection Problem seeks to identify a subset of exactly $\tau$ nodes that maximizes the sum of their eigencentrality scores. Formally, the problem is to find a subset $S \subseteq V$ with cardinality $|S| = \tau$ such that the objective function $\sum_{i \in S} c_i$ is maximized.
+Given a graph $G = (V, E)$ with $N = |V|$ nodes, and a pre-computed eigencentrality score $c_i \in \mathbb{R}$ for each node $i \in V$, the objective is to select exactly $\tau$ nodes such that the sum of their eigencentrality scores is maximized.
 
 \paragraph{Decision Variables.}
-We introduce binary decision variables $x_i \in \{0, 1\}$ for each node $i \in \{0, 1, \dots, N-1\}$. The variable $x_i$ takes the value $1$ if node $i$ is selected in the solution, and $0$ otherwise.
+For each node $i \in V$, introduce a binary decision variable $x_i \in \{0, 1\}$, where $x_i = 1$ indicates that node $i$ is selected, and $x_i = 0$ indicates that it is not selected.
 
 \paragraph{QUBO Derivation.}
-We convert the maximization problem into a minimization problem suitable for QUBO formulation by negating the objective. The original problem is equivalent to:
+\textbf{Step 1.} The original optimization problem is $\max_{\mathbf{x}} \sum_{i \in V} c_i x_i$ subject to $\sum_{i \in V} x_i = \tau$. To cast this as a minimization problem suitable for QUBO, we negate the objective:
 \begin{align}
-    \min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} c_i x_i \right)
-    \quad \text{subject to} \quad
-    \sum_{i=0}^{N-1} x_i = \tau.
+\min_{\mathbf{x}} \left( -\sum_{i \in V} c_i x_i \right).
 \end{align}
-We incorporate the equality constraint into the objective using a quadratic penalty term with weight $\lambda > 0$. The penalized Hamiltonian $H(x)$ is given by:
+
+\textbf{Step 2.} The cardinality constraint is expressed algebraically as:
 \begin{align}
-    H(x) = -\sum_{i=0}^{N-1} c_i x_i + \lambda \left( \sum_{i=0}^{N-1} x_i - \tau \right)^2.
+\sum_{i \in V} x_i = \tau.
 \end{align}
-Expanding the squared penalty term yields:
+
+\textbf{Step 3.} We convert the equality constraint into a quadratic penalty term using a Lagrange multiplier $\lambda > 0$:
 \begin{align}
-    \lambda \left( \sum_{i=0}^{N-1} x_i - \tau \right)^2
-    &= \lambda \left( \sum_{i=0}^{N-1} x_i^2 + \sum_{i \neq j} x_i x_j - 2\tau \sum_{i=0}^{N-1} x_i + \tau^2 \right).
+P(\mathbf{x}) = \lambda \left( \sum_{i \in V} x_i - \tau \right)^2.
 \end{align}
-Using the idempotent property of binary variables, $x_i^2 = x_i$, we simplify the expression:
+Expanding the square yields:
 \begin{align}
-    \lambda \left( \sum_{i=0}^{N-1} x_i + \sum_{i \neq j} x_i x_j - 2\tau \sum_{i=0}^{N-1} x_i + \tau^2 \right)
-    &= \lambda \sum_{i=0}^{N-1} (1 - 2\tau) x_i + \lambda \sum_{i \neq j} x_i x_j + \lambda \tau^2.
+P(\mathbf{x}) = \lambda \left( \sum_{i \in V} x_i^2 + \sum_{i \in V} \sum_{j \in V, j \neq i} x_i x_j - 2\tau \sum_{i \in V} x_i + \tau^2 \right).
 \end{align}
-Noting that $\sum_{i \neq j} x_i x_j = 2 \sum_{0 \leq i < j \leq N-1} x_i x_j$, the penalty contribution becomes:
+Applying the idempotent property of binary variables, $x_i^2 = x_i$, the expression simplifies to:
 \begin{align}
-    \lambda \sum_{i=0}^{N-1} (1 - 2\tau) x_i + 2\lambda \sum_{0 \leq i < j \leq N-1} x_i x_j + \lambda \tau^2.
+P(\mathbf{x}) = \lambda \left( (1 - 2\tau) \sum_{i \in V} x_i + \sum_{i \in V} \sum_{j \in V, j \neq i} x_i x_j + \tau^2 \right).
 \end{align}
-Combining the objective and penalty terms, the full QUBO Hamiltonian is:
+
+\textbf{Step 4.} Combining the negated objective and the penalty term gives the full QUBO Hamiltonian $H(\mathbf{x})$:
 \begin{align}
-    H(x) = \sum_{i=0}^{N-1} \left( \lambda(1 - 2\tau) - c_i \right) x_i + 2\lambda \sum_{0 \leq i < j \leq N-1} x_i x_j + \lambda \tau^2.
+H(\mathbf{x}) = -\sum_{i \in V} c_i x_i + \lambda \left( (1 - 2\tau) \sum_{i \in V} x_i + \sum_{i \in V} \sum_{j \in V, j \neq i} x_i x_j + \tau^2 \right).
 \end{align}
-Reading off the coefficients from the general form $H(x) = \sum_{i} Q_{i,i} x_i + \sum_{i < j} Q_{i,j} x_i x_j + c$, we obtain the QUBO parameters:
+
+\textbf{Step 5.} Collecting coefficients for linear and quadratic terms, and expressing the result in standard QUBO form $H(\mathbf{x}) = \sum_{i \le j} Q_{ij} x_i x_j + c$, we read off the closed-form entries:
 \begin{align}
-    Q_{i,i} &= \lambda(1 - 2\tau) - c_i, \quad \forall i \in \{0, \dots, N-1\}, \\
-    Q_{i,j} &= 2\lambda, \quad \forall i, j \in \{0, \dots, N-1\}, \; i < j, \\
-    c &= \lambda \tau^2.
+Q_{i,i} &= -c_i + \lambda(1 - 2\tau), \quad \forall i \in V, \\
+Q_{i,j} &= 2\lambda, \quad \forall i, j \in V, i \neq j, \\
+c &= \lambda \tau^2.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that the global minimum of $H(x)$ corresponds to a feasible solution. Specifically, $\lambda$ must exceed the maximum possible gain in the objective function achievable by violating the constraint. Since the objective coefficients are $c_i$, the maximum gain from selecting an additional node (or deviating from the count $\tau$) is bounded by $\max_{i} c_i$. Thus, setting $\lambda > \max_{i \in \{0, \dots, N-1\}} c_i$ guarantees that any infeasible solution incurs a penalty strictly greater than any potential improvement in the objective value, forcing the optimizer to satisfy $\sum_{i} x_i = \tau$.
+We set the penalty weight to $\lambda = 1 + \max_{i \in V} |c_i|$. The maximum possible improvement in the objective function achievable by flipping any single variable is bounded by $\max_{i \in V} |c_i|$. Violating the cardinality constraint by a single unit changes the penalty term by at least $\lambda$. Since $\lambda > \max_{i \in V} |c_i|$, the energy cost of any constraint violation strictly exceeds the maximum possible gain from the objective function. This guarantees that the optimizer will prioritize feasibility over objective improvement.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $x \in \{0,1\}^N$ recovers the optimal solution to the original problem. For any feasible assignment where $\sum_{i} x_i = \tau$, the penalty term vanishes, and $H(x)$ reduces to the negative objective function. For any infeasible assignment, the penalty term is strictly positive. By the choice of $\lambda$, the energy of any infeasible solution exceeds that of the best feasible solution. Consequently, the global minimum of $H(x)$ must occur at a feasible point that minimizes the negative objective, which is equivalent to maximizing the original objective.
+Minimizing $H(\mathbf{x})$ over $\{0, 1\}^N$ recovers the optimal solution to the original problem. First, any assignment satisfying $\sum_{i \in V} x_i = \tau$ incurs zero penalty, reducing $H(\mathbf{x})$ to $-\sum_{i \in V} c_i x_i$; thus, the minimum over feasible assignments corresponds exactly to the maximum eigencentrality sum. Second, any infeasible assignment incurs a penalty strictly greater than the maximum possible reduction in the objective term. Consequently, the global minimum of $H(\mathbf{x})$ cannot be infeasible, and must therefore be a feasible assignment that maximizes the original objective.
 
 \paragraph{Illustrative Example.}
-Consider an instance with $N=3$ nodes, target $\tau=1$, and eigencentrality scores $c_0=5, c_1=3, c_2=4$. We choose $\lambda=6$, satisfying $\lambda > \max(c_i)=5$. Substituting these values into the general formulas:
+Consider a graph with $N = 3$ nodes, target cardinality $\tau = 2$, and eigencentrality scores $c_0 = 0.5$, $c_1 = 0.8$, $c_2 = 0.3$. The penalty weight is $\lambda = 1 + \max\{0.5, 0.8, 0.3\} = 1.8$. Substituting these values into the general formulas yields the concrete Hamiltonian:
 \begin{align}
-    Q_{0,0} &= 6(1 - 2) - 5 = -11, \\
-    Q_{1,1} &= 6(1 - 2) - 3 = -9, \\
-    Q_{2,2} &= 6(1 - 2) - 4 = -10, \\
-    Q_{0,1} &= Q_{0,2} = Q_{1,2} = 2(6) = 12, \\
-    c &= 6(1)^2 = 6.
+H(x_0, x_1, x_2) &= -0.5x_0 - 0.8x_1 - 0.3x_2 + 1.8 \left( (1 - 4)(x_0 + x_1 + x_2) + 2(x_0x_1 + x_0x_2 + x_1x_2) + 4 \right) \\
+&= -0.5x_0 - 0.8x_1 - 0.3x_2 - 5.4(x_0 + x_1 + x_2) + 3.6(x_0x_1 + x_0x_2 + x_1x_2) + 7.2 \\
+&= -5.9x_0 - 6.2x_1 - 5.7x_2 + 3.6(x_0x_1 + x_0x_2 + x_1x_2) + 7.2.
 \end{align}
-The resulting Hamiltonian is:
-\begin{align}
-    H(x) = -11 x_0 - 9 x_1 - 10 x_2 + 12 x_0 x_1 + 12 x_0 x_2 + 12 x_1 x_2 + 6.
-\end{align}
-The feasible solutions are the permutations of $(1,0,0)$. Evaluating $H(x)$:
-\begin{align}
-    H(1,0,0) &= -11 + 6 = -5, \\
-    H(0,1,0) &= -9 + 6 = -3, \\
-    H(0,0,1) &= -10 + 6 = -4.
-\end{align}
-The minimum energy is $-5$ at $x=(1,0,0)$, corresponding to selecting node $0$ with the maximum score $5$.
+The corresponding Q matrix entries and offset are $Q_{0,0} = -5.9$, $Q_{1,1} = -6.2$, $Q_{2,2} = -5.7$, $Q_{i,j} = 3.6$ for $i \neq j$, and $c = 7.2$. Enumerating feasible assignments (those with exactly two variables equal to 1), the assignment $\mathbf{x}^* = (0, 1, 1)$ yields the minimum energy $H(\mathbf{x}^*) = -5.9(0) - 6.2(1) - 5.7(1) + 3.6(1) + 7.2 = -0.3$, corresponding to the optimal node selection $\{1, 2\}$ with maximum centrality score $0.8 + 0.3 = 1.1$.
+
 \end{document}

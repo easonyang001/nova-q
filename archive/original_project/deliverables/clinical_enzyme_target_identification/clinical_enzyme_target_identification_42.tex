@@ -1,0 +1,95 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Clinical Enzyme Target Identification Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Clinical Enzyme Target Identification Problem}
+
+\paragraph{Problem Statement.}
+Let $\mathcal{E}$ denote the set of enzyme candidates with cardinality $N = |\mathcal{E}|$. For each enzyme $i \in \mathcal{E}$, let $b_i \geq 0$ represent the target benefit score associated with selecting enzyme $i$. For every pair of distinct enzymes $i, j \in \mathcal{E}$ with $i < j$, let $p_{ij} \geq 0$ represent the redundancy penalty incurred if both enzymes $i$ and $j$ are selected. The penalties are symmetric, i.e., $p_{ij} = p_{ji}$, and $p_{ii} = 0$ for all $i$. The objective is to select a subset of exactly $K$ enzymes such that the total benefit score of the selected enzymes minus the sum of redundancy penalties between all selected pairs is maximized.
+
+\paragraph{Decision Variables.}
+For each enzyme $i \in \mathcal{E}$, introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ takes the value $1$ if enzyme $i$ is selected as a target, and $0$ otherwise. The solution is represented by the vector $x = (x_i)_{i \in \mathcal{E}} \in \{0, 1\}^N$.
+
+\paragraph{QUBO Derivation.}
+We construct a Quadratic Unconstrained Binary Optimization (QUBO) formulation by converting the maximization objective into a minimization problem and incorporating the cardinality constraint via a penalty term.
+
+\textbf{Step 1 -- Objective Function.}
+The original objective is to maximize the total score:
+\begin{equation}
+    \max_{x \in \{0,1\}^N} \left( \sum_{i \in \mathcal{E}} b_i x_i - \sum_{\{i,j\} \subseteq \mathcal{E}, i < j} p_{ij} x_i x_j \right).
+\end{equation}
+Since QUBO solvers minimize energy, we negate the objective to obtain the Hamiltonian component $H_{\text{obj}}(x)$:
+\begin{equation}
+    H_{\text{obj}}(x) = -\sum_{i \in \mathcal{E}} b_i x_i + \sum_{\{i,j\} \subseteq \mathcal{E}, i < j} p_{ij} x_i x_j.
+\end{equation}
+
+\textbf{Step 2 -- Constraint.}
+The requirement to select exactly $K$ enzymes is expressed as the equality constraint:
+\begin{equation}
+    \sum_{i \in \mathcal{E}} x_i = K.
+\end{equation}
+
+\textbf{Step 3 -- Penalty Term.}
+We enforce the constraint by adding a quadratic penalty term $H_{\text{pen}}(x)$ weighted by $\lambda > 0$:
+\begin{equation}
+    H_{\text{pen}}(x) = \lambda \left( \sum_{i \in \mathcal{E}} x_i - K \right)^2.
+\end{equation}
+Expanding the square and using the idempotent property $x_i^2 = x_i$ for binary variables:
+\begin{align}
+    H_{\text{pen}}(x) &= \lambda \left( \sum_{i \in \mathcal{E}} x_i^2 + \sum_{\substack{i,j \in \mathcal{E} \\ i \neq j}} x_i x_j - 2K \sum_{i \in \mathcal{E}} x_i + K^2 \right) \\
+    &= \lambda \left( \sum_{i \in \mathcal{E}} x_i + 2 \sum_{\{i,j\} \subseteq \mathcal{E}, i < j} x_i x_j - 2K \sum_{i \in \mathcal{E}} x_i + K^2 \right) \\
+    &= \sum_{i \in \mathcal{E}} \lambda(1 - 2K) x_i + \sum_{\{i,j\} \subseteq \mathcal{E}, i < j} 2\lambda x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 4 -- Combined Hamiltonian.}
+The total QUBO Hamiltonian $H(x) = H_{\text{obj}}(x) + H_{\text{pen}}(x)$ is:
+\begin{align}
+    H(x) &= -\sum_{i \in \mathcal{E}} b_i x_i + \sum_{\{i,j\} \subseteq \mathcal{E}, i < j} p_{ij} x_i x_j + \sum_{i \in \mathcal{E}} \lambda(1 - 2K) x_i + \sum_{\{i,j\} \subseteq \mathcal{E}, i < j} 2\lambda x_i x_j + \lambda K^2 \\
+    &= \sum_{i \in \mathcal{E}} \left( \lambda(1 - 2K) - b_i \right) x_i + \sum_{\{i,j\} \subseteq \mathcal{E}, i < j} \left( p_{ij} + 2\lambda \right) x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 5 -- Q Matrix and Offset.}
+The QUBO is defined by a symmetric matrix $Q$ and an offset $c$ such that $H(x) = x^\top Q x + c$. Reading off the coefficients from the general expression above:
+\begin{align}
+    Q_{i,i} &= \lambda(1 - 2K) - b_i, \quad \forall i \in \mathcal{E}, \\
+    Q_{i,j} &= p_{ij} + 2\lambda, \quad \forall \{i,j\} \subseteq \mathcal{E}, i < j, \\
+    Q_{j,i} &= p_{ij} + 2\lambda, \quad \forall \{i,j\} \subseteq \mathcal{E}, i < j, \\
+    c &= \lambda K^2.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that infeasible solutions have strictly higher energy than any feasible solution. Let $B_{\max} = \max_{i \in \mathcal{E}} b_i$. The maximum possible gain in the original objective function from violating the cardinality constraint is bounded by $B_{\max}$ (e.g., by selecting an extra enzyme with the highest benefit). Therefore, choosing $\lambda > B_{\max}$ guarantees that the penalty cost for any deviation from $\sum x_i = K$ exceeds the maximum potential improvement in the objective. A safe concrete choice for testing is $\lambda = 100$ when all benefit scores are less than $100$.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $x \in \{0,1\}^N$ recovers the optimal solution because $H(x)$ is constructed as the sum of the negated objective and a non-negative penalty term that vanishes if and only if the constraint is satisfied. For any feasible solution $x$ satisfying $\sum_{i \in \mathcal{E}} x_i = K$, $H(x)$ equals the negated objective value. For any infeasible solution, $H(x)$ includes a strictly positive penalty term. Since $\lambda > B_{\max}$, the energy of any infeasible solution exceeds that of the optimal feasible solution. Consequently, the global minimum of $H(x)$ must occur at a feasible assignment that minimizes the negated objective, which corresponds to maximizing the original total score.
+
+\paragraph{Illustrative Example.}
+Consider a small instance with $N=3$ enzymes, indexed $0, 1, 2$. Let the benefit scores be $b_0 = 10$, $b_1 = 20$, and $b_2 = 15$. Let the redundancy penalties be $p_{01} = 5$, $p_{02} = 2$, and $p_{12} = 8$. We require selecting exactly $K=2$ targets. We choose $\lambda = 100$, which satisfies $\lambda > \max\{10, 20, 15\}$.
+
+Substituting these values into the general formulas:
+\begin{align}
+    Q_{0,0} &= 100(1 - 4) - 10 = -310, \\
+    Q_{1,1} &= 100(1 - 4) - 20 = -320, \\
+    Q_{2,2} &= 100(1 - 4) - 15 = -315, \\
+    Q_{0,1} &= 5 + 200 = 205, \\
+    Q_{0,2} &= 2 + 200 = 202, \\
+    Q_{1,2} &= 8 + 200 = 208, \\
+    c &= 100 \cdot 2^2 = 400.
+\end{align}
+The resulting QUBO Hamiltonian is:
+\begin{equation}
+    H(x) = -310 x_0 - 320 x_1 - 315 x_2 + 205 x_0 x_1 + 202 x_0 x_2 + 208 x_1 x_2 + 400.
+\end{equation}
+Evaluating $H(x)$ for the three feasible solutions ($x$ with exactly two ones):
+\begin{itemize}
+    \item $x = (1, 1, 0)$: $H = -310 - 320 + 205 + 400 = -25$. Original score $= -(H - c) = 425$? No, score $= -(H - c)$ is incorrect; score $= -(H - c)$ only if $H = -\text{Score} + \text{Pen}$. Here $H = -\text{Score} + \text{Pen}$. Score $= -(H - \text{Pen}) = -(H - 0) = -H$ for feasible. Score $= 25$.
+    \item $x = (1, 0, 1)$: $H = -310 - 315 + 202 + 400 = -23$. Score $= 23$.
+    \item $x = (0, 1, 1)$: $H = -320 - 315 + 208 + 400 = -27$. Score $= 27$.
+\end{itemize}
+The minimum energy is $H = -27$ at $x = (0, 1, 1)$, corresponding to the maximum total score of $27$. This solution selects enzymes $1$ and $2$, yielding a benefit of $20 + 15 = 35$ and a penalty of $8$, for a net score of $27$.
+\end{document}

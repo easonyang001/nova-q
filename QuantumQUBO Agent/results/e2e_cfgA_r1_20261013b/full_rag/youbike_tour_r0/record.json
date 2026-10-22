@@ -1,0 +1,36 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 128.0
+  },
+  "model": {
+   "ok": false,
+   "seconds": 895.9,
+   "error": "ValueError: model validation failed: variables 0 and 6 have the same variable_keys {'sites': 'S0'}. A variable that decides about two things needs both ids (a stop AND its position: {'stations': 'S1', 'positions': 3}); declare the second set (e.g. positions) under DATA_SCHEMA 'sets'. Helper variables (covered / served indicators, slack) get {}"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment"
+ ],
+ "cost": {
+  "llm_tokens": 144819,
+  "solver_calls": null
+ },
+ "seconds": 1023.8
+}

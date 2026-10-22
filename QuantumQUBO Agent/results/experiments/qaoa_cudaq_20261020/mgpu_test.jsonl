@@ -1,0 +1,2 @@
+{"mode": "mgpu", "n_qubits": 26, "gpus": 2, "layers": 2, "s_per_evaluation": 0.7733970880508423, "ok": true}
+{"mode": "mgpu", "n_qubits": 28, "gpus": 2, "layers": 2, "s_per_evaluation": 3.24566650390625, "ok": true}

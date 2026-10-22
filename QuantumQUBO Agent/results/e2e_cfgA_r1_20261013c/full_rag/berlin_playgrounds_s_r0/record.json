@@ -1,0 +1,220 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 157.9
+  },
+  "model": {
+   "ok": true,
+   "seconds": 828.7
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 194.9
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1015.7,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: No blocks found for Friedrichshain-Kreuzberg in population table.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 21, in load_data\nValueError: DATA GAP: No blocks found for Friedrichshain-Kreuzberg in population table.\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "lor_centers": {
+    "meaning": "Geometric center of each 2021 LOR Planungsraum in Friedrichshain-Kreuzberg",
+    "source": "public"
+   },
+   "blocks": {
+    "meaning": "Urban block (Quartier) in Friedrichshain-Kreuzberg",
+    "source": "public"
+   },
+   "existing_playgrounds": {
+    "meaning": "Existing playground locations",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lor_center_id": {
+    "meaning": "ID for each LOR center",
+    "index": [
+     "lor_centers"
+    ],
+    "type": "text",
+    "source": "public",
+    "unit": "id"
+   },
+   "lor_lat": {
+    "meaning": "Latitude of LOR center",
+    "index": [
+     "lor_centers"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lor_lon": {
+    "meaning": "Longitude of LOR center",
+    "index": [
+     "lor_centers"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_id": {
+    "meaning": "ID for each urban block",
+    "index": [
+     "blocks"
+    ],
+    "type": "text",
+    "source": "public",
+    "unit": "id"
+   },
+   "block_lat": {
+    "meaning": "Latitude of block center",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "block_lon": {
+    "meaning": "Longitude of block center",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_pop": {
+    "meaning": "Population of the block in 2019",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "existing_playground_id": {
+    "meaning": "ID for each existing playground",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "text",
+    "source": "public",
+    "unit": "id"
+   },
+   "existing_playground_lat": {
+    "meaning": "Latitude of existing playground",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "existing_playground_lon": {
+    "meaning": "Longitude of existing playground",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "coverage_radius": {
+    "meaning": "Coverage radius in meters",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 250,
+    "unit": "m"
+   },
+   "num_new_facilities": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 3,
+    "unit": "count"
+   },
+   "effective_pop": {
+    "meaning": "Population of blocks not currently covered by existing playgrounds",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "block_pop",
+      "block_lat",
+      "block_lon",
+      "existing_playground_lat",
+      "existing_playground_lon",
+      "coverage_radius"
+     ],
+     "how": "Filter blocks within coverage_radius of any existing playground; keep population of uncovered blocks."
+    }
+   },
+   "coverage_matrix": {
+    "meaning": "Binary matrix indicating if a block is within coverage_radius of a LOR center",
+    "index": [
+     "blocks",
+     "lor_centers"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "binary",
+    "sparse": true,
+    "derived": {
+     "tool": "code",
+     "from": [
+      "block_lat",
+      "block_lon",
+      "lor_lat",
+      "lor_lon",
+      "coverage_radius"
+     ],
+     "how": "Compute Euclidean distance; set to 1 if distance <= coverage_radius."
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Einwohnerdichte_2019_Umweltatlas_Einwohnerdichte_2019_WFS_la.geojson",
+  "Einwohnerdichte_2020_Umweltatlas_-_WFS_Einwohnerdichte_2020_.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson",
+  "Spielplätze_Berlin.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 259047,
+  "solver_calls": null
+ },
+ "seconds": 2198.2
+}

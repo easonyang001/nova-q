@@ -1,0 +1,192 @@
+\begin{thebibliography}{25}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[AhmadiTeshnizi et~al.(2024)AhmadiTeshnizi, Gao, and
+  Udell]{ahmaditeshnizi2024optimus}
+Ali AhmadiTeshnizi, Wenzhi Gao, and Madeleine Udell.
+\newblock {OptiMUS}: Scalable optimization modeling with ({MI}){LP} solvers and
+  large language models.
+\newblock In \emph{Proceedings of the 41st International Conference on Machine
+  Learning (ICML)}, 2024.
+\newblock TODO verify.
+
+\bibitem[Akiba et~al.(2019)Akiba, Sano, Yanase, Ohta, and
+  Koyama]{akiba2019optuna}
+Takuya Akiba, Shotaro Sano, Toshihiko Yanase, Takeru Ohta, and Masanori Koyama.
+\newblock Optuna: A next-generation hyperparameter optimization framework.
+\newblock In \emph{Proceedings of the 25th ACM SIGKDD International Conference
+  on Knowledge Discovery and Data Mining}, 2019.
+
+\bibitem[Aramon et~al.(2019)Aramon, Rosenberg, Valiante, Miyazawa, Tamura, and
+  Katzgraber]{aramon2019digital}
+Maliheh Aramon, Gili Rosenberg, Elisabetta Valiante, Toshiyuki Miyazawa,
+  Hirotaka Tamura, and Helmut~G. Katzgraber.
+\newblock Physics-inspired optimization for quadratic unconstrained problems
+  using a digital annealer.
+\newblock \emph{Frontiers in Physics}, 7:\penalty0 48, 2019.
+\newblock TODO verify.
+
+\bibitem[Ayodele et~al.(2022)]{ayodele2022penalty}
+Mayowa Ayodele et~al.
+\newblock Exact and sequential penalty weights in quadratic unconstrained
+  binary optimisation with a digital annealer.
+\newblock In \emph{Proceedings of the Genetic and Evolutionary Computation
+  Conference Companion (GECCO)}, 2022.
+\newblock \doi{10.1145/3520304.3528925}.
+\newblock TODO verify author list.
+
+\bibitem[Glover et~al.(2019)Glover, Kochenberger, and Du]{glover2019tutorial}
+Fred Glover, Gary Kochenberger, and Yu~Du.
+\newblock Quantum bridge analytics {I}: a tutorial on formulating and using
+  {QUBO} models.
+\newblock \emph{4OR}, 17:\penalty0 335--371, 2019.
+\newblock TODO verify.
+
+\bibitem[Koch et~al.(2025)]{koch2025qoblib}
+Thorsten Koch et~al.
+\newblock Quantum optimization benchmark library: the intractable decathlon.
+\newblock \emph{Nature Computational Science}, 2025.
+\newblock arXiv:2504.03832. TODO verify title.
+
+\bibitem[Kwon et~al.(2023)]{kwon2023vllm}
+Woosuk Kwon et~al.
+\newblock Efficient memory management for large language model serving with
+  {PagedAttention}.
+\newblock In \emph{Proceedings of the 29th Symposium on Operating Systems
+  Principles (SOSP)}, 2023.
+
+\bibitem[Lucas(2014)]{lucas2014ising}
+Andrew Lucas.
+\newblock Ising formulations of many {NP} problems.
+\newblock \emph{Frontiers in Physics}, 2:\penalty0 5, 2014.
+\newblock \doi{10.3389/fphy.2014.00005}.
+
+\bibitem[Luxen and Vetter(2011)]{luxen2011osrm}
+Dennis Luxen and Christian Vetter.
+\newblock Real-time routing with {OpenStreetMap} data.
+\newblock In \emph{Proceedings of the 19th ACM SIGSPATIAL International
+  Conference on Advances in Geographic Information Systems}, 2011.
+
+\bibitem[Mizuki et~al.(2026)Mizuki, Katagiri, Mukunoki, and
+  Hoshino]{formulationautotuning2026}
+Naoya Mizuki, Takahiro Katagiri, Daichi Mukunoki, and Tetsuya Hoshino.
+\newblock Formulation-level auto-tuning for {QUBO}-based machine learning: A
+  case study across multiple quantum-inspired annealers, 2026.
+\newblock URL \url{https://arxiv.org/abs/2607.18774}.
+\newblock arXiv:2607.18774.
+
+\bibitem[Mondal and Parvez(2026)]{mondal2026quantumqubo}
+Niloy~Kumar Mondal and Md~Rizwan Parvez.
+\newblock Quantum{QUBO} agent: Automating quadratic unconstrained binary
+  optimization ({QUBO}) formulation generation from natural language.
+\newblock In \emph{ICML 2026 Workshop: AI as a Tool for Mathematics, Computer
+  Science, and Machine Learning}, 2026.
+\newblock URL \url{https://openreview.net/forum?id=9YTedapat4}.
+\newblock arXiv:2609.10629.
+
+\bibitem[Monta{\~n}ez-Barrera et~al.(2022)]{montanez2024unbalanced}
+J.~A. Monta{\~n}ez-Barrera et~al.
+\newblock Unbalanced penalization: a new approach to encode inequality
+  constraints of combinatorial problems for quantum optimization algorithms,
+  2022.
+\newblock arXiv:2211.13914. TODO verify journal version and author list.
+
+\bibitem[{OpenStreetMap contributors}(2026)]{osm}
+{OpenStreetMap contributors}.
+\newblock {OpenStreetMap}, 2026.
+\newblock URL \url{https://www.openstreetmap.org}.
+\newblock Data under the Open Database License (ODbL).
+
+\bibitem[Pelofske(2025)]{pelofske2025comparing}
+Elijah Pelofske.
+\newblock Comparing three generations of {D-Wave} quantum annealers for minor
+  embedded combinatorial optimization problems.
+\newblock \emph{Quantum Science and Technology}, 2025.
+\newblock arXiv:2301.03009.
+
+\bibitem[{PyQUBO project}(n.d.)]{pyquboDocs}
+{PyQUBO project}.
+\newblock {PyQUBO} documentation: Model.
+\newblock Online software documentation, n.d.
+\newblock URL
+  \url{https://pyqubo.readthedocs.io/en/latest/reference/model.html}.
+\newblock Accessed 2026-10-11.
+
+\bibitem[{QBOSON}(n.d.)]{kaiwuDocs}
+{QBOSON}.
+\newblock {Kaiwu SDK} documentation v1.1.2: {kaiwu.solver} package.
+\newblock Online software documentation, n.d.
+\newblock URL
+  \url{https://kaiwu-sdk-docs.qboson.com/en/source/kaiwu.solver.html}.
+\newblock Accessed 2026-10-11; version-specific penalty-method solver
+  interface.
+
+\bibitem[{QHyper project}(n.d.)]{qhyperDocs}
+{QHyper project}.
+\newblock {QHyper} documentation: Solver configuration tutorial.
+\newblock Online software documentation, n.d.
+\newblock URL
+  \url{https://qhyper.readthedocs.io/en/main/user_guide/solver_configuration.html}.
+\newblock Accessed 2026-10-11.
+
+\bibitem[{Qwen Team}(2025)]{qwen3report2025}
+{Qwen Team}.
+\newblock Qwen3 technical report, 2025.
+\newblock arXiv:2505.09388. TODO verify; cite the Qwen3.6 model card if one
+  exists.
+
+\bibitem[Ramamonjison et~al.(2023)]{ramamonjison2023nl4opt}
+Rindranirina Ramamonjison et~al.
+\newblock {NL4Opt} competition: Formulating optimization problems based on
+  their natural language descriptions.
+\newblock In \emph{Proceedings of the NeurIPS 2022 Competitions Track}, volume
+  220 of \emph{PMLR}, 2023.
+\newblock TODO verify.
+
+\bibitem[Rusn\'{a}kov\'{a} et~al.(2025)Rusn\'{a}kov\'{a}, Chovanec, and
+  Gazda]{penaltyml2025bisection}
+Ren\'{a}ta Rusn\'{a}kov\'{a}, Martin Chovanec, and Juraj Gazda.
+\newblock Minimum bisection problem: Machine learning-based penalty parameter
+  tuning for optimization on quantum annealers, 2025.
+\newblock URL \url{https://arxiv.org/abs/2509.19005}.
+\newblock arXiv:2509.19005.
+
+\bibitem[Verma and Lewis(2020)]{verma2020penalty}
+Amit Verma and Mark Lewis.
+\newblock Penalty and partitioning techniques to improve performance of {QUBO}
+  solvers.
+\newblock \emph{Discrete Optimization}, 2020.
+\newblock TODO verify volume and pages.
+
+\bibitem[Wang and Lu(2026)]{wang2026cim}
+Wang and Lu.
+\newblock Practical quantum {CIM} empowerment via all-domestic-core agentic
+  large model, 2026.
+\newblock arXiv:2605.23934. TODO verify full author names.
+
+\bibitem[Xiao et~al.(2024)]{xiao2024chainofexperts}
+Ziyang Xiao et~al.
+\newblock Chain-of-experts: When {LLM}s meet complex operations research
+  problems.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2024.
+\newblock TODO verify.
+
+\bibitem[Yao et~al.(2023)]{yao2023react}
+Shunyu Yao et~al.
+\newblock {ReAct}: Synergizing reasoning and acting in language models.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2023.
+
+\bibitem[Zhang et~al.(2025)Zhang, Emu, and Choudhury]{llmqubo2025}
+Huixiang Zhang, Mahzabeen Emu, and Salimur Choudhury.
+\newblock {LLM-QUBO}: An end-to-end framework for automated {QUBO}
+  transformation from natural language problem descriptions, 2025.
+\newblock URL \url{https://arxiv.org/abs/2509.00099}.
+\newblock arXiv:2509.00099.
+
+\end{thebibliography}

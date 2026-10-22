@@ -1,0 +1,157 @@
+{
+ "version": "e2e-2026-10-11",
+ "note": "Autonomous mode: the system gets only the user's sentence and, for every Clarifier question, the same fixed user answer (class-B settings only: no field names, no formulas). The judge and truth files are never shown to the system. Every arm must find and download its data itself; no files are supplied.",
+ "budget": {
+  "clarify_rounds": 3,
+  "model_attempts": 4,
+  "data_search_rounds": 2,
+  "max_downloads": 4,
+  "backend": "cga",
+  "policy": "default",
+  "max_solver_calls": 3,
+  "max_workflow_repairs": 2,
+  "max_model_repairs_before_solve": 1
+ },
+ "cases": [
+  {
+   "id": "ev_chargers_s",
+   "size": "small",
+   "country": "TW",
+   "sentence": "我想在台北市大安區新設 3 座電動車充電站。候選地點是大安區每一個里的中心點，希望充電站 1 公里內涵蓋的人口越多越好，每個里的人口只算一次。請用政府公開的里人口和里界資料。",
+   "answers": "站數 3 座；只考慮大安區的里；涵蓋距離是直線距離 1 公里；候選點用大安區全部的里，不要縮減或抽樣；人口用最新一個月、不分性別年齡的總人口；一個里只要中心點在任一新站 1 公里內就算涵蓋。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "ev_chargers",
+   "full_scale": true,
+   "sentence": "我想在台北市新設 5 座電動車充電站。候選地點是台北市每一個里的中心點，希望充電站 1 公里內涵蓋的人口越多越好，每個里的人口只算一次。請用政府公開的里人口和里界資料。",
+   "answers": "站數 5 座；涵蓋距離是直線距離 1 公里；候選點用全部的里，不要縮減或抽樣；人口用最新一個月、不分性別年齡的總人口；一個里只要中心點在任一新站 1 公里內就算涵蓋。其他問題請用你的預設，我接受你的假設。",
+   "size": "large",
+   "country": "TW"
+  },
+  {
+   "id": "youbike_tour",
+   "full_scale": false,
+   "sentence": "我要排一條 YouBike 巡檢路線：捷運大安站 500 公尺內的所有 YouBike 站點，每站走訪一次後回到起點，總距離越短越好。站點位置請用台北市 YouBike 公開即時資料。",
+   "answers": "範圍是以捷運大安站（緯度 25.0330、經度 121.5436）為中心、直線距離 500 公尺內的全部站點，不論目前是否營運；距離用經緯度算的直線距離；起點可以是任一站；只需要一條路線。其他問題請用你的預設，我接受你的假設。",
+   "live": {
+    "official_url_contains": "tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "truth_from_file": "youbike_from_file",
+    "kwargs": {
+     "radius": 500
+    }
+   },
+   "size": "small",
+   "country": "TW"
+  },
+  {
+   "id": "youbike_tour_l",
+   "size": "large",
+   "country": "TW",
+   "sentence": "我要排一條 YouBike 巡檢路線：捷運大安站 800 公尺內的所有 YouBike 站點，每站走訪一次後回到起點，總距離越短越好。站點位置請用台北市 YouBike 公開即時資料。",
+   "answers": "範圍是以捷運大安站（緯度 25.0330、經度 121.5436）為中心、直線距離 800 公尺內的全部站點，不論目前是否營運；距離用經緯度算的直線距離；起點可以是任一站；只需要一條路線。其他問題請用你的預設，我接受你的假設。",
+   "live": {
+    "official_url_contains": "tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "truth_from_file": "youbike_from_file",
+    "kwargs": {
+     "radius": 800
+    }
+   }
+  },
+  {
+   "id": "aed_groups",
+   "full_scale": false,
+   "sentence": "我要把台北市大安區的 AED 設置場所分給 3 個巡檢小組，每組場所數一樣，同組場所彼此距離越近越好。只看場所分類不是「學校、大型集會場所」也不是「其他」的場所。請用台北市 AED 公開資料。",
+   "answers": "只用大安區；排除場所分類為「學校、大型集會場所」和「其他」；同一個場所有多台 AED 時只算一個場所；3 組、每組場所數相同；距離用經緯度直線距離，目標是各組內兩兩距離總和最小。其他問題請用你的預設，我接受你的假設。",
+   "size": "small",
+   "country": "TW"
+  },
+  {
+   "id": "aed_groups_l",
+   "size": "large",
+   "country": "TW",
+   "sentence": "我要把台北市松山區、信義區、大安區、中山區的 AED 設置場所分給 4 個巡檢小組，每組場所數一樣，同組場所彼此距離越近越好。只看場所分類不是「學校、大型集會場所」也不是「其他」的場所。請用台北市 AED 公開資料。",
+   "answers": "只用松山、信義、大安、中山四區；排除場所分類為「學校、大型集會場所」和「其他」；同一個場所有多台 AED 時只算一個場所；4 組、每組場所數相同；距離用經緯度直線距離，目標是各組內兩兩距離總和最小。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "london_ambulance_s",
+   "size": "small",
+   "country": "UK",
+   "sentence": "我要在倫敦 Camden 區設 3 個救護站。候選地點和需求點都是 Camden 每個 MSOA（中層統計區）的人口加權中心，每個區的居民由最近的救護站服務，希望居民到最近救護站的直線距離（以人口加權）總和越小越好。請用英國官方的 2021 年人口普查人口和 MSOA 人口加權中心點資料。",
+   "answers": "救護站 3 個；範圍是 Camden 區的全部 MSOA，不要縮減；人口用 2021 年人口普查的常住人口；距離用直線距離；每個 MSOA 由最近的已設站點服務。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "london_ambulance_l",
+   "size": "large",
+   "country": "UK",
+   "sentence": "我要在倫敦 Camden 和 Islington 兩區設 8 個救護站。候選地點和需求點都是這兩區每個 LSOA（小統計區）的人口加權中心，每個區的居民由最近的救護站服務，希望居民到最近救護站的直線距離（以人口加權）總和越小越好。請用英國官方的 2021 年人口普查人口和 LSOA 人口加權中心點資料。",
+   "answers": "救護站 8 個；範圍是 Camden 和 Islington 兩區的全部 LSOA，需求點不要縮減，候選點如果太多可以用代表點；人口用 2021 年人口普查的常住人口；距離用直線距離；每個 LSOA 由最近的已設站點服務。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "berlin_playgrounds_s",
+   "size": "small",
+   "country": "DE",
+   "sentence": "我要在柏林 Friedrichshain-Kreuzberg 區新設 3 座遊戲場。候選地點是區內每個 LOR 規劃區（Planungsraum）的中心。希望新遊戲場 250 公尺內、而且目前 250 公尺內還沒有任何遊戲場的居民越多越好，每個街廓的居民只算一次。請用柏林官方的 2019 年街廓人口（Umweltatlas Einwohnerdichte 2019）、現有遊戲場（Spielplätze）和 2021 年版 LOR 規劃區資料。",
+   "answers": "新遊戲場 3 座；範圍是 Friedrichshain-Kreuzberg 區。距離用直線距離 250 公尺；街廓居民位置用街廓的中心點；規劃區候選點用規劃區多邊形的中心點；只算目前 250 公尺內沒有遊戲場的居民；範圍內的規劃區和街廓都不要縮減。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "berlin_playgrounds_l",
+   "size": "large",
+   "country": "DE",
+   "sentence": "我要在柏林 Mitte、Pankow 和 Friedrichshain-Kreuzberg 三區新設 8 座遊戲場。候選地點是區內每個 LOR 規劃區（Planungsraum）的中心。希望新遊戲場 250 公尺內、而且目前 250 公尺內還沒有任何遊戲場的居民越多越好，每個街廓的居民只算一次。請用柏林官方的 2019 年街廓人口（Umweltatlas Einwohnerdichte 2019）、現有遊戲場（Spielplätze）和 2021 年版 LOR 規劃區資料。",
+   "answers": "新遊戲場 8 座；範圍是 Mitte、Pankow、Friedrichshain-Kreuzberg 三區。距離用直線距離 250 公尺；街廓居民位置用街廓的中心點；規劃區候選點用規劃區多邊形的中心點；只算目前 250 公尺內沒有遊戲場的居民；範圍內的規劃區和街廓都不要縮減。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "melbourne_bike_tour",
+   "size": "small",
+   "country": "AU",
+   "sentence": "我要排一條墨爾本共享單車站巡檢路線：Flinders Street 火車站 1 公里內的所有共享單車停車站，每站走訪一次後回到起點，總距離越短越好。站點位置請用澳洲政府開放資料的墨爾本市 Bike Share Dock Locations 資料。",
+   "answers": "範圍是以 Flinders Street 火車站（緯度 -37.8183、經度 144.9671）為中心、直線距離 1 公里內的全部停車站；距離用經緯度算的直線距離；起點可以是任一站；只需要一條路線。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "basel_aed_groups",
+   "size": "small",
+   "country": "CH",
+   "sentence": "我要把瑞士巴塞爾郵遞區號 4051 的 AED 設置場所分給 5 個巡檢小組，每組場所數一樣，同組場所彼此距離越近越好。同一場所有多台 AED 只算一個場所。請用巴塞爾城市州開放資料（opendata.swiss 的 Defibrillatoren 資料）。",
+   "answers": "範圍是巴塞爾城市州 AED 資料中郵遞區號 (PLZ) 為 4051 的全部設置點；同名場所合併成一個場所；距離用經緯度算的直線距離；只需要一種分組。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "nyc_pb_budget",
+   "size": "small",
+   "country": "US",
+   "sentence": "我是紐約市議會第 3 選區的辦公室。2017 年參與式預算有 100 萬美元，要從當年選票上的提案中選出要撥款的一組，總經費不能超過 100 萬美元，被選中提案的總得票數越多越好。請用紐約市開放資料（NYC Open Data）的 Participatory Budgeting Projects 資料。",
+   "answers": "範圍是該資料中 Vote Year 為 2017、Council District 為 3 的全部提案（不論當年是否勝出）；每個提案只能整案撥款或不撥款；經費和得票數都用資料裡的數字；只需要一組方案。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "sg_hawker_groups",
+   "size": "small",
+   "country": "SG",
+   "test_set": true,
+   "sentence": "我要把新加坡 Toa Payoh 捷運站 2.5 公里內的所有小販中心分給 3 個衛生稽查小組，每組小販中心數一樣，同組小販中心彼此距離越近越好。請用新加坡政府開放資料（data.gov.sg）的 Hawker Centres 資料。",
+   "answers": "範圍是以 Toa Payoh 捷運站（緯度 1.3327、經度 103.8474）為中心、直線距離 2.5 公里內的全部小販中心；距離用經緯度算的直線距離；只需要一種分組。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "paris_velib_tour",
+   "size": "small",
+   "country": "FR",
+   "test_set": true,
+   "sentence": "我要排一條巴黎 Vélib' 共享單車站巡檢路線：Gare de Lyon 車站 600 公尺內的所有 Vélib' 站，每站走訪一次後回到起點，總距離越短越好。站點位置請用巴黎市開放資料（opendata.paris.fr）的 Vélib' 站點位置資料。",
+   "answers": "範圍是以 Gare de Lyon 車站（緯度 48.8443、經度 2.3744）為中心、直線距離 600 公尺內的全部站點；距離用經緯度算的直線距離；起點可以是任一站；只需要一條路線。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "cambridge_pb_budget",
+   "size": "small",
+   "country": "US",
+   "test_set": true,
+   "sentence": "我是麻州劍橋市的參與式預算辦公室。第 7 屆（FY22）參與式預算有 52.5 萬美元，要從該屆選票上的提案中選出要撥款的一組，總經費不能超過 52.5 萬美元，被選中提案的總得票數越多越好。請用劍橋市開放資料（data.cambridgema.gov）的 Participatory Budgeting Final Ballot Projects 資料。",
+   "answers": "範圍是該資料中 PB Cycle 為 7 的全部提案（不論當年是否勝出）；每個提案只能整案撥款或不撥款；經費和得票數都用資料裡的數字；只需要一組方案。其他問題請用你的預設，我接受你的假設。"
+  }
+ ],
+ "arms": {
+  "direct": "R0: direct LLM; plain web search and download by itself; one module; Python-error feedback only",
+  "pipeline": "R1: Clarifier, sets/params schema, data search + toolkit-enforced adapter, data contracts",
+  "no_repair": "R2: R1 + independent requirement Checker (detect, warn, no repair)",
+  "full": "R3: R2 + cross-stage repair (data->model, Checker disagreement -> model)",
+  "full_rag": "R3 + modelling-pattern retrieval for the Modeling Agent",
+  "full_noweb": "R3 with the Clarifier's web lookup switched off"
+ }
+}

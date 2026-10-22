@@ -1,0 +1,142 @@
+{
+ "case": "berlin_playgrounds_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 178.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 230.6
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 187.0,
+   "error": "ValueError: checker failed: RuntimeError: ValueError: operands could not be broadcast together with shapes (1381,1381,2) (20,20,2) \nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/reqcheck.py\", line 155, in _samples\n    ev = ns[\"evaluate\"](data, sol)\n  File \"<checker>\", line 43, in evaluate\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/prep/geo.py\", line 99, in haversine_matrix\n    a = np.sin(dla / 2) ** 2 + np.cos(la[:, None]) * np.cos(la[None, :]) * np.sin(dlo / 2) ** 2\n                               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~\nValueError: operands could not be broadcast together with shapes (1381,1381,2) (20,20,2) \n"
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1499.9,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: Block population data for 2019 is missing from the provided tables.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 48, in load_data\nValueError: DATA GAP: Block population data for 2019 is missing from the provided tables.\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 2,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Direct binary formulation with helper coverage variables. N~40 LORs, M~1500 blocks. Total vars ~1540. Fits CGA backend (<3600). Eligible blocks filtered in data to enforce block_eligibility implicitly, reducing variable count and simplifying constraints.",
+ "schema": {
+  "sets": {
+   "lor_ids": {
+    "meaning": "LOR Planungsraum identifier",
+    "source": "public"
+   },
+   "block_ids": {
+    "meaning": "Block identifier",
+    "source": "public"
+   },
+   "existing_pg_ids": {
+    "meaning": "Existing playground identifier",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lor_lat": {
+    "meaning": "LOR centroid latitude",
+    "index": [
+     "lor_ids"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lor_lon": {
+    "meaning": "LOR centroid longitude",
+    "index": [
+     "lor_ids"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_lat": {
+    "meaning": "Block centroid latitude",
+    "index": [
+     "block_ids"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "block_lon": {
+    "meaning": "Block centroid longitude",
+    "index": [
+     "block_ids"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_pop": {
+    "meaning": "Block population",
+    "index": [
+     "block_ids"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "existing_pg_lat": {
+    "meaning": "Existing playground latitude",
+    "index": [
+     "existing_pg_ids"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "existing_pg_lon": {
+    "meaning": "Existing playground longitude",
+    "index": [
+     "existing_pg_ids"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson",
+  "Lebensweltlich_orientierte_Räume_LOR_01_01_2021_Planungsräum.geojson",
+  "Statistische_Einheiten_im_INSPIRE-Datenmodell_Lebensweltlich.geojson",
+  "Statistische_Einheiten_im_INSPIRE-Datenmodell_RBS-Blöcke_-_W.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 197615,
+  "solver_calls": null
+ },
+ "seconds": 2099.7
+}

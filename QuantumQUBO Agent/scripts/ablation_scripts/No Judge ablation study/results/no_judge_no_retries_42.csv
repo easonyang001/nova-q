@@ -99,3 +99,4 @@ unit_commitment,42,failed,0,2,160.0,25565,0.0216,0,0,0,0,coding_error
 vehicle_routing,42,failed,0,2,63.4,18173,0.0138,0,0,0,0,formulation_error
 vertex_cover,42,success,1,1,126.3,13940,0.0097,0,0,0,0,
 vlsi_bisection_placement,42,failed,0,2,97.7,16120,0.0116,0,0,0,0,formulation_error
+max_cut,42,success,8,8,113.3,23243,0.0000,0,0,0,0,

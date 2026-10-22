@@ -42,66 +42,65 @@
     <h2 class='subsection'>Binary Image Denoising</h2>
 
 <h3>Problem Statement</h3>
-Given a noisy binary image represented on a grid of $N$ pixels, the objective is to recover a clean binary image that minimizes a global energy function. This energy comprises two components: a data fidelity term that penalizes deviations between the reconstructed pixels and the observed noisy pixels, and a smoothness term that penalizes label discontinuities between spatially adjacent pixels. The task is to determine the binary configuration that achieves the minimum total energy.
+Given a noisy binary image of dimensions $H \times W$, the objective is to recover a clean binary image by selecting a configuration of pixel labels that minimizes a global energy function. This energy function balances fidelity to the observed noisy pixels against spatial smoothness, penalizing abrupt label changes between adjacent pixels. The task is to find the binary image configuration that achieves the minimum energy.
 
 <h3>Decision Variables</h3>
-Let $\mathcal{K} = \{0, 1, \dots, N-1\}$ denote the set of indices corresponding to the pixels in the image grid. For each $k \in \mathcal{K}$, we introduce a binary decision variable $x_k \in \{0,1\}$, where $x_k = 1$ indicates a foreground (active) pixel and $x_k = 0$ indicates a background (inactive) pixel in the reconstructed clean image. The vector of all variables is denoted $\mathbf{x} = (x_0, x_1, \dots, x_{N-1})^\top$.
+Let $x_{i,j} \in \{0,1\}$ denote the label of the clean pixel at grid position $(i,j)$, where $i \in \{0, \dots, H-1\}$ and $j \in \{0, \dots, W-1\}$. The variable $x_{i,j}$ takes the value $1$ if the pixel is labeled as foreground (or class $1$), and $0$ otherwise. The total number of decision variables is $N = H \times W$.
 
 <h3>QUBO Derivation</h3>
-We derive the Quadratic Unconstrained Binary Optimization (QUBO) formulation through the following algebraic steps.
-
-<strong>Step 1.</strong> The original objective is expressed as a minimization over the binary hypercube:
+<strong>Step 1.</strong> The original energy minimization problem is formulated as:
 \begin{align}
-\min_{\mathbf{x} \in \{0,1\}^N} \quad & \sum_{k \in \mathcal{K}} d_k(x_k) + \sum_{(k,l) \in \mathcal{E}} w_{kl} |x_k - x_l|,
+\min_{x \in \{0,1\}^{HW}} \mathcal{E}(x) = \sum_{i=0}^{H-1} \sum_{j=0}^{W-1} d_{i,j} x_{i,j} + \sum_{(i,j) \sim (k,l)} w_{i,j,k,l} (x_{i,j} + x_{k,l} - 2 x_{i,j} x_{k,l}),
 \end{align}
-where $\mathcal{E}$ is the set of adjacent pixel pairs, $w_{kl} \geq 0$ are smoothness weights, and $d_k(x_k)$ is the instance-dependent data cost for pixel $k$.
+where $d_{i,j} \geq 0$ is the data cost coefficient for pixel $(i,j)$ derived from the noisy observation, and $w_{i,j,k,l} \geq 0$ is the smoothness penalty weight for neighboring pixels $(i,j)$ and $(k,l)$. The notation $(i,j) \sim (k,l)$ denotes adjacency on the grid (e.g., $4$-connected or $8$-connected).
 
-<strong>Step 2.</strong> The problem formulation contains no explicit equality or inequality constraints. Consequently, the constraint set is empty, and no constraint equations are introduced.
-
-<strong>Step 3.</strong> Since there are no constraints, penalty terms are omitted. We proceed to convert the objective terms into a quadratic polynomial using the idempotent property of binary variables, $x_k^2 = x_k$. For binary variables, the absolute difference simplifies to:
+<strong>Step 2.</strong> The variables are constrained to the binary domain. The algebraic form of this constraint for each pixel is:
 \begin{align}
-|x_k - x_l| = x_k + x_l - 2x_k x_l.
-\end{align}
-The data cost $d_k(x_k)$ can be represented by its linear coefficient $\delta_k$ such that $d_k(x_k) = \delta_k x_k$ (constant offsets are absorbed into the global offset). Substituting these expansions into the objective yields:
-\begin{align}
-H(\mathbf{x}) = \sum_{k \in \mathcal{K}} \delta_k x_k + \sum_{(k,l) \in \mathcal{E}} w_{kl} (x_k + x_l - 2x_k x_l).
+x_{i,j}^2 - x_{i,j} = 0, \quad \forall i \in \{0, \dots, H-1\}, j \in \{0, \dots, W-1\}.
 \end{align}
 
-<strong>Step 4.</strong> We combine and collect terms by variable index. Each quadratic term $x_k x_l$ appears exactly once in the edge sum. Each linear term $x_k$ accumulates contributions from its own data cost and from every incident edge $(k,l) \in \mathcal{E}$:
-\begin{align}
-H(\mathbf{x}) = \sum_{k \in \mathcal{K}} \left( \delta_k + \sum_{l \in \mathcal{N}(k)} w_{kl} \right) x_k - \sum_{(k,l) \in \mathcal{E}} 2w_{kl} x_k x_l,
-\end{align}
-where $\mathcal{N}(k) = \{ l \mid (k,l) \in \mathcal{E} \}$ denotes the set of neighbors of pixel $k$.
+<strong>Step 3.</strong> In standard QUBO formulations, constraints are typically enforced via quadratic penalty terms $\lambda (x_{i,j}^2 - x_{i,j})^2$. However, since the domain is explicitly restricted to $\{0,1\}$, the idempotent property $x_{i,j}^2 = x_{i,j}$ holds identically. Substituting this into the penalty form yields $\lambda (x_{i,j} - x_{i,j})^2 = 0$. Consequently, the penalty contribution vanishes, and no explicit penalty terms are required.
 
-<strong>Step 5.</strong> Reading off the coefficients from the expanded Hamiltonian $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$, we obtain the general closed-form expressions for the QUBO parameters:
+<strong>Step 4.</strong> Combining the objective and the (null) penalty terms, the QUBO Hamiltonian $\mathcal{H}(x)$ is identical to the original energy function:
 \begin{align}
-Q_{k,k} &= \delta_k + \sum_{l \in \mathcal{N}(k)} w_{kl}, \quad \forall k \in \mathcal{K}, \\
-Q_{k,l} &= -2w_{kl}, \quad \forall (k,l) \in \mathcal{E}, \\
-Q_{k,l} &= 0, \quad \forall (k,l) \notin \mathcal{E}, \, k \neq l, \\
+\mathcal{H}(x) = \sum_{i=0}^{H-1} \sum_{j=0}^{W-1} d_{i,j} x_{i,j} + \sum_{(i,j) \sim (k,l)} w_{i,j,k,l} (x_{i,j} + x_{k,l} - 2 x_{i,j} x_{k,l}).
+\end{align}
+
+<strong>Step 5.</strong> Expanding $\mathcal{H}(x)$ into the standard QUBO form $\mathcal{H}(x) = \sum_{i,j} Q_{i,j} x_i x_j + c$, where $x_i$ denotes the flattened variable index, we read off the diagonal entries, off-diagonal entries, and offset in closed form:
+\begin{align}
+Q_{(i,j),(i,j)} &= d_{i,j} + \sum_{(k,l) \sim (i,j)} w_{i,j,k,l}, \\
+Q_{(i,j),(k,l)} &= -2 w_{i,j,k,l}, \quad \text{for } (i,j) \sim (k,l), \\
+Q_{(i,j),(k,l)} &= 0, \quad \text{for } (i,j) \not\sim (k,l), \\
 c &= 0.
 \end{align}
+Here, the diagonal coefficient for each pixel aggregates its data cost and all connected smoothness weights, while each off-diagonal coefficient corresponds to the interaction between adjacent pixels.
 
 <h3>Penalty Weight Justification</h3>
-The problem definition specifies no explicit constraints; therefore, penalty terms and associated penalty weights are omitted from the formulation. The optimization is strictly unconstrained over $\{0,1\}^N$. If regularization or hard constraints were introduced in a variant of this problem, the penalty weight $\lambda$ would be chosen to satisfy $\lambda > \max_{\mathbf{x}} |H_{\text{obj}}(\mathbf{x})|$, ensuring that any violation of feasibility incurs an energy penalty strictly larger than the maximum possible reduction in the objective function.
+Because the binary constraints are inherently satisfied by the variable domain, the penalty weight $\lambda$ is effectively zero and no penalty terms are introduced. In scenarios where binary constraints are enforced via penalties, $\lambda$ must be chosen sufficiently large to dominate any feasible objective improvement from violating the constraint. Specifically, $\lambda > \max_{i,j} d_{i,j} + \sum_{(k,l)\sim(i,j)} w_{i,j,k,l}$ would guarantee that infeasible configurations incur a strictly higher energy than any feasible configuration. However, given the explicit restriction $x_{i,j} \in \{0,1\}$, the penalty term identically vanishes, and the Hamiltonian consists solely of the objective terms.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ exactly recovers the optimal clean image because the QUBO is an algebraically equivalent reformulation of the original energy function. The expansion using $x_k^2 = x_k$ preserves the exact numerical value of the objective for every binary configuration, meaning the relative ordering of all $2^N$ candidate solutions remains unchanged. Since the problem is unconstrained, every binary vector is feasible, and the global minimum of $H(\mathbf{x})$ corresponds precisely to the configuration that minimizes the combined data fidelity and smoothness costs. The quadratic structure ensures the energy landscape is well-defined for both classical and quantum solvers without introducing artificial feasible regions or penalty-induced local minima.
+Minimizing $\mathcal{H}(x)$ over $\{0,1\}^{HW}$ recovers the optimal clean image because the Hamiltonian is constructed to exactly represent the denoising energy function. For any feasible configuration $x \in \{0,1\}^{HW}$, the energy equals the sum of data fidelity and smoothness costs. Since the binary constraints are inherently satisfied, no infeasible configurations exist in the search space. The global minimum of $\mathcal{H}(x)$ therefore corresponds directly to the configuration that minimizes the original energy, guaranteeing that the optimal solution to the QUBO is the optimal denoised image.
 
 <h3>Illustrative Example</h3>
-We instantiate the general formulation for a small $2 \times 2$ image grid, yielding $N = 4$ pixels indexed by $\mathcal{K} = \{0, 1, 2, 3\}$. The adjacency set is $\mathcal{E} = \{(0,1), (0,2), (1,3), (2,3)\}$. Assigning instance parameters $d_k = \delta_k = 1$ for all $k$ and uniform smoothness weights $w_{kl} = 1$ for all $(k,l) \in \mathcal{E}$, we substitute these values into the general QUBO expressions.
-
-The concrete objective terms become:
+Consider a $2 \times 2$ grid ($H=2, W=2$) with variables $x_{0,0}, x_{0,1}, x_{1,0}, x_{1,1}$. We map them to indices $0, 1, 2, 3$ via the formula $x_{i,j} \to x_{2i+j}$. Assuming $4$-connected neighbors and uniform smoothness weights $w_{i,j,k,l} = w$, the general formulas instantiate to the following concrete QUBO parameters:
 \begin{align}
-\text{Linear:} \quad & Q_{0,0} = 1 + 1 + 1 = 3, \quad Q_{1,1} = 1 + 1 + 1 = 3, \\
-& Q_{2,2} = 1 + 1 + 1 = 3, \quad Q_{3,3} = 1 + 1 + 1 = 3. \\
-\text{Quadratic:} \quad & Q_{0,1} = -2(1) = -2, \quad Q_{0,2} = -2(1) = -2, \\
-& Q_{1,3} = -2(1) = -2, \quad Q_{2,3} = -2(1) = -2.
+Q_{0,0} &= d_{0,0} + w_{0,0,0,1} + w_{0,0,1,0}, \\
+Q_{1,1} &= d_{0,1} + w_{0,1,0,0} + w_{0,1,1,1}, \\
+Q_{2,2} &= d_{1,0} + w_{1,0,0,0} + w_{1,0,1,1}, \\
+Q_{3,3} &= d_{1,1} + w_{1,1,0,1} + w_{1,1,1,0}, \\
+Q_{0,1} &= Q_{1,0} = -2 w_{0,0,0,1}, \\
+Q_{0,2} &= Q_{2,0} = -2 w_{0,0,1,0}, \\
+Q_{1,3} &= Q_{3,1} = -2 w_{0,1,1,1}, \\
+Q_{2,3} &= Q_{3,2} = -2 w_{1,0,1,1}, \\
+c &= 0.
 \end{align}
 The resulting QUBO Hamiltonian is:
 \begin{align}
-H(\mathbf{x}) = 3(x_0 + x_1 + x_2 + x_3) - 2(x_0 x_1 + x_0 x_2 + x_1 x_3 + x_2 x_3).
+\mathcal{H}(x) &= (d_{0,0} + w_{0,0,0,1} + w_{0,0,1,0}) x_0 + (d_{0,1} + w_{0,1,0,0} + w_{0,1,1,1}) x_1 \nonumber \\
+&+ (d_{1,0} + w_{1,0,0,0} + w_{1,0,1,1}) x_2 + (d_{1,1} + w_{1,1,0,1} + w_{1,1,1,0}) x_3 \nonumber \\
+&- 2 w_{0,0,0,1} x_0 x_1 - 2 w_{0,0,1,0} x_0 x_2 - 2 w_{0,1,1,1} x_1 x_3 - 2 w_{1,0,1,1} x_2 x_3.
 \end{align}
-Enumerating all $2^4 = 16$ binary configurations reveals that the global minimum occurs at $\mathbf{x}^* = (0,0,0,0)^\top$ with minimum energy $H(\mathbf{x}^*) = 0$. This configuration corresponds to a completely uniform background image, which is optimal under the chosen parameters since the smoothness penalty for any transition outweighs the data cost savings. For other parameter regimes (e.g., larger $d_k$ relative to $w_{kl}$), the optimal solution would flip specific bits to match the noisy observations while preserving local smoothness.
+Evaluating $\mathcal{H}(x)$ over all $2^4 = 16$ binary configurations yields the optimal clean image $x^*$ and its minimum energy $\mathcal{H}(x^*)$, which are returned as the solution.
   </div>
 
   <div class="src-header">
@@ -113,66 +112,65 @@ Enumerating all $2^4 = 16$ binary configurations reveals that the global minimum
 \subsection*{Binary Image Denoising}
 
 \paragraph{Problem Statement.}
-Given a noisy binary image represented on a grid of $N$ pixels, the objective is to recover a clean binary image that minimizes a global energy function. This energy comprises two components: a data fidelity term that penalizes deviations between the reconstructed pixels and the observed noisy pixels, and a smoothness term that penalizes label discontinuities between spatially adjacent pixels. The task is to determine the binary configuration that achieves the minimum total energy.
+Given a noisy binary image of dimensions $H \times W$, the objective is to recover a clean binary image by selecting a configuration of pixel labels that minimizes a global energy function. This energy function balances fidelity to the observed noisy pixels against spatial smoothness, penalizing abrupt label changes between adjacent pixels. The task is to find the binary image configuration that achieves the minimum energy.
 
 \paragraph{Decision Variables.}
-Let $\mathcal{K} = \{0, 1, \dots, N-1\}$ denote the set of indices corresponding to the pixels in the image grid. For each $k \in \mathcal{K}$, we introduce a binary decision variable $x_k \in \{0,1\}$, where $x_k = 1$ indicates a foreground (active) pixel and $x_k = 0$ indicates a background (inactive) pixel in the reconstructed clean image. The vector of all variables is denoted $\mathbf{x} = (x_0, x_1, \dots, x_{N-1})^\top$.
+Let $x_{i,j} \in \{0,1\}$ denote the label of the clean pixel at grid position $(i,j)$, where $i \in \{0, \dots, H-1\}$ and $j \in \{0, \dots, W-1\}$. The variable $x_{i,j}$ takes the value $1$ if the pixel is labeled as foreground (or class $1$), and $0$ otherwise. The total number of decision variables is $N = H \times W$.
 
 \paragraph{QUBO Derivation.}
-We derive the Quadratic Unconstrained Binary Optimization (QUBO) formulation through the following algebraic steps.
-
-\textbf{Step 1.} The original objective is expressed as a minimization over the binary hypercube:
+\textbf{Step 1.} The original energy minimization problem is formulated as:
 \begin{align}
-\min_{\mathbf{x} \in \{0,1\}^N} \quad &amp; \sum_{k \in \mathcal{K}} d_k(x_k) + \sum_{(k,l) \in \mathcal{E}} w_{kl} |x_k - x_l|,
+\min_{x \in \{0,1\}^{HW}} \mathcal{E}(x) = \sum_{i=0}^{H-1} \sum_{j=0}^{W-1} d_{i,j} x_{i,j} + \sum_{(i,j) \sim (k,l)} w_{i,j,k,l} (x_{i,j} + x_{k,l} - 2 x_{i,j} x_{k,l}),
 \end{align}
-where $\mathcal{E}$ is the set of adjacent pixel pairs, $w_{kl} \geq 0$ are smoothness weights, and $d_k(x_k)$ is the instance-dependent data cost for pixel $k$.
+where $d_{i,j} \geq 0$ is the data cost coefficient for pixel $(i,j)$ derived from the noisy observation, and $w_{i,j,k,l} \geq 0$ is the smoothness penalty weight for neighboring pixels $(i,j)$ and $(k,l)$. The notation $(i,j) \sim (k,l)$ denotes adjacency on the grid (e.g., $4$-connected or $8$-connected).
 
-\textbf{Step 2.} The problem formulation contains no explicit equality or inequality constraints. Consequently, the constraint set is empty, and no constraint equations are introduced.
-
-\textbf{Step 3.} Since there are no constraints, penalty terms are omitted. We proceed to convert the objective terms into a quadratic polynomial using the idempotent property of binary variables, $x_k^2 = x_k$. For binary variables, the absolute difference simplifies to:
+\textbf{Step 2.} The variables are constrained to the binary domain. The algebraic form of this constraint for each pixel is:
 \begin{align}
-|x_k - x_l| = x_k + x_l - 2x_k x_l.
-\end{align}
-The data cost $d_k(x_k)$ can be represented by its linear coefficient $\delta_k$ such that $d_k(x_k) = \delta_k x_k$ (constant offsets are absorbed into the global offset). Substituting these expansions into the objective yields:
-\begin{align}
-H(\mathbf{x}) = \sum_{k \in \mathcal{K}} \delta_k x_k + \sum_{(k,l) \in \mathcal{E}} w_{kl} (x_k + x_l - 2x_k x_l).
+x_{i,j}^2 - x_{i,j} = 0, \quad \forall i \in \{0, \dots, H-1\}, j \in \{0, \dots, W-1\}.
 \end{align}
 
-\textbf{Step 4.} We combine and collect terms by variable index. Each quadratic term $x_k x_l$ appears exactly once in the edge sum. Each linear term $x_k$ accumulates contributions from its own data cost and from every incident edge $(k,l) \in \mathcal{E}$:
-\begin{align}
-H(\mathbf{x}) = \sum_{k \in \mathcal{K}} \left( \delta_k + \sum_{l \in \mathcal{N}(k)} w_{kl} \right) x_k - \sum_{(k,l) \in \mathcal{E}} 2w_{kl} x_k x_l,
-\end{align}
-where $\mathcal{N}(k) = \{ l \mid (k,l) \in \mathcal{E} \}$ denotes the set of neighbors of pixel $k$.
+\textbf{Step 3.} In standard QUBO formulations, constraints are typically enforced via quadratic penalty terms $\lambda (x_{i,j}^2 - x_{i,j})^2$. However, since the domain is explicitly restricted to $\{0,1\}$, the idempotent property $x_{i,j}^2 = x_{i,j}$ holds identically. Substituting this into the penalty form yields $\lambda (x_{i,j} - x_{i,j})^2 = 0$. Consequently, the penalty contribution vanishes, and no explicit penalty terms are required.
 
-\textbf{Step 5.} Reading off the coefficients from the expanded Hamiltonian $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$, we obtain the general closed-form expressions for the QUBO parameters:
+\textbf{Step 4.} Combining the objective and the (null) penalty terms, the QUBO Hamiltonian $\mathcal{H}(x)$ is identical to the original energy function:
 \begin{align}
-Q_{k,k} &amp;= \delta_k + \sum_{l \in \mathcal{N}(k)} w_{kl}, \quad \forall k \in \mathcal{K}, \\
-Q_{k,l} &amp;= -2w_{kl}, \quad \forall (k,l) \in \mathcal{E}, \\
-Q_{k,l} &amp;= 0, \quad \forall (k,l) \notin \mathcal{E}, \, k \neq l, \\
+\mathcal{H}(x) = \sum_{i=0}^{H-1} \sum_{j=0}^{W-1} d_{i,j} x_{i,j} + \sum_{(i,j) \sim (k,l)} w_{i,j,k,l} (x_{i,j} + x_{k,l} - 2 x_{i,j} x_{k,l}).
+\end{align}
+
+\textbf{Step 5.} Expanding $\mathcal{H}(x)$ into the standard QUBO form $\mathcal{H}(x) = \sum_{i,j} Q_{i,j} x_i x_j + c$, where $x_i$ denotes the flattened variable index, we read off the diagonal entries, off-diagonal entries, and offset in closed form:
+\begin{align}
+Q_{(i,j),(i,j)} &amp;= d_{i,j} + \sum_{(k,l) \sim (i,j)} w_{i,j,k,l}, \\
+Q_{(i,j),(k,l)} &amp;= -2 w_{i,j,k,l}, \quad \text{for } (i,j) \sim (k,l), \\
+Q_{(i,j),(k,l)} &amp;= 0, \quad \text{for } (i,j) \not\sim (k,l), \\
 c &amp;= 0.
 \end{align}
+Here, the diagonal coefficient for each pixel aggregates its data cost and all connected smoothness weights, while each off-diagonal coefficient corresponds to the interaction between adjacent pixels.
 
 \paragraph{Penalty Weight Justification.}
-The problem definition specifies no explicit constraints; therefore, penalty terms and associated penalty weights are omitted from the formulation. The optimization is strictly unconstrained over $\{0,1\}^N$. If regularization or hard constraints were introduced in a variant of this problem, the penalty weight $\lambda$ would be chosen to satisfy $\lambda &gt; \max_{\mathbf{x}} |H_{\text{obj}}(\mathbf{x})|$, ensuring that any violation of feasibility incurs an energy penalty strictly larger than the maximum possible reduction in the objective function.
+Because the binary constraints are inherently satisfied by the variable domain, the penalty weight $\lambda$ is effectively zero and no penalty terms are introduced. In scenarios where binary constraints are enforced via penalties, $\lambda$ must be chosen sufficiently large to dominate any feasible objective improvement from violating the constraint. Specifically, $\lambda &gt; \max_{i,j} d_{i,j} + \sum_{(k,l)\sim(i,j)} w_{i,j,k,l}$ would guarantee that infeasible configurations incur a strictly higher energy than any feasible configuration. However, given the explicit restriction $x_{i,j} \in \{0,1\}$, the penalty term identically vanishes, and the Hamiltonian consists solely of the objective terms.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ exactly recovers the optimal clean image because the QUBO is an algebraically equivalent reformulation of the original energy function. The expansion using $x_k^2 = x_k$ preserves the exact numerical value of the objective for every binary configuration, meaning the relative ordering of all $2^N$ candidate solutions remains unchanged. Since the problem is unconstrained, every binary vector is feasible, and the global minimum of $H(\mathbf{x})$ corresponds precisely to the configuration that minimizes the combined data fidelity and smoothness costs. The quadratic structure ensures the energy landscape is well-defined for both classical and quantum solvers without introducing artificial feasible regions or penalty-induced local minima.
+Minimizing $\mathcal{H}(x)$ over $\{0,1\}^{HW}$ recovers the optimal clean image because the Hamiltonian is constructed to exactly represent the denoising energy function. For any feasible configuration $x \in \{0,1\}^{HW}$, the energy equals the sum of data fidelity and smoothness costs. Since the binary constraints are inherently satisfied, no infeasible configurations exist in the search space. The global minimum of $\mathcal{H}(x)$ therefore corresponds directly to the configuration that minimizes the original energy, guaranteeing that the optimal solution to the QUBO is the optimal denoised image.
 
 \paragraph{Illustrative Example.}
-We instantiate the general formulation for a small $2 \times 2$ image grid, yielding $N = 4$ pixels indexed by $\mathcal{K} = \{0, 1, 2, 3\}$. The adjacency set is $\mathcal{E} = \{(0,1), (0,2), (1,3), (2,3)\}$. Assigning instance parameters $d_k = \delta_k = 1$ for all $k$ and uniform smoothness weights $w_{kl} = 1$ for all $(k,l) \in \mathcal{E}$, we substitute these values into the general QUBO expressions.
-
-The concrete objective terms become:
+Consider a $2 \times 2$ grid ($H=2, W=2$) with variables $x_{0,0}, x_{0,1}, x_{1,0}, x_{1,1}$. We map them to indices $0, 1, 2, 3$ via the formula $x_{i,j} \to x_{2i+j}$. Assuming $4$-connected neighbors and uniform smoothness weights $w_{i,j,k,l} = w$, the general formulas instantiate to the following concrete QUBO parameters:
 \begin{align}
-\text{Linear:} \quad &amp; Q_{0,0} = 1 + 1 + 1 = 3, \quad Q_{1,1} = 1 + 1 + 1 = 3, \\
-&amp; Q_{2,2} = 1 + 1 + 1 = 3, \quad Q_{3,3} = 1 + 1 + 1 = 3. \\
-\text{Quadratic:} \quad &amp; Q_{0,1} = -2(1) = -2, \quad Q_{0,2} = -2(1) = -2, \\
-&amp; Q_{1,3} = -2(1) = -2, \quad Q_{2,3} = -2(1) = -2.
+Q_{0,0} &amp;= d_{0,0} + w_{0,0,0,1} + w_{0,0,1,0}, \\
+Q_{1,1} &amp;= d_{0,1} + w_{0,1,0,0} + w_{0,1,1,1}, \\
+Q_{2,2} &amp;= d_{1,0} + w_{1,0,0,0} + w_{1,0,1,1}, \\
+Q_{3,3} &amp;= d_{1,1} + w_{1,1,0,1} + w_{1,1,1,0}, \\
+Q_{0,1} &amp;= Q_{1,0} = -2 w_{0,0,0,1}, \\
+Q_{0,2} &amp;= Q_{2,0} = -2 w_{0,0,1,0}, \\
+Q_{1,3} &amp;= Q_{3,1} = -2 w_{0,1,1,1}, \\
+Q_{2,3} &amp;= Q_{3,2} = -2 w_{1,0,1,1}, \\
+c &amp;= 0.
 \end{align}
 The resulting QUBO Hamiltonian is:
 \begin{align}
-H(\mathbf{x}) = 3(x_0 + x_1 + x_2 + x_3) - 2(x_0 x_1 + x_0 x_2 + x_1 x_3 + x_2 x_3).
+\mathcal{H}(x) &amp;= (d_{0,0} + w_{0,0,0,1} + w_{0,0,1,0}) x_0 + (d_{0,1} + w_{0,1,0,0} + w_{0,1,1,1}) x_1 \nonumber \\
+&amp;+ (d_{1,0} + w_{1,0,0,0} + w_{1,0,1,1}) x_2 + (d_{1,1} + w_{1,1,0,1} + w_{1,1,1,0}) x_3 \nonumber \\
+&amp;- 2 w_{0,0,0,1} x_0 x_1 - 2 w_{0,0,1,0} x_0 x_2 - 2 w_{0,1,1,1} x_1 x_3 - 2 w_{1,0,1,1} x_2 x_3.
 \end{align}
-Enumerating all $2^4 = 16$ binary configurations reveals that the global minimum occurs at $\mathbf{x}^* = (0,0,0,0)^\top$ with minimum energy $H(\mathbf{x}^*) = 0$. This configuration corresponds to a completely uniform background image, which is optimal under the chosen parameters since the smoothness penalty for any transition outweighs the data cost savings. For other parameter regimes (e.g., larger $d_k$ relative to $w_{kl}$), the optimal solution would flip specific bits to match the noisy observations while preserving local smoothness.</pre>
+Evaluating $\mathcal{H}(x)$ over all $2^4 = 16$ binary configurations yields the optimal clean image $x^*$ and its minimum energy $\mathcal{H}(x^*)$, which are returned as the solution.</pre>
 
   <script>
     function copyLatex(btn) {

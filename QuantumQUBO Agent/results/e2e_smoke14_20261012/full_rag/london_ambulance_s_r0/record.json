@@ -1,0 +1,38 @@
+{
+ "case": "london_ambulance_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 103.2
+  },
+  "model": {
+   "ok": false,
+   "seconds": 573.9,
+   "error": "ValueError: model validation failed: variable_keys[6] uses 'msoa_i', which is not a declared set. If variable 6 is a HELPER (slack, bits of an auxiliary number, an indicator that follows from the decisions), give it {}. Only if it is part of the decision the user asked for, declare 'msoa_i' under DATA_SCHEMA 'sets' and return its ids from make_example_data"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-implication"
+ ],
+ "cost": {
+  "llm_tokens": 108665,
+  "solver_calls": null
+ },
+ "seconds": 677.0
+}

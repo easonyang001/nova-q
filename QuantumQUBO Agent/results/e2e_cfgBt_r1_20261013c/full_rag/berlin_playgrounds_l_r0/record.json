@@ -1,0 +1,128 @@
+{
+ "case": "berlin_playgrounds_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 457.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1871.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 263.8
+  },
+  "data": {
+   "ok": false,
+   "seconds": 4414.1,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: LOR centers 2021 data is missing from provided tables\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 100, in load_data\nValueError: DATA GAP: LOR centers 2021 data is missing from provided tables\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "Maximum Covering Location Problem (MCLP) formulation. Decision variables x_i for LOR centers (150-200) and auxiliary variables y_j for block coverage (2000-3000). Total variables ~3200, which fits the CGA GPU annealer limit of 3,600.",
+ "schema": {
+  "sets": {
+   "lor_centers": {
+    "meaning": "Candidate LOR planning area centers",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "blocks": {
+    "meaning": "Umweltatlas population blocks",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "pop_j"
+    }
+   },
+   "existing_playgrounds": {
+    "meaning": "Locations of existing playgrounds",
+    "source": "public"
+   }
+  },
+  "params": {
+   "pop_j": {
+    "meaning": "Population of block j",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "people"
+   },
+   "is_uncovered_initially": {
+    "meaning": "True if block j is NOT within 250m of any existing playground",
+    "index": [
+     "blocks"
+    ],
+    "type": "binary",
+    "source": "public",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "existing_playgrounds",
+      "blocks"
+     ],
+     "how": "check distance < 250m"
+    }
+   },
+   "coverage_matrix": {
+    "meaning": "1 if LOR center i is within 250m of block j, else 0",
+    "index": [
+     "lor_centers",
+     "blocks"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lor_centers",
+      "blocks"
+     ],
+     "how": "dist < 250m"
+    }
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to establish",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "Einwohnerdichte_2019.xlsx",
+  "Einwohnerdichte_2019_Umweltatlas_-_WFS_Einwohnerdichte_2019_.geojson",
+  "Einwohnerdichte_2020_Umweltatlas_Einwohnerdichte_2020_WFS_la.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 227249,
+  "solver_calls": null
+ },
+ "seconds": 7008.3
+}

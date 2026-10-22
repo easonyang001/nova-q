@@ -1,0 +1,4 @@
+{"mode": "mqpu", "instance": "ev_chargers_s_n7", "n_qubits": 26, "layers": 3, "gpus": 1, "evaluations": 40, "wall_s": 7.313692092895508, "evals_per_s": 5.469193875259781, "mean_value": 4.0403282706169374}
+{"mode": "mqpu", "instance": "ev_chargers_s_n7", "n_qubits": 26, "layers": 3, "gpus": 2, "evaluations": 40, "wall_s": 4.42299222946167, "evals_per_s": 9.043651429807841, "mean_value": 4.0403282706169374}
+{"mode": "mqpu", "instance": "youbike_tour_n5", "n_qubits": 25, "layers": 3, "gpus": 1, "evaluations": 40, "wall_s": 9.30242919921875, "evals_per_s": 4.299952103194651, "mean_value": 5.8961362234025865}
+{"mode": "mqpu", "instance": "youbike_tour_n5", "n_qubits": 25, "layers": 3, "gpus": 2, "evaluations": 40, "wall_s": 4.802000045776367, "evals_per_s": 8.329862477861132, "mean_value": 5.8961362234025865}

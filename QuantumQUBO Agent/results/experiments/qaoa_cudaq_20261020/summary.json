@@ -1,0 +1,1640 @@
+[
+ {
+  "instance": "aed_groups_n3_s0",
+  "case": "aed_groups",
+  "points": 3,
+  "qubits": 9,
+  "p_random": 0.01171875,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 0.16581225395202637,
+   "solver_s": 0.1485762596130371
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 204.79741740226746,
+   "solver_s": 204.65969920158386
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.998,
+   "p_feasible": 0.998,
+   "wall_s": 2.9888112545013428,
+   "solver_s": 0.09505675999999999
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.3333333333333333,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 96.3960976600647,
+   "solver_s": 10.983251752099022
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.5993,
+   "p_feasible": 0.5993,
+   "wall_s": 60.07725715637207,
+   "solver_s": 57.694491386413574
+  }
+ },
+ {
+  "instance": "aed_groups_n3_s1",
+  "case": "aed_groups",
+  "points": 3,
+  "qubits": 9,
+  "p_random": 0.01171875,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 0.1607065200805664,
+   "solver_s": 0.1436319351196289
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 276.21612882614136,
+   "solver_s": 276.08057403564453
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.998,
+   "p_feasible": 0.998,
+   "wall_s": 2.8865387439727783,
+   "solver_s": 0.14089716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.3333333333333333,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 13.739560842514038,
+   "solver_s": 11.244760656030849
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.6044,
+   "p_feasible": 0.6044,
+   "wall_s": 70.71860027313232,
+   "solver_s": 68.31491374969482
+  }
+ },
+ {
+  "instance": "aed_groups_n3_s2",
+  "case": "aed_groups",
+  "points": 3,
+  "qubits": 9,
+  "p_random": 0.01171875,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 0.19126105308532715,
+   "solver_s": 0.179002046585083
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 191.2160952091217,
+   "solver_s": 191.20411229133606
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.999,
+   "p_feasible": 0.999,
+   "wall_s": 1.5185940265655518,
+   "solver_s": 0.10009796
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.3333333333333333,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 14.230691909790039,
+   "solver_s": 11.22869582194835
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.6034,
+   "p_feasible": 0.6034,
+   "wall_s": 64.38436150550842,
+   "solver_s": 60.72251057624817
+  }
+ },
+ {
+  "instance": "aed_groups_n6_s0",
+  "case": "aed_groups",
+  "points": 6,
+  "qubits": 18,
+  "p_random": 2.288818359375e-05,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.087,
+   "p_feasible": 1.0,
+   "wall_s": 0.2947373390197754,
+   "solver_s": 0.28284668922424316
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.3,
+   "p_feasible": 1.0,
+   "wall_s": 133.7159879207611,
+   "solver_s": 133.69689512252808
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.103,
+   "p_feasible": 0.972,
+   "wall_s": 1.6941063404083252,
+   "solver_s": 0.16195636
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.0335195530726257,
+   "p_feasible": 0.3407821229050279,
+   "wall_s": 13.32466197013855,
+   "solver_s": 11.287557408912107
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0198,
+   "p_feasible": 0.2513,
+   "wall_s": 64.72045373916626,
+   "solver_s": 62.2231011390686
+  }
+ },
+ {
+  "instance": "aed_groups_n6_s1",
+  "case": "aed_groups",
+  "points": 6,
+  "qubits": 18,
+  "p_random": 2.288818359375e-05,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.107,
+   "p_feasible": 1.0,
+   "wall_s": 0.4412198066711426,
+   "solver_s": 0.42293763160705566
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.285,
+   "p_feasible": 1.0,
+   "wall_s": 160.0386893749237,
+   "solver_s": 160.01955842971802
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.073,
+   "p_feasible": 0.916,
+   "wall_s": 1.5311129093170166,
+   "solver_s": 0.10727676
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.046875,
+   "p_feasible": 0.3125,
+   "wall_s": 13.110897064208984,
+   "solver_s": 11.286564986919984
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0178,
+   "p_feasible": 0.2466,
+   "wall_s": 71.57203793525696,
+   "solver_s": 68.48179793357849
+  }
+ },
+ {
+  "instance": "aed_groups_n6_s2",
+  "case": "aed_groups",
+  "points": 6,
+  "qubits": 18,
+  "p_random": 2.288818359375e-05,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.076,
+   "p_feasible": 1.0,
+   "wall_s": 0.40064501762390137,
+   "solver_s": 0.3823091983795166
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.248,
+   "p_feasible": 1.0,
+   "wall_s": 178.46704959869385,
+   "solver_s": 178.44848895072937
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.091,
+   "p_feasible": 0.928,
+   "wall_s": 1.6879222393035889,
+   "solver_s": 0.11995716000000001
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.04477611940298507,
+   "p_feasible": 0.34328358208955223,
+   "wall_s": 13.288902044296265,
+   "solver_s": 11.239987150067464
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.015,
+   "p_feasible": 0.2576,
+   "wall_s": 69.15904808044434,
+   "solver_s": 66.26453995704651
+  }
+ },
+ {
+  "instance": "aed_groups_n9_s0",
+  "case": "aed_groups",
+  "points": 9,
+  "qubits": 27,
+  "p_random": 4.470348358154297e-08,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.006,
+   "p_feasible": 1.0,
+   "wall_s": 0.518510103225708,
+   "solver_s": 0.48163366317749023
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.029,
+   "p_feasible": 1.0,
+   "wall_s": 155.62106776237488,
+   "solver_s": 155.5184829235077
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.008,
+   "p_feasible": 0.604,
+   "wall_s": 1.8118722438812256,
+   "solver_s": 0.10853796
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.03208556149732621,
+   "p_feasible": 0.32620320855614976,
+   "wall_s": 77.26988196372986,
+   "solver_s": 10.94680582312867
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0003,
+   "p_feasible": 0.0537,
+   "wall_s": 482.7032539844513,
+   "solver_s": 480.11201429367065
+  }
+ },
+ {
+  "instance": "aed_groups_n9_s1",
+  "case": "aed_groups",
+  "points": 9,
+  "qubits": 27,
+  "p_random": 4.470348358154297e-08,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.01,
+   "p_feasible": 1.0,
+   "wall_s": 0.5925674438476562,
+   "solver_s": 0.532012939453125
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.04,
+   "p_feasible": 1.0,
+   "wall_s": 104.04775953292847,
+   "solver_s": 103.99754595756531
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.003,
+   "p_feasible": 0.677,
+   "wall_s": 2.19266414642334,
+   "solver_s": 0.21357636
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.028169014084507043,
+   "p_feasible": 0.352112676056338,
+   "wall_s": 44.51156306266785,
+   "solver_s": 10.973626347957179
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0004,
+   "p_feasible": 0.0829,
+   "wall_s": 492.3754186630249,
+   "solver_s": 489.2332401275635
+  }
+ },
+ {
+  "instance": "aed_groups_n9_s2",
+  "case": "aed_groups",
+  "points": 9,
+  "qubits": 27,
+  "p_random": 4.470348358154297e-08,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.01,
+   "p_feasible": 1.0,
+   "wall_s": 0.5270376205444336,
+   "solver_s": 0.490739107131958
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.048,
+   "p_feasible": 1.0,
+   "wall_s": 10.256892919540405,
+   "solver_s": 10.20841932296753
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.001,
+   "p_feasible": 0.661,
+   "wall_s": 1.9137599468231201,
+   "solver_s": 0.12545876
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.03278688524590164,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 24.649006605148315,
+   "solver_s": 11.002766642952338
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0003,
+   "p_feasible": 0.0849,
+   "wall_s": 494.9849462509155,
+   "solver_s": 492.37933015823364
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n3_s0",
+  "case": "ev_chargers_s",
+  "points": 3,
+  "qubits": 9,
+  "p_random": 0.001953125,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.908,
+   "p_feasible": 1.0,
+   "wall_s": 0.06146049499511719,
+   "solver_s": 0.04876708984375
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 200.21313524246216,
+   "solver_s": 200.02391362190247
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.953,
+   "p_feasible": 0.999,
+   "wall_s": 1.4831280708312988,
+   "solver_s": 0.12725796
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.3333333333333333,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 14.208371639251709,
+   "solver_s": 11.21620460296981
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.187,
+   "p_feasible": 0.8128,
+   "wall_s": 63.916117429733276,
+   "solver_s": 61.35688257217407
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n3_s1",
+  "case": "ev_chargers_s",
+  "points": 3,
+  "qubits": 9,
+  "p_random": 0.001953125,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.769,
+   "p_feasible": 1.0,
+   "wall_s": 0.061712026596069336,
+   "solver_s": 0.04921269416809082
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.999,
+   "p_feasible": 1.0,
+   "wall_s": 279.4890694618225,
+   "solver_s": 279.40029096603394
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.835,
+   "p_feasible": 0.999,
+   "wall_s": 2.2141222953796387,
+   "solver_s": 0.12509756
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.3333333333333333,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 37.57982611656189,
+   "solver_s": 10.935662856092677
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.204,
+   "p_feasible": 0.8332,
+   "wall_s": 70.3407073020935,
+   "solver_s": 67.97285342216492
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n3_s2",
+  "case": "ev_chargers_s",
+  "points": 3,
+  "qubits": 11,
+  "p_random": 0.001953125,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.94,
+   "p_feasible": 0.994,
+   "wall_s": 0.1080162525177002,
+   "solver_s": 0.09531426429748535
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 195.4857883453369,
+   "solver_s": 195.44738745689392
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.578,
+   "p_feasible": 0.901,
+   "wall_s": 1.6271963119506836,
+   "solver_s": 0.13053756
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.16666666666666666,
+   "p_feasible": 0.25,
+   "wall_s": 37.5764856338501,
+   "solver_s": 10.979289448121563
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.2017,
+   "p_feasible": 0.7749,
+   "wall_s": 64.08839654922485,
+   "solver_s": 60.828142404556274
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n4_s0",
+  "case": "ev_chargers_s",
+  "points": 4,
+  "qubits": 14,
+  "p_random": 0.0001220703125,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.544,
+   "p_feasible": 1.0,
+   "wall_s": 0.19035744667053223,
+   "solver_s": 0.17659926414489746
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.961,
+   "p_feasible": 1.0,
+   "wall_s": 131.099547624588,
+   "solver_s": 131.0844349861145
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.614,
+   "p_feasible": 0.98,
+   "wall_s": 1.626579761505127,
+   "solver_s": 0.13191676000000002
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.047619047619047616,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 13.31871223449707,
+   "solver_s": 11.304735251003876
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0438,
+   "p_feasible": 0.6178,
+   "wall_s": 51.30997371673584,
+   "solver_s": 48.88802433013916
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n4_s2",
+  "case": "ev_chargers_s",
+  "points": 4,
+  "qubits": 14,
+  "p_random": 0.0001220703125,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.726,
+   "p_feasible": 1.0,
+   "wall_s": 0.1376328468322754,
+   "solver_s": 0.12408232688903809
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 175.25582337379456,
+   "solver_s": 175.20358419418335
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.295,
+   "p_feasible": 0.861,
+   "wall_s": 2.0386593341827393,
+   "solver_s": 0.12351756
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.0273972602739726,
+   "p_feasible": 0.3287671232876712,
+   "wall_s": 36.57851266860962,
+   "solver_s": 10.98714181710966
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0435,
+   "p_feasible": 0.6107,
+   "wall_s": 65.39630699157715,
+   "solver_s": 62.91749382019043
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n4_s1",
+  "case": "ev_chargers_s",
+  "points": 4,
+  "qubits": 16,
+  "p_random": 0.000244140625,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.795,
+   "p_feasible": 0.984,
+   "wall_s": 0.15328121185302734,
+   "solver_s": 0.13693904876708984
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 159.70527386665344,
+   "solver_s": 159.68856549263
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.433,
+   "p_feasible": 0.925,
+   "wall_s": 1.801147699356079,
+   "solver_s": 0.12777716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.07692307692307693,
+   "p_feasible": 0.2548076923076923,
+   "wall_s": 61.086395263671875,
+   "solver_s": 10.909927937900648
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0724,
+   "p_feasible": 0.6395,
+   "wall_s": 70.9178774356842,
+   "solver_s": 68.026371717453
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n5_s1",
+  "case": "ev_chargers_s",
+  "points": 5,
+  "qubits": 17,
+  "p_random": 1.52587890625e-05,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.564,
+   "p_feasible": 1.0,
+   "wall_s": 0.18190550804138184,
+   "solver_s": 0.17153072357177734
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.989,
+   "p_feasible": 1.0,
+   "wall_s": 39.69454336166382,
+   "solver_s": 39.67874455451965
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.254,
+   "p_feasible": 0.87,
+   "wall_s": 1.6339442729949951,
+   "solver_s": 0.15895676
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.01904761904761905,
+   "p_feasible": 0.2571428571428571,
+   "wall_s": 62.08241248130798,
+   "solver_s": 10.918296716874465
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0136,
+   "p_feasible": 0.4874,
+   "wall_s": 76.99366855621338,
+   "solver_s": 74.21035981178284
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n5_s0",
+  "case": "ev_chargers_s",
+  "points": 5,
+  "qubits": 18,
+  "p_random": 3.814697265625e-06,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.179,
+   "p_feasible": 1.0,
+   "wall_s": 0.1788935661315918,
+   "solver_s": 0.1631934642791748
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.592,
+   "p_feasible": 0.997,
+   "wall_s": 172.1793704032898,
+   "solver_s": 172.1327612400055
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.052,
+   "p_feasible": 0.489,
+   "wall_s": 1.504368782043457,
+   "solver_s": 0.13517756
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.0038461538461538464,
+   "p_feasible": 0.25,
+   "wall_s": 14.449633836746216,
+   "solver_s": 11.247269822983071
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0049,
+   "p_feasible": 0.4843,
+   "wall_s": 67.96180653572083,
+   "solver_s": 64.95006918907166
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n5_s2",
+  "case": "ev_chargers_s",
+  "points": 5,
+  "qubits": 19,
+  "p_random": 7.62939453125e-06,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.301,
+   "p_feasible": 0.999,
+   "wall_s": 0.15613269805908203,
+   "solver_s": 0.14536809921264648
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.783,
+   "p_feasible": 1.0,
+   "wall_s": 43.311245918273926,
+   "solver_s": 43.29420852661133
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.097,
+   "p_feasible": 0.841,
+   "wall_s": 1.9269263744354248,
+   "solver_s": 0.16131676
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.012048192771084338,
+   "p_feasible": 0.22590361445783133,
+   "wall_s": 35.58459138870239,
+   "solver_s": 11.011135100154206
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0115,
+   "p_feasible": 0.5893,
+   "wall_s": 62.478092670440674,
+   "solver_s": 60.033355712890625
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n6_s0",
+  "case": "ev_chargers_s",
+  "points": 6,
+  "qubits": 21,
+  "p_random": 4.76837158203125e-07,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.297,
+   "p_feasible": 1.0,
+   "wall_s": 0.16978859901428223,
+   "solver_s": 0.15780949592590332
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.902,
+   "p_feasible": 1.0,
+   "wall_s": 212.43784546852112,
+   "solver_s": 212.38624215126038
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.158,
+   "p_feasible": 0.713,
+   "wall_s": 1.635587453842163,
+   "solver_s": 0.14397716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.005141388174807198,
+   "p_feasible": 0.3264781491002571,
+   "wall_s": 13.404245853424072,
+   "solver_s": 11.274143927032128
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0016,
+   "p_feasible": 0.3139,
+   "wall_s": 59.9866304397583,
+   "solver_s": 57.17039775848389
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n6_s1",
+  "case": "ev_chargers_s",
+  "points": 6,
+  "qubits": 22,
+  "p_random": 4.76837158203125e-07,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.161,
+   "p_feasible": 0.996,
+   "wall_s": 0.17620325088500977,
+   "solver_s": 0.16409826278686523
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.854,
+   "p_feasible": 0.976,
+   "wall_s": 40.587671756744385,
+   "solver_s": 40.568514585494995
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.048,
+   "p_feasible": 0.468,
+   "wall_s": 1.808727741241455,
+   "solver_s": 0.14397796
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.006006006006006006,
+   "p_feasible": 0.5545545545545546,
+   "wall_s": 60.62477254867554,
+   "solver_s": 10.98723615705967
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0013,
+   "p_feasible": 0.3078,
+   "wall_s": 58.429187297821045,
+   "solver_s": 55.962544202804565
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n6_s2",
+  "case": "ev_chargers_s",
+  "points": 6,
+  "qubits": 24,
+  "p_random": 1.0728836059570312e-06,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.608,
+   "p_feasible": 0.968,
+   "wall_s": 0.19242215156555176,
+   "solver_s": 0.18009734153747559
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.927,
+   "p_feasible": 1.0,
+   "wall_s": 40.74913835525513,
+   "solver_s": 40.727869510650635
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.068,
+   "p_feasible": 0.632,
+   "wall_s": 2.790829658508301,
+   "solver_s": 0.12879875999999998
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.11261261261261261,
+   "p_feasible": 0.6993243243243243,
+   "wall_s": 34.10264611244202,
+   "solver_s": 11.0534061670769
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0073,
+   "p_feasible": 0.4689,
+   "wall_s": 71.39941024780273,
+   "solver_s": 68.78959321975708
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n7_s1",
+  "case": "ev_chargers_s",
+  "points": 7,
+  "qubits": 24,
+  "p_random": 1.7881393432617188e-07,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.342,
+   "p_feasible": 1.0,
+   "wall_s": 0.19661784172058105,
+   "solver_s": 0.18482327461242676
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.56,
+   "p_feasible": 0.983,
+   "wall_s": 162.55442452430725,
+   "solver_s": 162.5335555076599
+  },
+  "dwave_qpu": {
+   "found_optimum": false,
+   "p_optimal": 0.0,
+   "p_feasible": 0.058,
+   "wall_s": 1.8198661804199219,
+   "solver_s": 0.10577716000000001
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.011011011011011011,
+   "p_feasible": 0.42042042042042044,
+   "wall_s": 46.60808205604553,
+   "solver_s": 11.002828382188454
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0007,
+   "p_feasible": 0.1656,
+   "wall_s": 78.90145611763,
+   "solver_s": 76.18967342376709
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n7_s0",
+  "case": "ev_chargers_s",
+  "points": 7,
+  "qubits": 26,
+  "p_random": 2.9802322387695312e-08,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.167,
+   "p_feasible": 0.995,
+   "wall_s": 0.2080528736114502,
+   "solver_s": 0.19340229034423828
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.805,
+   "p_feasible": 1.0,
+   "wall_s": 13.252432346343994,
+   "solver_s": 13.231735467910767
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.049,
+   "p_feasible": 0.645,
+   "wall_s": 1.5914607048034668,
+   "solver_s": 0.19401835999999997
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.006568144499178982,
+   "p_feasible": 0.44499178981937604,
+   "wall_s": 14.848961114883423,
+   "solver_s": 11.256582918111235
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0004,
+   "p_feasible": 0.2266,
+   "wall_s": 140.35292053222656,
+   "solver_s": 137.87422847747803
+  }
+ },
+ {
+  "instance": "ev_chargers_s_n7_s2",
+  "case": "ev_chargers_s",
+  "points": 7,
+  "qubits": 27,
+  "p_random": 1.4901161193847656e-08,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.195,
+   "p_feasible": 1.0,
+   "wall_s": 0.22822356224060059,
+   "solver_s": 0.21459627151489258
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.745,
+   "p_feasible": 0.999,
+   "wall_s": 26.37330722808838,
+   "solver_s": 26.350358724594116
+  },
+  "dwave_qpu": {
+   "found_optimum": false,
+   "p_optimal": 0.0,
+   "p_feasible": 0.06,
+   "wall_s": 2.0360748767852783,
+   "solver_s": 0.13381676
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.006006006006006006,
+   "p_feasible": 0.7167167167167167,
+   "wall_s": 62.11375904083252,
+   "solver_s": 10.987150718923658
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0002,
+   "p_feasible": 0.1925,
+   "wall_s": 362.1807143688202,
+   "solver_s": 359.69224429130554
+  }
+ },
+ {
+  "instance": "london_ambulance_s_n3_s0",
+  "case": "london_ambulance_s",
+  "points": 3,
+  "qubits": 12,
+  "p_random": 0.000244140625,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.444,
+   "p_feasible": 1.0,
+   "wall_s": 0.2110764980316162,
+   "solver_s": 0.20116209983825684
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.804,
+   "p_feasible": 1.0,
+   "wall_s": 171.94996285438538,
+   "solver_s": 171.9333004951477
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.555,
+   "p_feasible": 0.998,
+   "wall_s": 1.4343931674957275,
+   "solver_s": 0.11905716000000001
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.1111111111111111,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 16.020447492599487,
+   "solver_s": 11.261205482995138
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0453,
+   "p_feasible": 0.5952,
+   "wall_s": 56.9170458316803,
+   "solver_s": 54.421863317489624
+  }
+ },
+ {
+  "instance": "london_ambulance_s_n3_s1",
+  "case": "london_ambulance_s",
+  "points": 3,
+  "qubits": 12,
+  "p_random": 0.000244140625,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.27,
+   "p_feasible": 1.0,
+   "wall_s": 0.2170548439025879,
+   "solver_s": 0.20864629745483398
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.733,
+   "p_feasible": 1.0,
+   "wall_s": 86.3655652999878,
+   "solver_s": 86.31125926971436
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.253,
+   "p_feasible": 0.995,
+   "wall_s": 1.5051918029785156,
+   "solver_s": 0.13799716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.3333333333333333,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 31.07543420791626,
+   "solver_s": 10.970667538931593
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0386,
+   "p_feasible": 0.635,
+   "wall_s": 61.552061557769775,
+   "solver_s": 59.33388328552246
+  }
+ },
+ {
+  "instance": "london_ambulance_s_n3_s2",
+  "case": "london_ambulance_s",
+  "points": 3,
+  "qubits": 12,
+  "p_random": 0.000244140625,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.743,
+   "p_feasible": 1.0,
+   "wall_s": 0.23874664306640625,
+   "solver_s": 0.2247767448425293
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.995,
+   "p_feasible": 1.0,
+   "wall_s": 38.514816761016846,
+   "solver_s": 38.501704931259155
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.667,
+   "p_feasible": 0.995,
+   "wall_s": 2.5039379596710205,
+   "solver_s": 0.12767716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.1111111111111111,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 96.08905386924744,
+   "solver_s": 10.970345544163138
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0487,
+   "p_feasible": 0.5561,
+   "wall_s": 78.42509198188782,
+   "solver_s": 75.21292495727539
+  }
+ },
+ {
+  "instance": "london_ambulance_s_n4_s0",
+  "case": "london_ambulance_s",
+  "points": 4,
+  "qubits": 20,
+  "p_random": 9.5367431640625e-07,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.249,
+   "p_feasible": 1.0,
+   "wall_s": 0.3021430969238281,
+   "solver_s": 0.29129719734191895
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.457,
+   "p_feasible": 1.0,
+   "wall_s": 214.70315384864807,
+   "solver_s": 214.68500566482544
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.097,
+   "p_feasible": 0.969,
+   "wall_s": 1.6851863861083984,
+   "solver_s": 0.15313716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.05555555555555555,
+   "p_feasible": 0.2777777777777778,
+   "wall_s": 14.66683554649353,
+   "solver_s": 11.241013908060268
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0011,
+   "p_feasible": 0.1141,
+   "wall_s": 51.562694787979126,
+   "solver_s": 49.0666241645813
+  }
+ },
+ {
+  "instance": "london_ambulance_s_n4_s1",
+  "case": "london_ambulance_s",
+  "points": 4,
+  "qubits": 20,
+  "p_random": 9.5367431640625e-07,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.067,
+   "p_feasible": 1.0,
+   "wall_s": 0.3356914520263672,
+   "solver_s": 0.3232088088989258
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.25,
+   "p_feasible": 1.0,
+   "wall_s": 41.10343647003174,
+   "solver_s": 41.085179805755615
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.052,
+   "p_feasible": 0.967,
+   "wall_s": 1.6013948917388916,
+   "solver_s": 0.13205676000000002
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.06666666666666667,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 67.58004522323608,
+   "solver_s": 10.881142277969047
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0023,
+   "p_feasible": 0.3085,
+   "wall_s": 65.31562495231628,
+   "solver_s": 63.06932210922241
+  }
+ },
+ {
+  "instance": "london_ambulance_s_n4_s2",
+  "case": "london_ambulance_s",
+  "points": 4,
+  "qubits": 20,
+  "p_random": 9.5367431640625e-07,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.322,
+   "p_feasible": 1.0,
+   "wall_s": 0.3084084987640381,
+   "solver_s": 0.29723381996154785
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.876,
+   "p_feasible": 1.0,
+   "wall_s": 45.602579832077026,
+   "solver_s": 45.58487129211426
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.103,
+   "p_feasible": 0.975,
+   "wall_s": 1.6433496475219727,
+   "solver_s": 0.11723756
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.05263157894736842,
+   "p_feasible": 0.3157894736842105,
+   "wall_s": 84.58415198326111,
+   "solver_s": 10.95526133198291
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.001,
+   "p_feasible": 0.1264,
+   "wall_s": 58.201441526412964,
+   "solver_s": 55.62562036514282
+  }
+ },
+ {
+  "instance": "youbike_tour_n3_s0",
+  "case": "youbike_tour",
+  "points": 3,
+  "qubits": 9,
+  "p_random": 0.00390625,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.934,
+   "p_feasible": 0.934,
+   "wall_s": 0.16244029998779297,
+   "solver_s": 0.15134096145629883
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 9.528066635131836,
+   "solver_s": 9.516653060913086
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.88,
+   "p_feasible": 0.88,
+   "wall_s": 1.4574713706970215,
+   "solver_s": 0.14035676
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.1111111111111111,
+   "p_feasible": 0.1111111111111111,
+   "wall_s": 13.239399194717407,
+   "solver_s": 11.228328943019733
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.2131,
+   "p_feasible": 0.2131,
+   "wall_s": 36.8876268863678,
+   "solver_s": 34.62832975387573
+  }
+ },
+ {
+  "instance": "youbike_tour_n3_s1",
+  "case": "youbike_tour",
+  "points": 3,
+  "qubits": 9,
+  "p_random": 0.00390625,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.924,
+   "p_feasible": 0.924,
+   "wall_s": 0.15738821029663086,
+   "solver_s": 0.14983201026916504
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 9.516512632369995,
+   "solver_s": 9.505022764205933
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.962,
+   "p_feasible": 0.962,
+   "wall_s": 1.6428766250610352,
+   "solver_s": 0.11539676
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.125,
+   "p_feasible": 0.125,
+   "wall_s": 69.0858097076416,
+   "solver_s": 10.896578415995464
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.2111,
+   "p_feasible": 0.2111,
+   "wall_s": 47.43144178390503,
+   "solver_s": 45.1135733127594
+  }
+ },
+ {
+  "instance": "youbike_tour_n3_s2",
+  "case": "youbike_tour",
+  "points": 3,
+  "qubits": 9,
+  "p_random": 0.00390625,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.937,
+   "p_feasible": 0.937,
+   "wall_s": 0.16632676124572754,
+   "solver_s": 0.15510964393615723
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 1.0,
+   "p_feasible": 1.0,
+   "wall_s": 9.135108947753906,
+   "solver_s": 9.123570919036865
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.874,
+   "p_feasible": 0.874,
+   "wall_s": 1.4992194175720215,
+   "solver_s": 0.09835716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.125,
+   "p_feasible": 0.125,
+   "wall_s": 84.08583235740662,
+   "solver_s": 10.953280072892085
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.2116,
+   "p_feasible": 0.2116,
+   "wall_s": 47.99758815765381,
+   "solver_s": 45.720494985580444
+  }
+ },
+ {
+  "instance": "youbike_tour_n4_s0",
+  "case": "youbike_tour",
+  "points": 4,
+  "qubits": 16,
+  "p_random": 3.0517578125e-05,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.365,
+   "p_feasible": 0.89,
+   "wall_s": 0.27506327629089355,
+   "solver_s": 0.2656733989715576
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.723,
+   "p_feasible": 1.0,
+   "wall_s": 10.41164493560791,
+   "solver_s": 10.39652156829834
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.22,
+   "p_feasible": 0.603,
+   "wall_s": 1.6408665180206299,
+   "solver_s": 0.12499676
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.02857142857142857,
+   "p_feasible": 0.08571428571428572,
+   "wall_s": 52.264944553375244,
+   "solver_s": 11.08694138401188
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0309,
+   "p_feasible": 0.0883,
+   "wall_s": 46.35602593421936,
+   "solver_s": 44.04641532897949
+  }
+ },
+ {
+  "instance": "youbike_tour_n4_s1",
+  "case": "youbike_tour",
+  "points": 4,
+  "qubits": 16,
+  "p_random": 3.0517578125e-05,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.341,
+   "p_feasible": 0.907,
+   "wall_s": 0.23820185661315918,
+   "solver_s": 0.2285451889038086
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.716,
+   "p_feasible": 1.0,
+   "wall_s": 9.608973979949951,
+   "solver_s": 9.593810081481934
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.326,
+   "p_feasible": 0.776,
+   "wall_s": 2.080415725708008,
+   "solver_s": 0.15307716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.027777777777777776,
+   "p_feasible": 0.08333333333333333,
+   "wall_s": 67.58162999153137,
+   "solver_s": 10.921688659815118
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.03,
+   "p_feasible": 0.0827,
+   "wall_s": 48.261462450027466,
+   "solver_s": 45.925344705581665
+  }
+ },
+ {
+  "instance": "youbike_tour_n4_s2",
+  "case": "youbike_tour",
+  "points": 4,
+  "qubits": 16,
+  "p_random": 3.0517578125e-05,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.331,
+   "p_feasible": 0.901,
+   "wall_s": 0.23874258995056152,
+   "solver_s": 0.22921204566955566
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.698,
+   "p_feasible": 1.0,
+   "wall_s": 9.766070365905762,
+   "solver_s": 9.75083065032959
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.238,
+   "p_feasible": 0.728,
+   "wall_s": 2.894289255142212,
+   "solver_s": 0.13535716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.027777777777777776,
+   "p_feasible": 0.08333333333333333,
+   "wall_s": 85.08345198631287,
+   "solver_s": 10.994905993109569
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0306,
+   "p_feasible": 0.0867,
+   "wall_s": 48.2749764919281,
+   "solver_s": 45.99848198890686
+  }
+ },
+ {
+  "instance": "youbike_tour_n5_s0",
+  "case": "youbike_tour",
+  "points": 5,
+  "qubits": 25,
+  "p_random": 5.960464477539063e-08,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.091,
+   "p_feasible": 0.859,
+   "wall_s": 0.3184690475463867,
+   "solver_s": 0.3042111396789551
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.234,
+   "p_feasible": 1.0,
+   "wall_s": 11.52586817741394,
+   "solver_s": 11.505258798599243
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.033,
+   "p_feasible": 0.524,
+   "wall_s": 2.4147331714630127,
+   "solver_s": 0.12797796
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.05555555555555555,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 81.48856973648071,
+   "solver_s": 10.964312539901584
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0009,
+   "p_feasible": 0.0094,
+   "wall_s": 184.6152994632721,
+   "solver_s": 182.16279697418213
+  }
+ },
+ {
+  "instance": "youbike_tour_n5_s1",
+  "case": "youbike_tour",
+  "points": 5,
+  "qubits": 25,
+  "p_random": 5.960464477539063e-08,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.104,
+   "p_feasible": 0.845,
+   "wall_s": 0.3171226978302002,
+   "solver_s": 0.30279016494750977
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.322,
+   "p_feasible": 1.0,
+   "wall_s": 10.264113664627075,
+   "solver_s": 10.243531227111816
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.069,
+   "p_feasible": 0.449,
+   "wall_s": 2.7114715576171875,
+   "solver_s": 0.12749716
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.03571428571428571,
+   "p_feasible": 0.32142857142857145,
+   "wall_s": 58.07914185523987,
+   "solver_s": 10.921139457961544
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0011,
+   "p_feasible": 0.0139,
+   "wall_s": 202.09009218215942,
+   "solver_s": 199.63316369056702
+  }
+ },
+ {
+  "instance": "youbike_tour_n5_s2",
+  "case": "youbike_tour",
+  "points": 5,
+  "qubits": 25,
+  "p_random": 5.960464477539063e-08,
+  "sa": {
+   "found_optimum": true,
+   "p_optimal": 0.084,
+   "p_feasible": 0.867,
+   "wall_s": 0.3210129737854004,
+   "solver_s": 0.30696940422058105
+  },
+  "sqa": {
+   "found_optimum": true,
+   "p_optimal": 0.288,
+   "p_feasible": 1.0,
+   "wall_s": 10.396977424621582,
+   "solver_s": 10.375983476638794
+  },
+  "dwave_qpu": {
+   "found_optimum": true,
+   "p_optimal": 0.019,
+   "p_feasible": 0.424,
+   "wall_s": 2.381990671157837,
+   "solver_s": 0.14071916
+  },
+  "cga": {
+   "found_optimum": true,
+   "p_optimal": 0.041666666666666664,
+   "p_feasible": 0.3333333333333333,
+   "wall_s": 30.57427978515625,
+   "solver_s": 10.964873507153243
+  },
+  "qaoa_p3": {
+   "found_optimum": true,
+   "p_optimal": 0.0006,
+   "p_feasible": 0.0079,
+   "wall_s": 202.7415623664856,
+   "solver_s": 200.26677465438843
+  }
+ }
+]

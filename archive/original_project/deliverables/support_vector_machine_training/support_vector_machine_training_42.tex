@@ -1,0 +1,79 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Binary SVM Training Toy Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Binary SVM Training Toy Problem}
+
+\paragraph{Problem Statement.}
+Given a finite set of $N$ candidate models, each associated with a precomputed classification loss $\ell_j$ and a regularization penalty $r_j$ for $j \in \{0, \dots, N-1\}$, the task is to select exactly one candidate that minimizes the total regularized score. The objective is to find the candidate index $j^*$ such that $\ell_{j^*} + r_{j^*}$ is minimized.
+
+\paragraph{Decision Variables.}
+Introduce binary selection variables $x_j \in \{0,1\}$ for each candidate $j \in \{0, \dots, N-1\}$. The variable $x_j = 1$ indicates that candidate $j$ is selected, and $x_j = 0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- The original objective function in general notation is:
+\begin{align}
+\min_{x} \sum_{j=0}^{N-1} (\ell_j + r_j) x_j.
+\end{align}
+
+Step 2 --- The selection constraint requires that exactly one candidate is chosen:
+\begin{align}
+\sum_{j=0}^{N-1} x_j = 1.
+\end{align}
+
+Step 3 --- We convert the constraint to a quadratic penalty term with weight $\lambda > 0$. 
+(a) The squared penalty is written as:
+\begin{align}
+P(x) = \lambda \left( \sum_{j=0}^{N-1} x_j - 1 \right)^2.
+\end{align}
+(b) Expanding the square yields:
+\begin{align}
+P(x) = \lambda \left( \sum_{j=0}^{N-1} x_j^2 + \sum_{j \neq k} x_j x_k - 2 \sum_{j=0}^{N-1} x_j + 1 \right).
+\end{align}
+Using the idempotent property $x_j^2 = x_j$ for binary variables, we collect terms:
+\begin{align}
+P(x) = \lambda \left( \sum_{j=0}^{N-1} x_j + \sum_{j \neq k} x_j x_k - 2 \sum_{j=0}^{N-1} x_j + 1 \right) = \lambda \left( -\sum_{j=0}^{N-1} x_j + \sum_{j \neq k} x_j x_k + 1 \right).
+\end{align}
+(c) The resulting general penalty contribution to the Hamiltonian is therefore $\lambda \left( -\sum_{j=0}^{N-1} x_j + \sum_{j \neq k} x_j x_k + 1 \right)$.
+
+Step 4 --- Combining the objective and the penalty term gives the single QUBO Hamiltonian $H(x)$:
+\begin{align}
+H(x) = \sum_{j=0}^{N-1} (\ell_j + r_j) x_j + \lambda \left( -\sum_{j=0}^{N-1} x_j + \sum_{j \neq k} x_j x_k + 1 \right).
+\end{align}
+
+Step 5 --- Reading off the QUBO parameters from $H(x)$ in general closed form:
+\begin{align}
+Q_{j,j} &= \ell_j + r_j - \lambda, \quad \text{for } j \in \{0, \dots, N-1\}, \\
+Q_{j,k} &= 2\lambda, \quad \text{for } j, k \in \{0, \dots, N-1\}, \ j \neq k, \\
+c &= \lambda.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+Let $\Lambda = \max_{j \in \{0, \dots, N-1\}} (\ell_j + r_j)$. We set $\lambda = \Lambda + 1$. The maximum possible value of the original objective function over any feasible assignment is $\Lambda$. If the constraint is violated, the term $\left( \sum_{j=0}^{N-1} x_j - 1 \right)^2$ evaluates to at least $1$, incurring a penalty of at least $\lambda$. Since $\lambda > \Lambda$, the energy cost of any infeasible configuration strictly exceeds the maximum possible objective gain achievable by any feasible configuration. Therefore, the global minimum of $H(x)$ cannot occur at an infeasible point.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution because the penalty weight $\lambda$ is chosen to strictly dominate any feasible objective improvement. For any feasible assignment (where exactly one $x_j=1$), the penalty term vanishes, and $H(x)$ reduces exactly to the original objective function. For any infeasible assignment, the penalty term contributes at least $\lambda$, which exceeds the maximum possible value of the original objective. Consequently, the global minimum of $H(x)$ must occur at a feasible point, and among feasible points, $H(x)$ is identical to the original objective, guaranteeing that the minimizer corresponds to the candidate with the lowest regularized score.
+
+\paragraph{Illustrative Example.}
+Consider an instance with $N=2$ candidates. Let the precomputed scores be $\ell_0 + r_0 = 0.5$ and $\ell_1 + r_1 = 0.2$. The maximum score is $\Lambda = 0.5$, so we choose $\lambda = 0.5 + 1 = 1.5$. Substituting these values into the general QUBO parameters yields:
+\begin{align}
+Q_{0,0} &= 0.5 - 1.5 = -1.0, \\
+Q_{1,1} &= 0.2 - 1.5 = -1.3, \\
+Q_{0,1} = Q_{1,0} &= 2(1.5) = 3.0, \\
+c &= 1.5.
+\end{align}
+The resulting Hamiltonian is $H(x) = -x_0 - 1.3x_1 + 3x_0x_1 + 1.5$. Evaluating $H(x)$ over all $2^2 = 4$ binary assignments gives:
+\begin{align}
+H(0,0) &= 1.5, \\
+H(1,0) &= -1.0 + 1.5 = 0.5, \\
+H(0,1) &= -1.3 + 1.5 = 0.2, \\
+H(1,1) &= -2.3 + 3.0 + 1.5 = 2.2.
+\end{align}
+The global minimum is $0.2$ at $x = (0,1)$, correctly selecting candidate $1$ with the lowest regularized score.
+
+\end{document}

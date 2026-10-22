@@ -1,0 +1,45 @@
+You are converting human-written optimization test instances into structured JSON, IN PROBLEM TERMS.
+You do NOT know, and must not assume, how the problem will be encoded as binary variables.
+
+Problem:
+{problem_prompt}
+
+Objective direction: {direction}
+Instance parameters named by the problem analyst (use these names as instance keys where they fit):
+{instance_parameters}
+
+User-provided instances:
+{raw_input}
+
+Return ONE JSON object:
+{
+  "solution_format": "<plain-English definition of a SOLUTION as a JSON value, in problem terms: what keys or
+                      list it has, what each entry means, 0-based indices referring to the instance data.
+                      Examples: {\"selected\": [indices of chosen sets]} ; {\"tour\": [city indices in visiting order]} ;
+                      {\"assignment\": [location index of facility 0, of facility 1, ...]}.
+                      It must hold exactly the decisions the problem asks for, and enough of them that an
+                      independent checker can verify every constraint and compute the objective from the
+                      solution plus the instance. Do not mention binary variables, QUBO or encodings.>",
+  "cases": [
+    {
+      "name": "<short snake_case id, e.g. n4_case1>",
+      "description": "<one sentence about this instance; include any source link/doi/citation given in the input>",
+      "instance": { <all data the problem needs, 0-based indices, numbers as numbers> },
+      "optimal_value": <float: the optimal objective value EXACTLY as the input states it, in the problem's own
+                        convention. Do NOT negate maximisation values. Do NOT recompute it.>,
+      "reference_solution": <ONE optimal solution the input states, written EXACTLY in solution_format (same JSON
+                             type, same keys); if the input lists several optimal solutions, use the first one;
+                             null if the input gives no optimal solution. Transcribe it faithfully; do not repair
+                             or recompute it.>
+    }
+  ]
+}
+
+Rules:
+- Extract ALL test cases present in the input.
+- Use the same instance keys and the same solution_format for every case.
+- Translate labels to 0-based indices consistently (e.g. S0..S3 -> 0..3, cities A,B,C -> 0,1,2) and say so in
+  solution_format when it matters.
+- edges format: list of [i, j, weight] triples (0-indexed nodes).
+{previous_feedback}
+Respond with the JSON object only. No prose. No markdown fences.

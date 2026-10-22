@@ -1,0 +1,38 @@
+{
+ "case": "ev_chargers_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 112.3
+  },
+  "model": {
+   "ok": false,
+   "seconds": 621.5,
+   "error": "ValueError: model validation failed: set 'var_type' has members with no decision variable: ['coverage']. Create variables for EVERY member (do not fix a decision such as the start of a tour by leaving its variables out; symmetric solutions are fine). A member that can never be chosen must be removed in the data stage"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "cost": {
+  "llm_tokens": 106118,
+  "solver_calls": null
+ },
+ "seconds": 733.8
+}

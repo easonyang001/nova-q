@@ -1,0 +1,296 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 111.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 194.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 20.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 701.5
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 69.0
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position encoding TSP; M^2 variables; fits CGA backend for M<=30",
+ "schema": {
+  "sets": {
+   "nodes": {
+    "meaning": "Set of locations to visit, including all YouBike stations within radius and the start point (Daan MRT)",
+    "source": "public",
+    "reducible": null
+   },
+   "positions": {
+    "meaning": "Sequence positions in the tour, 0 to M-1",
+    "source": "user",
+    "reducible": null
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each node",
+    "index": [
+     "nodes"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each node",
+    "index": [
+     "nodes"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Euclidean straight-line distance between nodes",
+    "index": [
+     "nodes",
+     "nodes"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Compute pairwise distances from coordinates"
+    }
+   },
+   "radius": {
+    "meaning": "Search radius in meters from start point",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 500.0,
+    "unit": "m"
+   },
+   "start_lat": {
+    "meaning": "Latitude of the start point (Daan MRT)",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 25.033,
+    "unit": "deg_lat"
+   },
+   "start_lon": {
+    "meaning": "Longitude of the start point (Daan MRT)",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 121.5436,
+    "unit": "deg_lon"
+   }
+  }
+ },
+ "data_found": [
+  "臺北捷運車站出入口座標.csv",
+  "臺北捷運車站出入口無障礙電梯_無障礙坡道GPS座標.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix"
+  ],
+  "notes": "YouBike station data was not provided; used MRT station exit coordinates as proxy. Filtered for Daan MRT exits and included start point. Distances computed via haversine.",
+  "prep_log": "**資料來源**\n\n- 臺北捷運車站出入口座標（政府資料開放平台） <https://data.gov.tw/dataset/128428>，授權：待確認，取得 2026-10-12T08:57:24.494132+00:00\n- 臺北捷運車站出入口無障礙電梯、無障礙坡道GPS座標（政府資料開放平台） <https://data.gov.tw/dataset/128414>，授權：待確認，取得 2026-10-12T08:57:24.713925+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter Daan MRT exits | 390 | 12 |  |",
+  "flags": [],
+  "review_required": [
+   "nodes: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "nodes: ['MRT exits used as YouBike station proxy']",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat: ['MRT exits used as YouBike station proxy']",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: ['MRT exits used as YouBike station proxy']",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: ['Distances computed from MRT exit coordinates']",
+   "獨立資料核對不一致：set 'nodes' has 13 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 1. Check which rows you keep and whether duplicates of the same place are merged"
+  ],
+  "sources": [
+   {
+    "title": "臺北捷運車站出入口座標",
+    "url": "https://data.gov.tw/dataset/128428",
+    "resource_url": "https://data.taipei/api/dataset/cfa4778c-62c1-497b-b704-756231de348b/resource/307a7f61-e302-4108-a817-877ccbfca7c1/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T08:57:24.494132+00:00",
+    "sha256": "134d8488c240fb23e04535db6a94da73006f890c83617eeedaa9b26c9f120015",
+    "bytes": 17633
+   },
+   {
+    "title": "臺北捷運車站出入口無障礙電梯、無障礙坡道GPS座標",
+    "url": "https://data.gov.tw/dataset/128414",
+    "resource_url": "https://data.taipei/api/dataset/0a3bb422-9eb5-459b-a9d4-138456516183/resource/61792c82-6609-41b2-9775-3a346934826d/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T08:57:24.713925+00:00",
+    "sha256": "93da8455aa6408a5f498ee95392a6784464f67571c3eb9f57351c36c8d706fcc",
+    "bytes": 10392
+   }
+  ],
+  "n_variables": 169,
+  "n_constraints": 26,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "nodes": 1
+    },
+    "totals": {}
+   },
+   "issues": [
+    "set 'nodes' has 13 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 1. Check which rows you keep and whether duplicates of the same place are merged"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "d7c858ec2f612808470f6c5b",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 39,
+    "invalid": 39,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_issues",
+   "version": "d7c858ec2f612808470f6c5b",
+   "issues": [
+    "the delivered solution breaks the confirmed requirements: Start node Start must be at position 0, found at 12"
+   ],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_issues",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "已有可行方案，達到簡單基準的品質；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "annealer",
+  "quality_gap": -0.7537107053508753,
+  "objective": 2057.889929872721,
+  "baseline_objective": 8355.580102677575
+ },
+ "truth_used": "run did not use the official feed: judged against the pre-downloaded official snapshot",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "nodes",
+    "mapping": "coordinates within 30 m",
+    "entity_set_declared": true,
+    "instance_entities": 13,
+    "mapped": 5,
+    "duplicates": [
+     "YouBike2.0_捷運大安站(5號出口)"
+    ],
+    "missing_real_entities": 14,
+    "missing_examples": [
+     "YouBike2.0_復興南路1段340巷口",
+     "YouBike2.0_信義大安路口(信維大樓)",
+     "YouBike2.0_大安高工",
+     "YouBike2.0_東豐公園",
+     "YouBike2.0_德安公園(四維路66巷)",
+     "YouBike2.0_瑞安街208巷",
+     "YouBike2.0_復興南路二段128巷口",
+     "YouBike2.0_仁愛路四段48巷口",
+     "YouBike2.0_捷運大安站(6號出口)",
+     "YouBike2.0_信義路三段134巷口"
+    ],
+    "unmapped_ids": [
+     "Daan_Exit_0",
+     "Daan_Exit_5",
+     "Daan_Exit_6",
+     "Daan_Exit_7",
+     "Daan_Exit_8",
+     "Daan_Exit_9",
+     "Daan_Exit_10",
+     "Daan_Exit_11"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "nodes",
+      "positions"
+     ]
+    ],
+    "structure": "13 decision entities but only 5 map to real ones: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 13,
+    "required_stations_missing": 14,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 521.3856542735402
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 183288,
+  "solver_calls": 3
+ },
+ "seconds": 1096.7
+}

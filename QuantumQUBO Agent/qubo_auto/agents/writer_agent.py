@@ -27,7 +27,7 @@ def generate_latex(
     prompt = _fill(
         _PROMPT_TEMPLATE,
         nl_problem=nl_problem,
-        spec_json=spec.model_dump_json(indent=2),
+        spec_json=spec.model_dump_json(indent=2),兩個語言模型線上聊天
         formulation_json=formulation.model_dump_json(indent=2),
         problem_name=spec.problem_name,
     )

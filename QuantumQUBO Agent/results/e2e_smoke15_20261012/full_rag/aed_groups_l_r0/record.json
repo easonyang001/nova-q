@@ -1,0 +1,239 @@
+{
+ "case": "aed_groups_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 109.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 495.4
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 42.3
+  },
+  "data": {
+   "ok": true,
+   "seconds": 275.9
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 71.5
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 43.3
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location after filtering by district and category",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "Inspection team identifier",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "num_teams": {
+    "meaning": "Number of inspection teams (fixed to 4)",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 4
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [],
+  "notes": "Filtered to 4 districts (松山, 大安, 中山, 信義) via 區域代碼 modulo 1000. Excluded '學校、大型集會場所' and '其他'. Deduplicated by name+address+coords. Teams fixed to 4 per spec.",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-12T07:07:14.715202+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Load raw table | 2729 | 2729 | Initial load from public dataset |\n| Clean 區域代碼 | 2729 | 2729 | Converted to numeric, dropped NaN |\n| Filter districts | 2729 | 320 | Kept 松山, 大安, 中山, 信義 |\n| Filter categories | 320 | 54 | Excluded schools, large gathering, other |\n| Deduplicate | 54 | 48 | One entry per physical location |\n| Drop missing coords | 48 | 48 | Removed invalid coords |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：lat, lon, num_teams, sites, teams",
+   "獨立資料核對不一致：set 'sites' has 48 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 231. Check which rows you keep and whether duplicates of the same place are merged",
+   "獨立資料核對不一致：parameter 'lat' sums to 1,201.54, but an independent computation from the raw tables expects 5,785.76. Rows may be missing, duplicated, from the wrong period or include totals of a higher level",
+   "獨立資料核對不一致：parameter 'lon' sums to 5,834.05, but an independent computation from the raw tables expects 28,072.8. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T07:07:14.715202+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 192,
+  "n_constraints": 52,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 231
+    },
+    "totals": {
+     "lat": 5785.7632110899995,
+     "lon": 28072.8494841
+    }
+   },
+   "issues": [
+    "set 'sites' has 48 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 231. Check which rows you keep and whether duplicates of the same place are merged",
+    "parameter 'lat' sums to 1,201.54, but an independent computation from the raw tables expects 5,785.76. Rows may be missing, duplicated, from the wrong period or include totals of a higher level",
+    "parameter 'lon' sums to 5,834.05, but an independent computation from the raw tables expects 28,072.8. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "aa8fd6ee70efdb5d055a5e54",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 36,
+    "invalid": 36,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "aa8fd6ee70efdb5d055a5e54",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.470458859354826,
+  "objective": 231024.76182058858,
+  "baseline_objective": 436273.49055281386
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 48,
+    "mapped": 48,
+    "duplicates": [],
+    "missing_real_entities": 152,
+    "missing_examples": [
+     "BELLAVITA 寶麗廣場",
+     "Blitz",
+     "Curves女性專用30分鐘健身中心復興民權店",
+     "DREAM PLAZA",
+     "Force Fitness 小巨蛋",
+     "Hotel Indigo Taipei North 台北大直英迪格酒店",
+     "JR東日本大飯店 台北",
+     "MAJI MAJI集食行樂",
+     "Marriott Taipei 台北萬豪酒店",
+     "上引水產有限公司(台北漁市)"
+    ],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "structure": "the instance has 48 mapped places instead of 200: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 48,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 7206657.906369695
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 168406,
+  "solver_calls": 3
+ },
+ "seconds": 1038.0
+}

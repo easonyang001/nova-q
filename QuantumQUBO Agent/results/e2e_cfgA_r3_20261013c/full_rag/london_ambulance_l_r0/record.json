@@ -1,0 +1,102 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 151.2
+  },
+  "model": {
+   "ok": true,
+   "seconds": 271.6
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 44.4
+  },
+  "data": {
+   "ok": false,
+   "seconds": 2504.9,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: in_area: no boundary found for 'Islington, London'; write the area as '<area>, <city>'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 23, in load_data\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 106, in wrapped\n    return obj(*a, **kw)\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/prep/geo.py\", line 315, in in_area\n    hit = points_in_polygon(la, lo, area_polygon(a, country))\n                                    ~~~~~~~~~~~~^^^^^^^^^^^^\nValueError: in_area: no boundary found for 'Islington, London'; write the area as '<area>, <city>'\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-p-median",
+  "mp-coverage-once"
+ ],
+ "model_choice": "Restricted Assignment QUBO. Uses binary x_j for site selection and z_{i,j} for assignment only to the k nearest candidates. Total variables = |J| + |I|*k. For |J|<=150 and k=20, variables <= 3150, fitting the 3600 backend limit. Exact if the true nearest open site lies within the k nearest candidates.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "LSOA identifier (candidate & demand point)",
+    "source": "public"
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "2021 Census resident population",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat": {
+    "meaning": "Latitude of LSOA centroid",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of LSOA centroid",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k_open": {
+    "meaning": "Number of ambulance stations to open",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   },
+   "nearest_k": {
+    "meaning": "Number of nearest candidates considered for each demand point to bound QUBO size",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 20
+   }
+  }
+ },
+ "data_found": [
+  "Lower_layer_Super_Output_Areas_December_2021_EW_Population_W.csv",
+  "TS001_-_Number_of_usual_residents_in_households_and_communal.csv"
+ ],
+ "cost": {
+  "llm_tokens": 259592,
+  "solver_calls": null
+ },
+ "seconds": 2972.2
+}

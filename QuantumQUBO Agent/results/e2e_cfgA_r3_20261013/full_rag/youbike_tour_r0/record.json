@@ -1,0 +1,240 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 108.9
+  },
+  "model": {
+   "ok": true,
+   "seconds": 236.7
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 0.2,
+   "error": "PromptTooLong: step 'req_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 28443 output tokens and your prompt contains at least 4326 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested "
+  },
+  "data": {
+   "ok": true,
+   "seconds": 423.5
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 275.8
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Position encoding (p[i,k]) with N^2 binary variables. Two one-hot constraints (row/column sums = 1) enforce a permutation matrix. The quadratic objective naturally favors a single cycle. For N=20, variables = 400, well within the 3,600 limit of the CGA backend.",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "YouBike station ID within 500m of Daan Station",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Sequence position in the tour (0 to N-1)",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "distance_matrix": {
+    "meaning": "Euclidean distance between stations in meters",
+    "index": [
+     "stations",
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "compute pairwise Euclidean distance from WGS84 coords"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "YouBike2_0臺北市公共自行車即時資訊.json",
+  "臺北市YouBike見位率統計_見位率.csv",
+  "臺北市YouBike見車率統計_見車率.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 500m of Daan Station (25.0330, 121.5436). Deduplicated by station ID (sno). Computed pairwise Euclidean distance in meters from WGS84 coordinates. Positions are 0 to N-1.",
+  "prep_log": "**資料來源**\n\n- YouBike2.0臺北市公共自行車即時資訊（catalogue data.gov.tw） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-13T02:30:06.696192+00:00\n- 臺北市YouBike見位率統計 — 見位率（政府資料開放平台） <https://data.gov.tw/dataset/174976>，授權：待確認，取得 2026-10-13T02:29:50.572782+00:00\n- 臺北市YouBike見車率統計 — 見車率（政府資料開放平台） <https://data.gov.tw/dataset/166491>，授權：待確認，取得 2026-10-13T02:29:50.941621+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (25.033, 121.5436) 500 公尺內的資料 | 1819 | 18 |  |\n| Filter within 500m of Daan Station | 1819 | 18 |  |\n| Deduplicate by sno | 18 | 18 |  |",
+  "flags": [],
+  "review_required": [
+   "stations: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "distance_matrix: 尚未聲明 unit，需求為 m",
+   "distance_matrix: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：distance_matrix, lat, lon, positions, stations"
+  ],
+  "sources": [
+   {
+    "title": "YouBike2.0臺北市公共自行車即時資訊",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "catalogue data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:30:06.696192+00:00",
+    "sha256": "e026d17012a67f18476fd8d89ae023d7edcd30a3dd8d2c2d9935fd8f167ba431",
+    "bytes": 952827
+   },
+   {
+    "title": "臺北市YouBike見位率統計 — 見位率",
+    "url": "https://data.gov.tw/dataset/174976",
+    "resource_url": "https://data.taipei/api/dataset/65f4c67c-56c8-4b52-abda-5b58946dfecd/resource/d969e222-7fb3-49f1-95f7-3894a8b9f2bb/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:29:50.572782+00:00",
+    "sha256": "cc06f53f01d102bf8437db0d85faca5476541224490202467b0feafae543d08e",
+    "bytes": 147256
+   },
+   {
+    "title": "臺北市YouBike見車率統計 — 見車率",
+    "url": "https://data.gov.tw/dataset/166491",
+    "resource_url": "https://data.taipei/api/dataset/ba0dafae-043c-4730-b97e-2defd7af766c/resource/55a1ce30-7c99-497c-bdcd-bb88b848c803/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T02:29:50.941621+00:00",
+    "sha256": "4865f65b2d6267de184640abb05e5adf2f3c886710e3fa935ec67508b255dc75",
+    "bytes": 147256
+   }
+  ],
+  "n_variables": 324,
+  "n_constraints": 36,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: ModuleNotFoundError: No module named 'toolkit'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/datacheck.py\", line 33, in _expected\n    exec(compile(code, \"<data_checker>\", \"exec\"), ns)\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<data_checker>\", line 3, in <module>\nModuleNotFoundError: No module named 'toolkit'\n"
+   ]
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.5785859629442635,
+  "objective": 3420.914531263017,
+  "baseline_objective": 8117.7042776355465
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (YouBike2_0臺北市公共自行車即時資訊.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 18,
+    "mapped": 18,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 18,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 3417.0711754159815,
+    "reference_quality": 3504.645699100399,
+    "gap_vs_reference": -0.025
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 135209,
+  "solver_calls": 3
+ },
+ "seconds": 1045.2
+}

@@ -1,0 +1,335 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 501.9
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1992.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 212.7
+  },
+  "data": {
+   "ok": true,
+   "seconds": 7918.0
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 2758.2
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "修正未通過檢查，保留先前版本：目前模型的限制互相衝突，獨立可行性檢查確認無解；先回查資料與模型，不再盲目調 penalty。系統不會自行刪除已確認的需求"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "p-median with k-nearest candidate restriction. Approx 2200 variables for 200 LSOAs (k=10). Fits CGA.",
+ "schema": {
+  "sets": {
+   "demand_points": {
+    "meaning": "LSOA population weighted centroids",
+    "source": "public"
+   },
+   "candidate_sites": {
+    "meaning": "Potential locations for ambulance stations (subset of LSOAs)",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Resident population of the LSOA",
+    "index": [
+     "demand_points"
+    ],
+    "type": "int",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the centroid",
+    "index": [
+     "demand_points"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the centroid",
+    "index": [
+     "demand_points"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "site_lat": {
+    "meaning": "Latitude of the candidate site",
+    "index": [
+     "candidate_sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "site_lon": {
+    "meaning": "Longitude of the candidate site",
+    "index": [
+     "candidate_sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between demand point i and candidate site j",
+    "index": [
+     "demand_points",
+     "candidate_sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon",
+      "site_lat",
+      "site_lon"
+     ],
+     "how": "straight line distance"
+    }
+   },
+   "p": {
+    "meaning": "Number of stations to deploy",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "2021_Lower_layer_Super_Output_Area_Population_Weighted_Centr.geojson",
+  "LSOA_2021.geojson",
+  "LSOA_Atlas_Current_LSOA_boundaries_post-2011.csv",
+  "TS001_-_Number_of_usual_residents_in_households_and_communal.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "keep_category",
+   "match"
+  ],
+  "notes": "\n1. Filtered LSOAs to only those in 'Camden' and 'Islington' using the 'LSOA_Atlas_Current_LSOA_boundaries_post-2011' table (Names column).\n2. Extracted 2021 population from 'TS001' table, filtering for 'Total: All usual residents' using prep.keep_category.\n3. Used '2021_Lower_layer_Super_Output_Area_Population_Weighted_Centr' for the coordinates of LSOA centroids.\n4. Demand points are all LSOAs in the two boroughs that have both population and centroid data.\n5. Candidate sites are initially the same set of LSOAs.\n6. Distance matrix computed using prep.haversine_matrix.\n",
+  "prep_log": "**資料來源**\n\n- 2021 Lower layer Super Output Area (Population Weighted Centroid)（ArcGIS Hub） <https://hub.arcgis.com/datasets/ce789f97d0194b39a284d48ef1293b11_0>，授權：待確認，取得 2026-10-13T21:17:58.041932+00:00\n- LSOA 2021（ArcGIS Hub） <https://hub.arcgis.com/datasets/f5b96112c4b7458a8883f8b25b9a663c_0>，授權：待確認，取得 2026-10-13T20:42:43.500199+00:00\n- LSOA Atlas — Current LSOA boundaries post-2011（catalogue data.gov.uk） <https://data.gov.uk/dataset/lsoa-atlas1>，授權：待確認，取得 2026-10-13T21:17:56.628199+00:00\n- TS001 - Number of usual residents in households and communal establishments — 2021 super output areas - lower layer（Nomis (ONS official statistics)） <https://www.nomisweb.co.uk/datasets/nm_2021_1>，授權：待確認，取得 2026-10-13T20:42:35.991320+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter boroughs | 4837 | 256 | Kept only Camden and Islington LSOAs |\n| 只保留 C2021_RESTYPE_3_NAME=Total: All usual residents | 14343 | 4781 |  |\n| Extract population | 14343 | 4781 | Filtered for total usual residents |\n| Extract centroids | 1000 | 1000 | Selected LSOA codes and coordinates |\n| 合併（LSOA_CODE ↔ LSOA_CODE） | 256 | 256 | 完全對上 0、模糊對上 256、對不上 0 |\n| 合併（LSOA_CODE ↔ LSOA_CODE） | 256 | 256 | 完全對上 19、模糊對上 237、對不上 0 |\n| Final merge and cleanup | 256 | 256 | Joined borough list with population and centroids |",
+  "flags": [],
+  "review_required": [
+   "demand_points: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "candidate_sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "population: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "site_lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "site_lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "獨立資料核對不一致：parameter 'population' sums to 420,736, but an independent computation from the raw tables expects 0. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+  ],
+  "sources": [
+   {
+    "title": "2021 Lower layer Super Output Area (Population Weighted Centroid)",
+    "url": "https://hub.arcgis.com/datasets/ce789f97d0194b39a284d48ef1293b11_0",
+    "resource_url": "https://services-eu1.arcgis.com/6BsumkdKnml1ntNV/arcgis/rest/services/2021_LSOA_Population_Weighted_Centroid/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+    "publisher": "ArcGIS Hub",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T21:17:58.041932+00:00",
+    "sha256": "c4cf35094bf4f9a11d1655f0c43b07a5f2fc72de42965a0e8709db6756c95beb",
+    "bytes": 182308
+   },
+   {
+    "title": "LSOA 2021",
+    "url": "https://hub.arcgis.com/datasets/f5b96112c4b7458a8883f8b25b9a663c_0",
+    "resource_url": "https://services3.arcgis.com/HFpQvhZ7zqF7O2S8/arcgis/rest/services/LSOA_2021/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+    "publisher": "ArcGIS Hub",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T20:42:43.500199+00:00",
+    "sha256": "f5a978a33bd64549cee5c5ad21d53adaef16e4bdfbc770a2d94ae04827376ef5",
+    "bytes": 6423992
+   },
+   {
+    "title": "LSOA Atlas — Current LSOA boundaries post-2011",
+    "url": "https://data.gov.uk/dataset/lsoa-atlas1",
+    "resource_url": "https://data.london.gov.uk/download/2n8zy/0193f884-2ccd-49c2-968e-28aa3b1c480d/lsoa-data.csv",
+    "publisher": "catalogue data.gov.uk",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T21:17:56.628199+00:00",
+    "sha256": "845487ca70e9da0a642f9e7eec033b63f8d19681308b5d70638bd24898d43b79",
+    "bytes": 5427580
+   },
+   {
+    "title": "TS001 - Number of usual residents in households and communal establishments — 2021 super output areas - lower layer",
+    "url": "https://www.nomisweb.co.uk/datasets/nm_2021_1",
+    "resource_url": "https://www.nomisweb.co.uk/api/v01/dataset/NM_2021_1.data.csv?date=latest&geography=TYPE151&measures=20100",
+    "publisher": "Nomis (ONS official statistics)",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T20:42:35.991320+00:00",
+    "sha256": "634c26cd3c6795a5b0ab84887b5432826d5e3f47084c525f49fbe1100585d093",
+    "bytes": 5243393
+   }
+  ],
+  "n_variables": 2816,
+  "n_constraints": 2817,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "demand_points": 0,
+     "candidate_sites": 0
+    },
+    "totals": {
+     "population": 0.0
+    }
+   },
+   "issues": [
+    "parameter 'population' sums to 420,736, but an independent computation from the raw tables expects 0. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+   ]
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:infeasible",
+  "diagnosis:diagnose",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "delivery:needs_input"
+ ],
+ "delivery": {
+  "status": "no_solution",
+  "message": "資料／模型檢查未通過，未消耗退火機額度",
+  "solution_source": null,
+  "quality_gap": null,
+  "objective": null,
+  "baseline_objective": null
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "demand_points",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 256,
+    "mapped": 244,
+    "duplicates": [],
+    "missing_real_entities": 12,
+    "missing_examples": [
+     "Camden 015F",
+     "Camden 022F",
+     "Camden 022G",
+     "Camden 023F",
+     "Camden 026E",
+     "Camden 029E",
+     "Islington 007E",
+     "Islington 007F",
+     "Islington 011J",
+     "Islington 011K"
+    ],
+    "unmapped_ids": [
+     "E01000864",
+     "E01000865",
+     "E01000953",
+     "E01000945",
+     "E01000950",
+     "E01000936",
+     "E01000940",
+     "E01000852",
+     "E01000854",
+     "E01002731"
+    ],
+    "coordinates_outside_area": 292,
+    "coordinates_far_from_own_entity": [
+     "E01000907",
+     "E01000908",
+     "E01000909",
+     "E01000912",
+     "E01000913",
+     "E01000893",
+     "E01000894",
+     "E01000895",
+     "E01000896",
+     "E01000899"
+    ],
+    "identical_coordinates": 101,
+    "population_param": "population",
+    "population_exact_matches": 0,
+    "population_total": 420736.0,
+    "population_truth_total": 426727
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "candidate_sites"
+     ],
+     [
+      "candidate_sites",
+      "demand_points"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "solution": "none delivered"
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 423860,
+  "solver_calls": 0
+ },
+ "seconds": 13383.7
+}

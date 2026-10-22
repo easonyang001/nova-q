@@ -1,0 +1,96 @@
+{
+ "case": "london_ambulance_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 118.3
+  },
+  "model": {
+   "ok": true,
+   "seconds": 218.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 47.7
+  },
+  "data": {
+   "ok": false,
+   "seconds": 600.2,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: Local Authority column not found.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 166, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 51, in load_data\nValueError: DATA GAP: Local Authority column not found.\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality"
+ ],
+ "model_choice": "Standard p-median formulation with assignment variables. N=24 MSOAs -> 24 y + 576 x = 600 binary variables. Fits CGA backend (limit 3600) with room for auxiliary variables if needed. Exact formulation, no relaxation.",
+ "schema": {
+  "sets": {
+   "msoa": {
+    "meaning": "MSOA identifier",
+    "source": "public"
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "Population of each MSOA",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "lat": {
+    "meaning": "Latitude of MSOA center",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of MSOA center",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of ambulance stations to open",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "How_life_has_changed_in_Camden_Census_2021.csv",
+  "How_life_has_changed_in_Camden_Census_2021.xlsx",
+  "How_the_population_changed_in_Camden_Census_2021.xlsx",
+  "MSOA_2011_to_MSOA_2021_to_Local_Authority_District_2022_Best.csv"
+ ],
+ "cost": {
+  "llm_tokens": 222239,
+  "solver_calls": null
+ },
+ "seconds": 986.2
+}

@@ -1,0 +1,29 @@
+Quadratic unconstrained binary optimization (QUBO) lets annealing hardware attack scheduling, routing, location
+and many other combinatorial problems, but turning a real problem into a solved QUBO still takes an expert: the
+problem must be pinned down, real data must be found and cleaned, the model must be written and checked, and
+penalty weights and solver settings must be tuned on the hardware. Large language models
+(LLMs) can draft QUBO formulations from natural language, but formulation correctness alone does not establish
+that a workflow has acquired the intended data or delivered a usable decision.
+We present a human-in-the-loop agent system that goes from a one-sentence problem description to a solution on
+an annealer, built entirely on a locally served open model. The system clarifies the problem (with sourced web
+lookup), lets the model choose and write the formulation under problem-independent structural checks, finds and
+preprocesses public data through a typed sets-and-parameters interface, records provenance, and submits the QUBO to
+interchangeable backends: simulated annealing, a GPU annealer, Fujitsu's Digital Annealer and D-Wave (direct QPU
+and the Leap Hybrid service). The experiments reported here use simulated annealing, the GPU annealer and the
+D-Wave Leap Hybrid service; the Digital Annealer rejected our submission at its monthly account limit. An outer
+recovery loop checks data and model failures before any tuning, preserves model--data versions, and
+distinguishes usable, limited and unavailable solutions. Penalty tuning is a secondary option for improving feasibility or quality against a baseline; the UI
+starts with the default policy.
+Separate checker roles compare prepared data with raw-table aggregates and model decisions with the confirmed
+requirements. These checks provide repair evidence rather than correctness guarantees. Optional retrieval
+supplies general modelling patterns. A person confirms the specification, approves data assumptions and reviews
+the result; unresolved failures are returned with a diagnosis. A new real-data ablation protocol separates
+pipeline structure, checking, repair and pattern retrieval; repeated evaluation under a frozen version remains
+open.
+We also show that the standard way of verifying LLM-written QUBOs is unreliable: in an audit of 33 failures of
+an existing pipeline, at least 7 of 12 ``shape'' failures were caused by wrong LLM-written test cases rather than
+wrong models, and one benchmark's reference answer contradicts itself. We propose problem-level verification,
+which decodes every ground state and checks it with an independent checker anchored on the human-stated
+optimum. Under it, the pipeline solves 70.3\% (69--72\%) of 100 benchmarks over three runs, while 27\% of the
+benchmarks change outcome between identical runs. On a 12-category suite the local system produced a valid model
+for all 36 runs, and the GPU annealer reached the exact optimum in 7 of the 9 categories with a known optimum.

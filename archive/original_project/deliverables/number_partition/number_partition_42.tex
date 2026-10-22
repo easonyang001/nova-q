@@ -1,0 +1,87 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Partition Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Partition Problem}
+
+\paragraph{Problem Statement.}
+Given a collection of $N$ positive integers $\{a_0, a_1, \dots, a_{N-1}\}$, partition the set into two disjoint subsets $S_0$ and $S_1$ such that the absolute difference between the sum of the elements in $S_0$ and the sum of the elements in $S_1$ is minimized.
+
+\paragraph{Decision Variables.}
+For each integer index $i \in \{0, 1, \dots, N-1\}$, introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i = 1$ indicates that the integer $a_i$ is assigned to subset $S_1$, while $x_i = 0$ indicates assignment to subset $S_0$. The collection of variables is denoted by the vector $x = (x_0, x_1, \dots, x_{N-1}) \in \{0, 1\}^N$.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 --- Original Objective.}
+Let $A_0 = \sum_{i: x_i = 0} a_i$ and $A_1 = \sum_{i: x_i = 1} a_i$ denote the sums of the two subsets. The difference $A_1 - A_0$ can be expressed compactly using the binary variables as $\sum_{i=0}^{N-1} a_i (2x_i - 1)$. Minimizing the absolute difference is equivalent to minimizing its square:
+\begin{align}
+    \min_{x \in \{0,1\}^N} \left( \sum_{i=0}^{N-1} a_i (2x_i - 1) \right)^2.
+\end{align}
+
+\textbf{Step 2 --- Constraints.}
+The problem imposes no explicit constraints. The requirement that each integer belongs to exactly one subset is implicitly enforced by the binary definition of $x_i$.
+
+\textbf{Step 3 --- Expansion of the Squared Objective.}
+Since there are no constraints, no penalty terms are required. We expand the squared objective directly to obtain a quadratic form. Let $S = \sum_{j=0}^{N-1} a_j$ denote the total sum of all input integers. Expanding the square yields:
+\begin{align}
+    \left( \sum_{i=0}^{N-1} a_i (2x_i - 1) \right)^2 
+    &= \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} a_i a_j (2x_i - 1)(2x_j - 1) \\
+    &= \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} a_i a_j (4x_i x_j - 2x_i - 2x_j + 1) \\
+    &= 4 \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} a_i a_j x_i x_j - 2 \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} a_i a_j x_i - 2 \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} a_i a_j x_j + \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} a_i a_j.
+\end{align}
+Using the idempotent property $x_k^2 = x_k$ for binary variables, we separate diagonal ($i=j$) and off-diagonal ($i \neq j$) quadratic terms. The linear terms simplify by factoring out the constant sum $S$:
+\begin{align}
+    -2 \sum_{i=0}^{N-1} x_i a_i \left( \sum_{j=0}^{N-1} a_j \right) - 2 \sum_{j=0}^{N-1} x_j a_j \left( \sum_{i=0}^{N-1} a_i \right) = -4S \sum_{i=0}^{N-1} a_i x_i.
+\end{align}
+The constant term simplifies to $S^2$. The quadratic term becomes:
+\begin{align}
+    4 \sum_{i=0}^{N-1} a_i^2 x_i + 4 \sum_{i \neq j} a_i a_j x_i x_j.
+\end{align}
+
+\textbf{Step 4 --- Combined Hamiltonian.}
+Collecting all terms and rewriting the off-diagonal quadratic sum over unique pairs $i < j$ (noting that $x_i x_j = x_j x_i$), we obtain the QUBO Hamiltonian $H(x)$:
+\begin{align}
+    H(x) = \sum_{i=0}^{N-1} \left( 4a_i^2 - 4a_i S \right) x_i + \sum_{0 \le i < j \le N-1} 8a_i a_j x_i x_j + S^2.
+\end{align}
+
+\textbf{Step 5 --- Q Matrix Entries and Offset.}
+Reading the coefficients from the general Hamiltonian $H(x) = \sum_{i \le j} Q_{ij} x_i x_j + c$, we obtain the following closed-form expressions for the QUBO matrix entries and constant offset:
+\begin{align}
+    Q_{i,i} &= 4a_i^2 - 4a_i \sum_{j=0}^{N-1} a_j, \quad \forall i \in \{0, \dots, N-1\}, \\
+    Q_{i,j} &= 8a_i a_j, \quad \forall 0 \le i < j \le N-1, \\
+    Q_{i,j} &= 0, \quad \forall i > j, \\
+    c &= \left( \sum_{j=0}^{N-1} a_j \right)^2.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The Partition Problem formulation contains no explicit constraints; therefore, no penalty weights are required. The binary variable definition inherently restricts the search space to valid partitions, and the objective function alone suffices to guide the optimization toward the minimum energy state.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over the domain $\{0,1\}^N$ directly minimizes the squared difference between the subset sums. Because the squared difference is non-negative, the global minimum energy corresponds to the smallest achievable difference. Any assignment $x$ that violates the implicit partition requirement is impossible under the binary variable definition, ensuring all evaluated states are feasible. Consequently, the ground state of $H(x)$ recovers the optimal partition that minimizes the absolute difference of subset sums.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N=3$ integers $a_0=1$, $a_1=2$, and $a_2=3$. The total sum is $S = 1+2+3 = 6$. Substituting these values into the general formulas yields the following QUBO parameters:
+\begin{align}
+    Q_{0,0} &= 4(1)^2 - 4(1)(6) = -20, \\
+    Q_{1,1} &= 4(2)^2 - 4(2)(6) = -32, \\
+    Q_{2,2} &= 4(3)^2 - 4(3)(6) = -36, \\
+    Q_{0,1} &= 8(1)(2) = 16, \\
+    Q_{0,2} &= 8(1)(3) = 24, \\
+    Q_{1,2} &= 8(2)(3) = 48, \\
+    c &= 6^2 = 36.
+\end{align}
+The resulting Hamiltonian is:
+\begin{align}
+    H(x) = -20x_0 - 32x_1 - 36x_2 + 16x_0x_1 + 24x_0x_2 + 48x_1x_2 + 36.
+\end{align}
+Evaluating $H(x)$ for the assignment $x = (1, 1, 0)$ (which places $a_0, a_1$ in $S_1$ and $a_2$ in $S_0$) gives:
+\begin{align}
+    H(1,1,0) = -20 - 32 + 16 + 36 = 0.
+\end{align}
+The energy is zero, confirming that the subsets $\{1, 2\}$ and $\{3\}$ have equal sums and represent the optimal partition for this instance.
+
+\end{document}

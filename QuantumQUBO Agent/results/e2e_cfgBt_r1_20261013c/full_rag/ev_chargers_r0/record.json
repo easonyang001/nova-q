@@ -1,0 +1,108 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 625.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1642.7
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 139.1
+  },
+  "data": {
+   "ok": false,
+   "seconds": 4160.2,
+   "error": "ValueError: data preparation failed: 預處理失敗：APITimeoutError: Request timed out."
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "MCLP (Maximum Covering Location Problem) formulation. Variables: x_i (station at site i), y_j (Li j covered). Total variables: 2 * N (approx 920 for Taipei). Fits CGA backend easily.",
+ "schema": {
+  "sets": {
+   "lis": {
+    "meaning": "Neighborhoods (Li) in Taipei City",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Total population of the Li",
+    "index": [
+     "lis"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "person"
+   },
+   "lat": {
+    "meaning": "Latitude of Li centroid",
+    "index": [
+     "lis"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of Li centroid",
+    "index": [
+     "lis"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of charging stations to place",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "coverage_radius": {
+    "meaning": "Distance threshold for coverage",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1000,
+    "unit": "m"
+   }
+  }
+ },
+ "data_found": [
+  "台北市村里界.geojson",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 140418,
+  "solver_calls": null
+ },
+ "seconds": 6568.2
+}

@@ -1,0 +1,249 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 526.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1831.4
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 1226.8
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1067.2
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 302.9
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.3
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP encoding. N^2 variables. For N=50, 2500 variables. Fits CGA backend.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike stations within 800m of MRT Daan",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "positions": {
+    "meaning": "The sequence order in the tour",
+    "source": "mock"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the YouBike station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between site i and site j",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "YouBike2_0臺北市公共自行車即時資訊.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "drop_stray_points",
+   "haversine_matrix",
+   "merge_same_place",
+   "within_radius"
+  ],
+  "notes": "\n1. Filtered YouBike stations to keep only those within 800 meters of MRT Daan Station (25.0330, 121.5436) using prep.within_radius.\n2. Cleaned coordinates using prep.drop_stray_points to remove any invalid GPS data.\n3. Merged stations that share the same name and are very close together using prep.merge_same_place to ensure one entity per real place.\n4. Reduced the number of sites to a maximum of 60 using prep.reduce_points to ensure the problem size fits the solver's performance constraints.\n5. Generated a distance matrix using prep.haversine_matrix for all selected stations.\n6. Created a mock 'positions' set as a sequence of IDs (P0, P1, ...) to represent the tour order.\n",
+  "prep_log": "**資料來源**\n\n- YouBike2.0臺北市公共自行車即時資訊（catalogue data.gov.tw） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-13T15:34:45.997557+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (25.033, 121.5436) 800 公尺內的資料 | 1819 | 38 |  |\n| Filter within 800m of MRT Daan | 1819 | 38 |  |\n| 移除離群座標（距中心 > 20 km） | 38 | 38 | 移除 0 筆，例：[] |\n| Drop stray points | 38 | 38 |  |\n| 合併同名且相距 150 m 內的同一地點 | 38 | 38 | 合併 0 筆 |\n| Merge same place stations | 38 | 38 |  |",
+  "flags": [],
+  "review_required": [
+   "sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "site_name: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）"
+  ],
+  "sources": [
+   {
+    "title": "YouBike2.0臺北市公共自行車即時資訊",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "catalogue data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T15:34:45.997557+00:00",
+    "sha256": "149ec887e79c198143bb35edfd59295ffe1ddaab6b50bd7f4b4c7e0448e8a386",
+    "bytes": 952693
+   }
+  ],
+  "n_variables": 1444,
+  "n_constraints": 76,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 38
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "92f40ec55372799427ea4955",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 59,
+    "invalid": 59,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "92f40ec55372799427ea4955",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.7344587537636261,
+  "objective": 7493.768354276644,
+  "baseline_objective": 28220.73203499993
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (YouBike2_0臺北市公共自行車即時資訊.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 38,
+    "mapped": 38,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 38,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 7493.7683542766445,
+    "reference_quality": 7426.4082799077005,
+    "gap_vs_reference": 0.0091
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 150134,
+  "solver_calls": 3
+ },
+ "seconds": 4955.0
+}

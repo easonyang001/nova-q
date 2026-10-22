@@ -1,0 +1,126 @@
+{
+ "case": "ev_chargers_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 192.3
+  },
+  "model": {
+   "ok": true,
+   "seconds": 249.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 55.8
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1620.3,
+   "error": "ValueError: data preparation failed: RuntimeError: AttributeError: Can only use .str accessor with string values, not floating\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 116, in load_data\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 106, in wrapped\n    return obj(*a, **kw)\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/prep/join.py\", line 64, in match\n    codes = lk.str.replace(\"|\", \"\", regex=False).str.fullmatch(r\"[\\d.\\-]+\").mean() > 0.5\n            ^^^^^^\nAttributeError: Can only use .str accessor with string values, not floating. Did you mean: 'std'?\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "Maximum Covering Location Problem (MCLP). Variables: x_i (site selection) and y_j (coverage indicator). For ~100 villages, total variables ~200. Fits CGA backend easily.",
+ "schema": {
+  "sets": {
+   "villages": {
+    "meaning": "Villages in Da'an District",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Total population of the village",
+    "index": [
+     "villages"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "people"
+   },
+   "lat": {
+    "meaning": "Latitude of village centroid",
+    "index": [
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of village centroid",
+    "index": [
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of charging stations to install",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   },
+   "radius": {
+    "meaning": "Coverage radius",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1000,
+    "unit": "m"
+   },
+   "dist_matrix": {
+    "meaning": "Distance between village centroids",
+    "index": [
+     "villages",
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "台北市村里界.geojson",
+  "村里界圖.csv",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 125010,
+  "solver_calls": null
+ },
+ "seconds": 2118.7
+}

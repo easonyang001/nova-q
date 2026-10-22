@@ -1,0 +1,84 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: FPGA Placement Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{FPGA Placement Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ logic blocks $\mathcal{B} = \{0, 1, \dots, N-1\}$ and a set of $M$ discrete FPGA sites $\mathcal{S} = \{0, 1, \dots, M-1\}$, the FPGA placement problem requires assigning each logic block to exactly one site such that each site accommodates at most one block. Connected blocks incur communication costs proportional to the distance between their assigned sites. The goal is to find a placement that minimizes the total weighted communication distance across all connected block pairs.
+
+\paragraph{Decision Variables.}
+We introduce binary decision variables $x_{i,j} \in \{0, 1\}$ for all $i \in \mathcal{B}$ and $j \in \mathcal{S}$, where $x_{i,j} = 1$ if and only if logic block $i$ is assigned to site $j$, and $x_{i,j} = 0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 -- Objective Function.} The original objective minimizes the total weighted communication distance:
+\begin{align}
+    \min \quad \sum_{i \in \mathcal{B}} \sum_{k \in \mathcal{B}} \sum_{j \in \mathcal{S}} \sum_{l \in \mathcal{S}} w_{ik} \, d_{jl} \, x_{i,j} \, x_{k,l},
+\end{align}
+where $w_{ik} \ge 0$ denotes the communication weight between block $i$ and block $k$, and $d_{jl} \ge 0$ denotes the physical distance between site $j$ and site $l$.
+
+\textbf{Step 2 -- Constraints.} The placement must satisfy two constraints:
+\begin{align}
+    \sum_{j \in \mathcal{S}} x_{i,j} = 1, \quad \forall i \in \mathcal{B}, \tag{C1} \\
+    \sum_{i \in \mathcal{B}} x_{i,j} \le 1, \quad \forall j \in \mathcal{S}. \tag{C2}
+\end{align}
+
+\textbf{Step 3 -- Penalty Term Conversion.} We convert the constraints into quadratic penalty terms added to the objective. Let $\lambda_1 > 0$ and $\lambda_2 > 0$ be penalty weights.
+
+For the equality constraint (C1), we use the standard squared penalty:
+\begin{align}
+    P_1 &= \lambda_1 \sum_{i \in \mathcal{B}} \left( \sum_{j \in \mathcal{S}} x_{i,j} - 1 \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_{i,j}^2 = x_{i,j}$ for binary variables yields:
+\begin{align}
+    P_1 &= \lambda_1 \sum_{i \in \mathcal{B}} \left( \sum_{j \in \mathcal{S}} x_{i,j} + \sum_{j \neq l} x_{i,j} x_{i,l} - 2 \sum_{j \in \mathcal{S}} x_{i,j} + 1 \right) \\
+    &= \lambda_1 \sum_{i \in \mathcal{B}} \left( \sum_{j \neq l} x_{i,j} x_{i,l} - \sum_{j \in \mathcal{S}} x_{i,j} + 1 \right).
+\end{align}
+This penalty contributes linear terms $-\lambda_1 x_{i,j}$, quadratic terms $\lambda_1 x_{i,j} x_{i,l}$ for $j \neq l$, and a constant offset $\lambda_1$ per block.
+
+For the inequality constraint (C2), we enforce that no site hosts more than one block by penalizing any pair of blocks assigned to the same site:
+\begin{align}
+    P_2 &= \lambda_2 \sum_{j \in \mathcal{S}} \sum_{i \in \mathcal{B}} \sum_{k \in \mathcal{B}, \, k > i} x_{i,j} x_{k,j}.
+\end{align}
+This penalty contributes quadratic terms $\lambda_2 x_{i,j} x_{k,j}$ for $i < k$ and zero otherwise.
+
+\textbf{Step 4 -- Combined QUBO Hamiltonian.} The full QUBO energy function $H(\mathbf{x})$ is the sum of the objective and penalty terms:
+\begin{align}
+    H(\mathbf{x}) &= \sum_{i \in \mathcal{B}} \sum_{k \in \mathcal{B}} \sum_{j \in \mathcal{S}} \sum_{l \in \mathcal{S}} w_{ik} d_{jl} x_{i,j} x_{k,l} \nonumber \\
+    &\quad + \lambda_1 \sum_{i \in \mathcal{B}} \left( \sum_{j \neq l} x_{i,j} x_{i,l} - \sum_{j \in \mathcal{S}} x_{i,j} + 1 \right) \nonumber \\
+    &\quad + \lambda_2 \sum_{j \in \mathcal{S}} \sum_{i < k} x_{i,j} x_{k,j}.
+\end{align}
+
+\textbf{Step 5 -- Q Matrix Entries and Offset.} Reading off the coefficients from $H(\mathbf{x}) = \sum_{(i,j) \le (k,l)} Q_{(i,j),(k,l)} x_{i,j} x_{k,l} + c$, we obtain the following closed-form expressions for the upper-triangular Q matrix entries and the constant offset:
+\begin{align}
+    Q_{(i,j),(i,j)} &= -\lambda_1, \\
+    Q_{(i,j),(i,l)} &= w_{ii} d_{jl} + \lambda_1, \quad j \neq l, \\
+    Q_{(i,j),(k,j)} &= w_{ik} d_{jj} + \lambda_2, \quad i < k, \\
+    Q_{(i,j),(k,l)} &= w_{ik} d_{jl}, \quad i \neq k, \, j \neq l, \\
+    c &= \lambda_1 N.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weights $\lambda_1$ and $\lambda_2$ must be chosen large enough to ensure that any energy reduction from improving the objective is outweighed by the penalty incurred from violating constraints. The maximum possible objective gain from violating a single constraint is bounded by $N \cdot \max(w) \cdot \max(d)$. A sufficient condition to guarantee constraint satisfaction at the global minimum is:
+\begin{align}
+    \lambda_1, \lambda_2 > N^2 \cdot \max_{i,k} w_{ik} \cdot \max_{j,l} d_{jl}.
+\end{align}
+This ensures that the energy of any infeasible configuration strictly exceeds that of the optimal feasible configuration.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{NM}$ recovers the optimal placement because (i) all feasible assignments satisfy the constraints exactly, yielding zero penalty energy, so $H(\mathbf{x})$ reduces to the original objective; (ii) any infeasible assignment violates at least one constraint, incurring a penalty energy of at least $\min(\lambda_1, \lambda_2)$. By choosing $\lambda_1, \lambda_2$ according to the justification above, the penalty strictly dominates any possible reduction in the communication cost term. Consequently, the global minimum of $H(\mathbf{x})$ must occur at a feasible point, and among feasible points, $H(\mathbf{x})$ equals the objective function, guaranteeing that the minimizer corresponds to the optimal placement.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N=3$ blocks, $M=3$ sites, and penalty weights $\lambda_1 = \lambda_2 = 10000$. The variable mapping follows $x_{i,j} \leftrightarrow x_{3i+j}$ for $i,j \in \{0,1,2\}$, yielding 9 binary variables. Substituting these parameters into the general formulas yields the concrete Hamiltonian:
+\begin{align}
+    H(\mathbf{x}) &= \sum_{i,k=0}^{2} \sum_{j,l=0}^{2} w_{ik} d_{jl} x_{3i+j} x_{3k+l} \nonumber \\
+    &\quad + 10000 \sum_{i=0}^{2} \left( \sum_{j \neq l} x_{3i+j} x_{3i+l} - \sum_{j=0}^{2} x_{3i+j} + 1 \right) \nonumber \\
+    &\quad + 10000 \sum_{j=0}^{2} \sum_{i < k} x_{3i+j} x_{3k+j}.
+\end{align}
+The constant offset evaluates to $c = 10000 \times 3 = 30000$. The Q matrix entries follow directly from the general closed forms; for instance, $Q_{(0,0),(0,0)} = -10000$, $Q_{(0,0),(0,1)} = w_{00} d_{01} + 10000$, $Q_{(0,0),(1,0)} = w_{01} d_{00} + 10000$, and $Q_{(0,0),(1,1)} = w_{01} d_{01}$. Solving this QUBO yields the block-to-site assignment that minimizes total weighted wirelength while strictly satisfying the one-block-per-site and one-site-per-block constraints.
+\end{document}

@@ -1,0 +1,82 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Planar Robot Inverse Kinematics Candidate Selection}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Planar Robot Inverse Kinematics Candidate Selection}
+
+\paragraph{Problem Statement.}
+Given a planar robot with $N$ discretized joint-angle candidates, the task is to select exactly one candidate that minimizes the combined inverse kinematics (IK) error and regularization cost. Let $N \in \mathbb{Z}^+$ denote the number of candidates, and let $c_i \in \mathbb{R}$ denote the cost associated with candidate $i$ for $i \in \{0, \dots, N-1\}$. The goal is to identify the candidate index $i^*$ that yields the minimum total cost while satisfying the selection constraint.
+
+\paragraph{Decision Variables.}
+We introduce binary decision variables $x_i \in \{0, 1\}$ for each candidate $i \in \{0, \dots, N-1\}$. The variable $x_i$ equals $1$ if candidate $i$ is selected, and $0$ otherwise. The requirement that exactly one candidate must be chosen is enforced by the equality constraint $\sum_{i=0}^{N-1} x_i = 1$.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 --- Original Objective.} The problem requires minimizing the total cost:
+\begin{align}
+\min_{x \in \{0,1\}^N} \sum_{i=0}^{N-1} c_i x_i.
+\end{align}
+
+\textbf{Step 2 --- Constraint Formulation.} The selection constraint is written algebraically as:
+\begin{align}
+\sum_{i=0}^{N-1} x_i = 1.
+\end{align}
+
+\textbf{Step 3 --- Penalty Term Expansion.} We convert the equality constraint into a quadratic penalty using a positive weight $\lambda > 0$:
+\begin{align}
+P(x) = \lambda \left( \sum_{i=0}^{N-1} x_i - 1 \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+P(x) = \lambda \left( \sum_{i=0}^{N-1} x_i^2 + \sum_{i \neq j} x_i x_j - 2 \sum_{i=0}^{N-1} x_i + 1 \right).
+\end{align}
+Applying the idempotent property $x_i^2 = x_i$ for binary variables simplifies the expression to:
+\begin{align}
+P(x) = \lambda \left( \sum_{i=0}^{N-1} x_i + \sum_{i \neq j} x_i x_j - 2 \sum_{i=0}^{N-1} x_i + 1 \right) = \lambda \left( \sum_{i \neq j} x_i x_j - \sum_{i=0}^{N-1} x_i + 1 \right).
+\end{align}
+Rewriting the pairwise sum over unordered indices gives the general penalty contribution:
+\begin{align}
+P(x) = \lambda \left( 2 \sum_{0 \leq i < j \leq N-1} x_i x_j - \sum_{i=0}^{N-1} x_i + 1 \right).
+\end{align}
+
+\textbf{Step 4 --- Combined QUBO Hamiltonian.} Adding the objective and penalty terms produces the single QUBO Hamiltonian $H(x)$:
+\begin{align}
+H(x) = \sum_{i=0}^{N-1} c_i x_i + \lambda \left( 2 \sum_{0 \leq i < j \leq N-1} x_i x_j - \sum_{i=0}^{N-1} x_i + 1 \right).
+\end{align}
+Grouping coefficients by variable products yields:
+\begin{align}
+H(x) = \sum_{0 \leq i < j \leq N-1} (2\lambda) x_i x_j + \sum_{i=0}^{N-1} (c_i - \lambda) x_i + \lambda.
+\end{align}
+
+\textbf{Step 5 --- Q Matrix Entries and Offset.} Reading off the coefficients from the general closed form gives:
+\begin{align}
+Q_{i,j} &= 2\lambda, & 0 \leq i < j \leq N-1, \\
+Q_{i,i} &= c_i - \lambda, & 0 \leq i \leq N-1, \\
+c &= \lambda. &
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+We require $\lambda > \sum_{i=0}^{N-1} |c_i|$ to ensure that any violation of the equality constraint incurs a penalty strictly greater than the maximum possible reduction in the objective function. Specifically, if a candidate assignment violates $\sum_i x_i = 1$, the squared term $\left( \sum_i x_i - 1 \right)^2$ is at least $1$ for integer variables, incurring a minimum penalty of $\lambda$. The maximum possible gain from the objective function by selecting an invalid configuration is bounded by $\sum_i |c_i|$. Thus, choosing $\lambda > \sum_i |c_i|$ guarantees that infeasible solutions always have higher energy than the optimal feasible solution.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal candidate selection because the penalty term is zero if and only if $\sum_i x_i = 1$, and strictly positive otherwise. For any feasible assignment, $H(x)$ reduces exactly to the original objective $\sum_i c_i x_i$. For any infeasible assignment, the energy exceeds the minimum feasible energy by at least $\lambda - \sum_i |c_i| > 0$. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that minimizes the original cost, yielding both the optimal candidate index and the minimum cost.
+
+\paragraph{Illustrative Example.}
+Consider an instance with $N=3$ candidates and costs $c_0 = 2.5$, $c_1 = 1.8$, $c_2 = 3.2$. Let $\lambda = 10$. The objective is $2.5 x_0 + 1.8 x_1 + 3.2 x_2$. The penalty term expands to $10(2 x_0 x_1 + 2 x_0 x_2 + 2 x_1 x_2 - x_0 - x_1 - x_2 + 1)$. Combining these, the concrete QUBO Hamiltonian is:
+\begin{align}
+H(x) &= 20 x_0 x_1 + 20 x_0 x_2 + 20 x_1 x_2 + (2.5 - 10) x_0 + (1.8 - 10) x_1 + (3.2 - 10) x_2 + 10 \\
+&= 20 x_0 x_1 + 20 x_0 x_2 + 20 x_1 x_2 - 7.5 x_0 - 8.2 x_1 - 6.8 x_2 + 10.
+\end{align}
+Evaluating the three feasible solutions ($x_0+x_1+x_2=1$):
+\begin{align}
+x = (1,0,0) &\Rightarrow H = 2.5, \\
+x = (0,1,0) &\Rightarrow H = 1.8, \\
+x = (0,0,1) &\Rightarrow H = 3.2.
+\end{align}
+The minimum energy is $1.8$, achieved at $x^* = (0,1,0)$, corresponding to candidate $1$ with minimum cost $1.8$.
+
+\end{document}

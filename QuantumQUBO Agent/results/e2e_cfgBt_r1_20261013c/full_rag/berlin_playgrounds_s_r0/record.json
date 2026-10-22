@@ -1,0 +1,155 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 374.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1532.1
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 147.0
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1986.2,
+   "error": "ValueError: data preparation failed: 預處理失敗：APITimeoutError: Request timed out."
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Maximum Covering Location Problem (MCLP) formulation. Variables: x_i (site selection) and y_j (coverage indicator). For a realistic instance (100 sites, 2000 blocks), total variables ~2100, which fits the CGA GPU annealer (limit 3600).",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Candidate LOR planning area centers",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "blocks": {
+    "meaning": "Residential blocks not currently covered by existing playgrounds",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "pop"
+    }
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "Population of the residential block",
+    "index": [
+     "blocks"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "people"
+   },
+   "site_lat": {
+    "meaning": "Latitude of LOR center",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "site_lon": {
+    "meaning": "Longitude of LOR center",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_lat": {
+    "meaning": "Latitude of block center",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "block_lon": {
+    "meaning": "Longitude of block center",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "coverage_radius": {
+    "meaning": "Distance threshold for coverage",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 250,
+    "unit": "m"
+   },
+   "max_sites": {
+    "meaning": "Number of new playgrounds to establish",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   },
+   "coverage_matrix": {
+    "meaning": "Binary indicator if site i covers block j",
+    "index": [
+     "sites",
+     "blocks"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "site_lat",
+      "site_lon",
+      "block_lat",
+      "block_lon"
+     ],
+     "how": "dist <= 250m"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Einwohnerdichte_2019_Umweltatlas_-_WFS_Einwohnerdichte_2019_.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson",
+  "Lebensweltlich_orientierte_Räume_LOR_01_01_2021_Planungsräum.geojson",
+  "Spielplätze_Berlin.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 82566,
+  "solver_calls": null
+ },
+ "seconds": 4039.9
+}

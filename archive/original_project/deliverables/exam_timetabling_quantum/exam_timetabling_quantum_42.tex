@@ -1,0 +1,77 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Exam Timetabling}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Exam Timetabling}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ exams, a set of $T$ available time slots, a set of student-conflict pairs $\mathcal{C} \subseteq \{0, \dots, N-1\} \times \{0, \dots, N-1\}$ indicating which pairs of exams share at least one student, and a matrix of soft penalty weights $w_{i,t}$, the task is to assign each exam to exactly one time slot such that the total number of student conflicts is minimized, while optionally penalizing undesirable slot assignments.
+
+\paragraph{Decision Variables.}
+For each exam $i \in \{0, \dots, N-1\}$ and each time slot $t \in \{0, \dots, T-1\}$, introduce a binary decision variable $x_{i,t} \in \{0, 1\}$. The variable $x_{i,t}$ equals $1$ if exam $i$ is scheduled in time slot $t$, and $0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- Write the original objective in general notation. The problem requires minimizing the sum of conflict penalties and soft slot penalties:
+\begin{align}
+\min_{x} \; E_{\text{obj}}(x) = \sum_{(i,j) \in \mathcal{C}} \sum_{t=0}^{T-1} x_{i,t} x_{j,t} + \sum_{i=0}^{N-1} \sum_{t=0}^{T-1} w_{i,t} x_{i,t}.
+\end{align}
+
+Step 2 --- Write each constraint in its original algebraic form. Each exam must be assigned to exactly one slot:
+\begin{align}
+\sum_{t=0}^{T-1} x_{i,t} = 1 \quad \text{for all } i \in \{0, \dots, N-1\}.
+\end{align}
+
+Step 3 --- Convert each constraint to a penalty term. Introduce a penalty weight $\lambda > 0$ and add the squared violation to the objective:
+\begin{align}
+P(x) = \lambda \sum_{i=0}^{N-1} \left( \sum_{t=0}^{T-1} x_{i,t} - 1 \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_{i,t}^2 = x_{i,t}$ for binary variables yields:
+\begin{align}
+\left( \sum_{t=0}^{T-1} x_{i,t} - 1 \right)^2 &= \sum_{t=0}^{T-1} x_{i,t}^2 + \sum_{t \neq t'} x_{i,t} x_{i,t'} - 2 \sum_{t=0}^{T-1} x_{i,t} + 1 \\
+&= \sum_{t=0}^{T-1} x_{i,t} + 2 \sum_{0 \le t < t' \le T-1} x_{i,t} x_{i,t'} - 2 \sum_{t=0}^{T-1} x_{i,t} + 1 \\
+&= 2 \sum_{0 \le t < t' \le T-1} x_{i,t} x_{i,t'} - \sum_{t=0}^{T-1} x_{i,t} + 1.
+\end{align}
+Thus, the penalty contribution for exam $i$ is $\lambda \left( 2 \sum_{0 \le t < t' \le T-1} x_{i,t} x_{i,t'} - \sum_{t=0}^{T-1} x_{i,t} + 1 \right)$.
+
+Step 4 --- Combine objective and all penalty terms into the single QUBO Hamiltonian $H(x)$:
+\begin{align}
+H(x) = \sum_{(i,j) \in \mathcal{C}} \sum_{t=0}^{T-1} x_{i,t} x_{j,t} + \sum_{i=0}^{N-1} \sum_{t=0}^{T-1} w_{i,t} x_{i,t} + \lambda \sum_{i=0}^{N-1} \left( 2 \sum_{0 \le t < t' \le T-1} x_{i,t} x_{i,t'} - \sum_{t=0}^{T-1} x_{i,t} + 1 \right).
+\end{align}
+
+Step 5 --- Read off the Q matrix entries and offset $c$ from $H$ in general closed form. Grouping terms by variable pairs $(i,t)$ and $(j,t')$ gives:
+\begin{align}
+Q_{(i,t),(i,t)} &= w_{i,t} - \lambda, \\
+Q_{(i,t),(i,t')} &= 2\lambda \quad \text{for } t \neq t', \\
+Q_{(i,t),(j,t)} &= 1 \quad \text{for } (i,j) \in \mathcal{C}, \\
+Q_{(i,t),(j,t')} &= 0 \quad \text{otherwise}, \\
+c &= \lambda N.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the one-hot constraint incurs a higher energy cost than the maximum possible reduction in the objective function. The maximum absolute contribution of the soft penalty weights to the objective is $\max_{i,t} |w_{i,t}|$. To guarantee that feasible solutions are strictly preferred over infeasible ones, it suffices to choose $\lambda > \max_{i,t} |w_{i,t}|$. In practice, a conservative bound $\lambda > \max_{i,t} |w_{i,t}| + \frac{|\mathcal{C}|}{2}$ is often used to dominate the conflict term, but the fundamental requirement is that $\lambda$ exceeds the maximum possible objective gain from relaxing a single constraint.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^{NT}$ recovers the optimal schedule because any feasible assignment satisfies $\sum_{t=0}^{T-1} x_{i,t} = 1$ for all $i$, causing all penalty terms to vanish. Thus, for feasible $x$, $H(x)$ equals the original objective $E_{\text{obj}}(x)$. For any infeasible assignment, at least one constraint is violated, adding a positive penalty $\lambda \sum_{i=0}^{N-1} (\sum_{t=0}^{T-1} x_{i,t} - 1)^2 \ge \lambda$. By choosing $\lambda$ larger than the maximum possible decrease in the objective function from any single constraint violation, the energy of any infeasible solution strictly exceeds that of the optimal feasible solution. Consequently, the global minimum of $H(x)$ must correspond to a feasible assignment that minimizes the original objective.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N=2$ exams and $T=2$ slots. The variables are $x_{0,0}, x_{0,1}, x_{1,0}, x_{1,1}$, mapped to indices $k = i T + t$ as $0 \to x_{0,0}$, $1 \to x_{0,1}$, $2 \to x_{1,0}$, $3 \to x_{1,1}$. Assume a single conflict pair $\mathcal{C} = \{(0,1)\}$ and uniform soft penalties $w_{i,t} = 1$ for all $i,t$. Set the penalty weight to $\lambda = 10$.
+
+Substituting these values into the general formulas yields the concrete Hamiltonian:
+\begin{align}
+H(x) &= x_{0,0}x_{1,0} + x_{0,1}x_{1,1} + x_{0,0} + x_{0,1} + x_{1,0} + x_{1,1} \\
+&\quad + 10 \left( 2x_{0,0}x_{0,1} - x_{0,0} - x_{0,1} + 1 \right) + 10 \left( 2x_{1,0}x_{1,1} - x_{1,0} - x_{1,1} + 1 \right) \\
+&= x_{0,0}x_{1,0} + x_{0,1}x_{1,1} + 20x_{0,0}x_{0,1} + 20x_{1,0}x_{1,1} - 9x_{0,0} - 9x_{0,1} - 9x_{1,0} - 9x_{1,1} + 20.
+\end{align}
+The corresponding Q matrix entries and offset are:
+\begin{align}
+Q_{0,0} &= -9, & Q_{1,1} &= -9, & Q_{2,2} &= -9, & Q_{3,3} &= -9, \\
+Q_{0,1} = Q_{1,0} &= 20, & Q_{2,3} = Q_{3,2} &= 20, & Q_{0,2} = Q_{2,0} &= 1, & Q_{1,3} = Q_{3,1} &= 1, \\
+\text{all other } Q_{k,l} &= 0, & c &= 20.
+\end{align}
+The optimal assignment is $x_{0,0}=1, x_{0,1}=0, x_{1,0}=0, x_{1,1}=1$ (or symmetrically $x_{0,1}=1, x_{1,0}=1$), which yields an energy of $H(x^*) = 2$. This corresponds to scheduling exam $0$ in slot $0$ and exam $1$ in slot $1$, incurring zero conflicts and a soft penalty of $2$.
+\end{document}

@@ -42,97 +42,100 @@
     <h2 class='subsection'>Densest K-Subgraph Problem</h2>
 
 <h3>Problem Statement</h3>
-Given an undirected weighted graph $G = (V, E)$ with $N = |V|$ vertices and edge weights $w_{ij} \geq 0$ for each $\{i, j\} \in E$, the Densest K-Subgraph Problem asks for a subset of vertices $S \subseteq V$ of cardinality exactly $K$ such that the total weight of the edges induced by $S$ is maximized. Formally, the problem is:
-\begin{align}
-    \max_{S \subseteq V} \quad & \sum_{\{i, j\} \subseteq S} w_{ij} \\
-    \text{s.t.} \quad & |S| = K.
-\end{align}
+Let $G = (V, E)$ be an undirected weighted graph with vertex set $V = \{0, 1, \dots, N-1\}$ and edge set $E$. Each edge $\{i, j\} \in E$ has a non-negative weight $w_{ij}$. The Densest K-Subgraph Problem asks for a subset of vertices $S \subseteq V$ such that $|S| = K$ and the total weight of the edges induced by $S$ is maximized. Formally, we seek to maximize
+\begin{equation}
+    \sum_{\{i, j\} \subseteq S} w_{ij},
+\end{equation}
+subject to the cardinality constraint $|S| = K$.
 
 <h3>Decision Variables</h3>
-We introduce a binary variable $x_i \in \{0, 1\}$ for each vertex $i \in V$. The variable $x_i$ indicates the selection of vertex $i$:
-\begin{align}
-    x_i = 
-    \begin{cases}
+We introduce a binary variable $x_i \in \{0, 1\}$ for each vertex $i \in V$. The variable $x_i$ indicates whether vertex $i$ is included in the selected subset:
+\begin{equation}
+    x_i = \begin{cases}
         1 & \text{if } i \in S, \\
         0 & \text{otherwise}.
     \end{cases}
-\end{align}
-The constraint $|S| = K$ is enforced by $\sum_{i \in V} x_i = K$. The induced edge weight is represented by $\sum_{i < j} w_{ij} x_i x_j$, where the sum ranges over all pairs of distinct vertices.
+\end{equation}
+The selection of exactly $K$ vertices is enforced by the constraint $\sum_{i \in V} x_i = K$.
 
 <h3>QUBO Derivation</h3>
-We convert the maximization problem to a minimization problem by negating the objective. The resulting Quadratic Unconstrained Binary Optimization (QUBO) Hamiltonian $H(\mathbf{x})$ is constructed by adding a quadratic penalty term to enforce the cardinality constraint.
+We construct a Quadratic Unconstrained Binary Optimization (QUBO) formulation by converting the maximization problem into a minimization problem and incorporating the cardinality constraint as a quadratic penalty term.
 
 <strong>Step 1: Objective Function.</strong>
-The original objective is to maximize $\sum_{i < j} w_{ij} x_i x_j$. For minimization, we define:
-\begin{align}
-    H_{\text{obj}}(\mathbf{x}) = -\sum_{i < j} w_{ij} x_i x_j.
-\end{align}
+Maximizing the induced edge weight is equivalent to minimizing its negative. The objective function in terms of the decision variables is:
+\begin{equation}
+    \min_{x \in \{0,1\}^N} \left( -\sum_{\{i, j\} \in E} w_{ij} x_i x_j \right).
+\end{equation}
+For completeness, we assume $w_{ij} = 0$ for non-edges, allowing the sum to range over all pairs $i < j$.
 
 <strong>Step 2: Constraint.</strong>
-The cardinality constraint is:
-\begin{align}
+The requirement to select exactly $K$ vertices is expressed as:
+\begin{equation}
     \sum_{i \in V} x_i = K.
-\end{align}
+\end{equation}
 
 <strong>Step 3: Penalty Term.</strong>
-We introduce a penalty term with weight $\lambda > 0$:
+We introduce a penalty term with weight $\lambda > 0$ to enforce the constraint. The penalty is the square of the constraint violation:
+\begin{equation}
+    P(x) = \lambda \left( \sum_{i \in V} x_i - K \right)^2.
+\end{equation}
+Expanding the square and using the idempotent property of binary variables ($x_i^2 = x_i$), we obtain:
 \begin{align}
-    H_{\text{pen}}(\mathbf{x}) = \lambda \left( \sum_{i \in V} x_i - K \right)^2.
+    P(x) &= \lambda \left( \sum_{i \in V} x_i^2 + \sum_{i \neq j} x_i x_j - 2K \sum_{i \in V} x_i + K^2 \right) \\
+    &= \lambda \left( \sum_{i \in V} x_i + 2 \sum_{i < j} x_i x_j - 2K \sum_{i \in V} x_i + K^2 \right) \\
+    &= \lambda \left( (1 - 2K) \sum_{i \in V} x_i + 2 \sum_{i < j} x_i x_j + K^2 \right).
 \end{align}
-Expanding the square and using the idempotent property $x_i^2 = x_i$ for binary variables:
-\begin{align}
-    \left( \sum_{i \in V} x_i - K \right)^2 
-    &= \sum_{i \in V} x_i^2 + \sum_{i \neq j} x_i x_j - 2K \sum_{i \in V} x_i + K^2 \\
-    &= \sum_{i \in V} x_i + 2 \sum_{i < j} x_i x_j - 2K \sum_{i \in V} x_i + K^2 \\
-    &= 2 \sum_{i < j} x_i x_j + (1 - 2K) \sum_{i \in V} x_i + K^2.
-\end{align}
-Multiplying by $\lambda$, the penalty contribution is:
-\begin{align}
-    H_{\text{pen}}(\mathbf{x}) = 2\lambda \sum_{i < j} x_i x_j + \lambda(1 - 2K) \sum_{i \in V} x_i + \lambda K^2.
-\end{align}
+Thus, the penalty contributes linear terms with coefficient $\lambda(1 - 2K)$, quadratic terms with coefficient $2\lambda$, and a constant offset $\lambda K^2$.
 
 <strong>Step 4: Combined Hamiltonian.</strong>
-Combining the objective and penalty terms, the total QUBO Hamiltonian is:
-\begin{align}
-    H(\mathbf{x}) = \sum_{i < j} (2\lambda - w_{ij}) x_i x_j + \sum_{i \in V} \lambda(1 - 2K) x_i + \lambda K^2.
-\end{align}
+The total QUBO Hamiltonian $H(x)$ is the sum of the negated objective and the penalty term:
+\begin{equation}
+    H(x) = \sum_{i \in V} \lambda(1 - 2K) x_i + \sum_{i < j} \left( 2\lambda - w_{ij} \right) x_i x_j + \lambda K^2.
+\end{equation}
 
-<strong>Step 5: Q Matrix Entries.</strong>
-The Hamiltonian is expressed in the standard QUBO form $H(\mathbf{x}) = \mathbf{x}^T Q \mathbf{x} + c$, where $\mathbf{x}^T Q \mathbf{x} = \sum_{i} Q_{ii} x_i + 2 \sum_{i < j} Q_{ij} x_i x_j$. Matching coefficients with $H(\mathbf{x})$ yields:
+<strong>Step 5: QUBO Parameters.</strong>
+Reading off the coefficients from $H(x)$, the QUBO matrix entries $Q_{i,j}$ and offset $c$ are given by:
 \begin{align}
-    Q_{ij} &= \lambda - \frac{w_{ij}}{2} \quad \text{for } i < j, \\
-    Q_{ii} &= \lambda(1 - 2K) \quad \text{for } i \in V, \\
+    Q_{i,i} &= \lambda(1 - 2K), \quad \forall i \in V, \\
+    Q_{i,j} &= 2\lambda - w_{ij}, \quad \forall i < j, \\
     c &= \lambda K^2.
 \end{align}
+The QUBO problem is to find $x^* \in \{0,1\}^N$ that minimizes $x^\top Q x + c$.
 
 <h3>Penalty Weight Justification</h3>
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the cardinality constraint incurs an energy cost exceeding the maximum possible gain from the objective function. The minimum energy cost for violating the constraint by one unit is $\lambda$. The maximum possible increase in the objective value by altering the selection is bounded by the sum of all edge weights incident to any single vertex, which is at most $N \cdot \max_{i,j} w_{ij}$. Therefore, choosing
-\begin{align}
-    \lambda > N \cdot \max_{i, j \in V} w_{ij}
-\end{align}
-guarantees that the penalty cost for any infeasible solution strictly dominates any potential objective improvement, ensuring the global minimum corresponds to a feasible solution.
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any infeasible solution has a strictly higher energy than the optimal feasible solution. Let $W_{\max} = \max_{\{i,j\} \in E} w_{ij}$ denote the maximum edge weight.
+
+Consider an infeasible solution with $K+1$ selected vertices. The penalty incurred is $\lambda$. The maximum possible gain in the objective function by selecting an extra vertex, compared to the best feasible $K$-subgraph, is bounded by the maximum degree of the graph times the maximum edge weight. Specifically, removing any vertex from a set of $K+1$ vertices yields a valid $K$-subgraph, and the weight lost is at most $(N-1)W_{\max}$. Thus, the objective value of the $K+1$-subgraph can exceed the optimal objective value by at most $(N-1)W_{\max}$. To penalize this violation, we require:
+\begin{equation}
+    \lambda > (N - 1) W_{\max}.
+\end{equation}
+A symmetric argument applies to solutions with $K-1$ vertices. Therefore, choosing $\lambda > (N-1)W_{\max}$ guarantees that the global minimum of $H(x)$ corresponds to a feasible solution with maximum induced weight.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(\mathbf{x})$ over $\mathbf{x} \in \{0, 1\}^N$ recovers the optimal solution to the Densest K-Subgraph Problem. For any feasible solution ($\sum_i x_i = K$), the penalty term vanishes, and $H(\mathbf{x})$ equals the negated objective value. Thus, minimizing $H$ over feasible solutions is equivalent to maximizing the induced edge weight. For any infeasible solution, the penalty term is at least $\lambda$. By the choice of $\lambda$, the energy of any infeasible solution exceeds the energy of the best feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must be attained at a feasible configuration that maximizes the objective.
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution to the Densest K-Subgraph Problem. For any feasible solution $x$ (where $\sum_i x_i = K$), the penalty term vanishes, and $H(x)$ equals the negated objective value. For any infeasible solution $x'$, the penalty term is at least $\lambda$. By the choice of $\lambda$, the energy increase due to the penalty strictly outweighs any potential reduction in the objective term. Consequently, the global minimum of $H(x)$ must occur at a feasible point, and among feasible points, $H(x)$ is minimized exactly when the induced edge weight is maximized.
 
 <h3>Illustrative Example</h3>
-Consider a graph with $N=3$ vertices $\{0, 1, 2\}$ and edge weights $w_{01} = 1$, $w_{02} = 2$, $w_{12} = 3$. Let $K=2$. The optimal solution selects vertices $\{1, 2\}$ with induced weight $3$.
+Consider a graph with $N=3$ vertices $V=\{0,1,2\}$ and $K=2$. Let the edge weights be $w_{01}=1$, $w_{02}=2$, and $w_{12}=3$. The maximum weight is $W_{\max}=3$. We choose $\lambda = 7$, which satisfies $\lambda > (3-1) \times 3 = 6$.
 
-Using the general formulas with $\lambda = 10$ (satisfying $\lambda > 3 \cdot 3 = 9$):
+The QUBO parameters are:
 \begin{align}
-    Q_{01} &= 10 - \frac{1}{2} = 9.5, \quad Q_{02} = 10 - \frac{2}{2} = 9.0, \quad Q_{12} = 10 - \frac{3}{2} = 8.5, \\
-    Q_{00} = Q_{11} = Q_{22} &= 10(1 - 4) = -30, \\
-    c &= 10 \cdot 2^2 = 40.
+    Q_{0,0} = Q_{1,1} = Q_{2,2} &= 7(1 - 4) = -21, \\
+    Q_{0,1} &= 14 - 1 = 13, \\
+    Q_{0,2} &= 14 - 2 = 12, \\
+    Q_{1,2} &= 14 - 3 = 11, \\
+    c &= 7 \times 2^2 = 28.
 \end{align}
 The Hamiltonian is:
-\begin{align}
-    H(\mathbf{x}) = 9.5 x_0 x_1 + 9.0 x_0 x_2 + 8.5 x_1 x_2 - 30(x_0 + x_1 + x_2) + 40.
-\end{align}
-Evaluating at the optimal configuration $\mathbf{x}^* = (0, 1, 1)$:
-\begin{align}
-    H(\mathbf{x}^*) = 8.5(1) - 30(2) + 40 = 8.5 - 60 + 40 = -11.5.
-\end{align}
-This corresponds to the negated objective value $-3$, confirming correctness. Any infeasible configuration, such as $\mathbf{x} = (1, 1, 0)$, yields $H = 9.5 - 60 + 40 = -10.5$, which is strictly higher than $-11.5$.
+\begin{equation}
+    H(x) = -21(x_0 + x_1 + x_2) + 13 x_0 x_1 + 12 x_0 x_2 + 11 x_1 x_2 + 28.
+\end{equation}
+Evaluating $H(x)$ for feasible solutions (those with exactly two 1s):
+<ul>
+    <li> $x = (1,1,0)$: $H = -42 + 13 + 28 = -1$ (induced weight $1$).
+    <li> $x = (1,0,1)$: $H = -42 + 12 + 28 = -2$ (induced weight $2$).
+    <li> $x = (0,1,1)$: $H = -42 + 11 + 28 = -3$ (induced weight $3$).
+</ul>
+The infeasible solution $x=(1,1,1)$ yields $H = -63 + 13 + 12 + 11 + 28 = 1$, which is higher than any feasible energy. The minimum energy is $-3$, achieved at $x^* = (0,1,1)$, corresponding to the optimal vertex subset $\{1,2\}$ with maximum induced weight $3$.
   </div>
 
   <div class="src-header">
@@ -144,97 +147,100 @@ This corresponds to the negated objective value $-3$, confirming correctness. An
 \subsection*{Densest K-Subgraph Problem}
 
 \paragraph{Problem Statement.}
-Given an undirected weighted graph $G = (V, E)$ with $N = |V|$ vertices and edge weights $w_{ij} \geq 0$ for each $\{i, j\} \in E$, the Densest K-Subgraph Problem asks for a subset of vertices $S \subseteq V$ of cardinality exactly $K$ such that the total weight of the edges induced by $S$ is maximized. Formally, the problem is:
-\begin{align}
-    \max_{S \subseteq V} \quad &amp; \sum_{\{i, j\} \subseteq S} w_{ij} \\
-    \text{s.t.} \quad &amp; |S| = K.
-\end{align}
+Let $G = (V, E)$ be an undirected weighted graph with vertex set $V = \{0, 1, \dots, N-1\}$ and edge set $E$. Each edge $\{i, j\} \in E$ has a non-negative weight $w_{ij}$. The Densest K-Subgraph Problem asks for a subset of vertices $S \subseteq V$ such that $|S| = K$ and the total weight of the edges induced by $S$ is maximized. Formally, we seek to maximize
+\begin{equation}
+    \sum_{\{i, j\} \subseteq S} w_{ij},
+\end{equation}
+subject to the cardinality constraint $|S| = K$.
 
 \paragraph{Decision Variables.}
-We introduce a binary variable $x_i \in \{0, 1\}$ for each vertex $i \in V$. The variable $x_i$ indicates the selection of vertex $i$:
-\begin{align}
-    x_i = 
-    \begin{cases}
+We introduce a binary variable $x_i \in \{0, 1\}$ for each vertex $i \in V$. The variable $x_i$ indicates whether vertex $i$ is included in the selected subset:
+\begin{equation}
+    x_i = \begin{cases}
         1 &amp; \text{if } i \in S, \\
         0 &amp; \text{otherwise}.
     \end{cases}
-\end{align}
-The constraint $|S| = K$ is enforced by $\sum_{i \in V} x_i = K$. The induced edge weight is represented by $\sum_{i &lt; j} w_{ij} x_i x_j$, where the sum ranges over all pairs of distinct vertices.
+\end{equation}
+The selection of exactly $K$ vertices is enforced by the constraint $\sum_{i \in V} x_i = K$.
 
 \paragraph{QUBO Derivation.}
-We convert the maximization problem to a minimization problem by negating the objective. The resulting Quadratic Unconstrained Binary Optimization (QUBO) Hamiltonian $H(\mathbf{x})$ is constructed by adding a quadratic penalty term to enforce the cardinality constraint.
+We construct a Quadratic Unconstrained Binary Optimization (QUBO) formulation by converting the maximization problem into a minimization problem and incorporating the cardinality constraint as a quadratic penalty term.
 
 \textbf{Step 1: Objective Function.}
-The original objective is to maximize $\sum_{i &lt; j} w_{ij} x_i x_j$. For minimization, we define:
-\begin{align}
-    H_{\text{obj}}(\mathbf{x}) = -\sum_{i &lt; j} w_{ij} x_i x_j.
-\end{align}
+Maximizing the induced edge weight is equivalent to minimizing its negative. The objective function in terms of the decision variables is:
+\begin{equation}
+    \min_{x \in \{0,1\}^N} \left( -\sum_{\{i, j\} \in E} w_{ij} x_i x_j \right).
+\end{equation}
+For completeness, we assume $w_{ij} = 0$ for non-edges, allowing the sum to range over all pairs $i &lt; j$.
 
 \textbf{Step 2: Constraint.}
-The cardinality constraint is:
-\begin{align}
+The requirement to select exactly $K$ vertices is expressed as:
+\begin{equation}
     \sum_{i \in V} x_i = K.
-\end{align}
+\end{equation}
 
 \textbf{Step 3: Penalty Term.}
-We introduce a penalty term with weight $\lambda &gt; 0$:
+We introduce a penalty term with weight $\lambda &gt; 0$ to enforce the constraint. The penalty is the square of the constraint violation:
+\begin{equation}
+    P(x) = \lambda \left( \sum_{i \in V} x_i - K \right)^2.
+\end{equation}
+Expanding the square and using the idempotent property of binary variables ($x_i^2 = x_i$), we obtain:
 \begin{align}
-    H_{\text{pen}}(\mathbf{x}) = \lambda \left( \sum_{i \in V} x_i - K \right)^2.
+    P(x) &amp;= \lambda \left( \sum_{i \in V} x_i^2 + \sum_{i \neq j} x_i x_j - 2K \sum_{i \in V} x_i + K^2 \right) \\
+    &amp;= \lambda \left( \sum_{i \in V} x_i + 2 \sum_{i &lt; j} x_i x_j - 2K \sum_{i \in V} x_i + K^2 \right) \\
+    &amp;= \lambda \left( (1 - 2K) \sum_{i \in V} x_i + 2 \sum_{i &lt; j} x_i x_j + K^2 \right).
 \end{align}
-Expanding the square and using the idempotent property $x_i^2 = x_i$ for binary variables:
-\begin{align}
-    \left( \sum_{i \in V} x_i - K \right)^2 
-    &amp;= \sum_{i \in V} x_i^2 + \sum_{i \neq j} x_i x_j - 2K \sum_{i \in V} x_i + K^2 \\
-    &amp;= \sum_{i \in V} x_i + 2 \sum_{i &lt; j} x_i x_j - 2K \sum_{i \in V} x_i + K^2 \\
-    &amp;= 2 \sum_{i &lt; j} x_i x_j + (1 - 2K) \sum_{i \in V} x_i + K^2.
-\end{align}
-Multiplying by $\lambda$, the penalty contribution is:
-\begin{align}
-    H_{\text{pen}}(\mathbf{x}) = 2\lambda \sum_{i &lt; j} x_i x_j + \lambda(1 - 2K) \sum_{i \in V} x_i + \lambda K^2.
-\end{align}
+Thus, the penalty contributes linear terms with coefficient $\lambda(1 - 2K)$, quadratic terms with coefficient $2\lambda$, and a constant offset $\lambda K^2$.
 
 \textbf{Step 4: Combined Hamiltonian.}
-Combining the objective and penalty terms, the total QUBO Hamiltonian is:
-\begin{align}
-    H(\mathbf{x}) = \sum_{i &lt; j} (2\lambda - w_{ij}) x_i x_j + \sum_{i \in V} \lambda(1 - 2K) x_i + \lambda K^2.
-\end{align}
+The total QUBO Hamiltonian $H(x)$ is the sum of the negated objective and the penalty term:
+\begin{equation}
+    H(x) = \sum_{i \in V} \lambda(1 - 2K) x_i + \sum_{i &lt; j} \left( 2\lambda - w_{ij} \right) x_i x_j + \lambda K^2.
+\end{equation}
 
-\textbf{Step 5: Q Matrix Entries.}
-The Hamiltonian is expressed in the standard QUBO form $H(\mathbf{x}) = \mathbf{x}^T Q \mathbf{x} + c$, where $\mathbf{x}^T Q \mathbf{x} = \sum_{i} Q_{ii} x_i + 2 \sum_{i &lt; j} Q_{ij} x_i x_j$. Matching coefficients with $H(\mathbf{x})$ yields:
+\textbf{Step 5: QUBO Parameters.}
+Reading off the coefficients from $H(x)$, the QUBO matrix entries $Q_{i,j}$ and offset $c$ are given by:
 \begin{align}
-    Q_{ij} &amp;= \lambda - \frac{w_{ij}}{2} \quad \text{for } i &lt; j, \\
-    Q_{ii} &amp;= \lambda(1 - 2K) \quad \text{for } i \in V, \\
+    Q_{i,i} &amp;= \lambda(1 - 2K), \quad \forall i \in V, \\
+    Q_{i,j} &amp;= 2\lambda - w_{ij}, \quad \forall i &lt; j, \\
     c &amp;= \lambda K^2.
 \end{align}
+The QUBO problem is to find $x^* \in \{0,1\}^N$ that minimizes $x^\top Q x + c$.
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the cardinality constraint incurs an energy cost exceeding the maximum possible gain from the objective function. The minimum energy cost for violating the constraint by one unit is $\lambda$. The maximum possible increase in the objective value by altering the selection is bounded by the sum of all edge weights incident to any single vertex, which is at most $N \cdot \max_{i,j} w_{ij}$. Therefore, choosing
-\begin{align}
-    \lambda &gt; N \cdot \max_{i, j \in V} w_{ij}
-\end{align}
-guarantees that the penalty cost for any infeasible solution strictly dominates any potential objective improvement, ensuring the global minimum corresponds to a feasible solution.
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any infeasible solution has a strictly higher energy than the optimal feasible solution. Let $W_{\max} = \max_{\{i,j\} \in E} w_{ij}$ denote the maximum edge weight.
+
+Consider an infeasible solution with $K+1$ selected vertices. The penalty incurred is $\lambda$. The maximum possible gain in the objective function by selecting an extra vertex, compared to the best feasible $K$-subgraph, is bounded by the maximum degree of the graph times the maximum edge weight. Specifically, removing any vertex from a set of $K+1$ vertices yields a valid $K$-subgraph, and the weight lost is at most $(N-1)W_{\max}$. Thus, the objective value of the $K+1$-subgraph can exceed the optimal objective value by at most $(N-1)W_{\max}$. To penalize this violation, we require:
+\begin{equation}
+    \lambda &gt; (N - 1) W_{\max}.
+\end{equation}
+A symmetric argument applies to solutions with $K-1$ vertices. Therefore, choosing $\lambda &gt; (N-1)W_{\max}$ guarantees that the global minimum of $H(x)$ corresponds to a feasible solution with maximum induced weight.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\mathbf{x} \in \{0, 1\}^N$ recovers the optimal solution to the Densest K-Subgraph Problem. For any feasible solution ($\sum_i x_i = K$), the penalty term vanishes, and $H(\mathbf{x})$ equals the negated objective value. Thus, minimizing $H$ over feasible solutions is equivalent to maximizing the induced edge weight. For any infeasible solution, the penalty term is at least $\lambda$. By the choice of $\lambda$, the energy of any infeasible solution exceeds the energy of the best feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must be attained at a feasible configuration that maximizes the objective.
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution to the Densest K-Subgraph Problem. For any feasible solution $x$ (where $\sum_i x_i = K$), the penalty term vanishes, and $H(x)$ equals the negated objective value. For any infeasible solution $x&#x27;$, the penalty term is at least $\lambda$. By the choice of $\lambda$, the energy increase due to the penalty strictly outweighs any potential reduction in the objective term. Consequently, the global minimum of $H(x)$ must occur at a feasible point, and among feasible points, $H(x)$ is minimized exactly when the induced edge weight is maximized.
 
 \paragraph{Illustrative Example.}
-Consider a graph with $N=3$ vertices $\{0, 1, 2\}$ and edge weights $w_{01} = 1$, $w_{02} = 2$, $w_{12} = 3$. Let $K=2$. The optimal solution selects vertices $\{1, 2\}$ with induced weight $3$.
+Consider a graph with $N=3$ vertices $V=\{0,1,2\}$ and $K=2$. Let the edge weights be $w_{01}=1$, $w_{02}=2$, and $w_{12}=3$. The maximum weight is $W_{\max}=3$. We choose $\lambda = 7$, which satisfies $\lambda &gt; (3-1) \times 3 = 6$.
 
-Using the general formulas with $\lambda = 10$ (satisfying $\lambda &gt; 3 \cdot 3 = 9$):
+The QUBO parameters are:
 \begin{align}
-    Q_{01} &amp;= 10 - \frac{1}{2} = 9.5, \quad Q_{02} = 10 - \frac{2}{2} = 9.0, \quad Q_{12} = 10 - \frac{3}{2} = 8.5, \\
-    Q_{00} = Q_{11} = Q_{22} &amp;= 10(1 - 4) = -30, \\
-    c &amp;= 10 \cdot 2^2 = 40.
+    Q_{0,0} = Q_{1,1} = Q_{2,2} &amp;= 7(1 - 4) = -21, \\
+    Q_{0,1} &amp;= 14 - 1 = 13, \\
+    Q_{0,2} &amp;= 14 - 2 = 12, \\
+    Q_{1,2} &amp;= 14 - 3 = 11, \\
+    c &amp;= 7 \times 2^2 = 28.
 \end{align}
 The Hamiltonian is:
-\begin{align}
-    H(\mathbf{x}) = 9.5 x_0 x_1 + 9.0 x_0 x_2 + 8.5 x_1 x_2 - 30(x_0 + x_1 + x_2) + 40.
-\end{align}
-Evaluating at the optimal configuration $\mathbf{x}^* = (0, 1, 1)$:
-\begin{align}
-    H(\mathbf{x}^*) = 8.5(1) - 30(2) + 40 = 8.5 - 60 + 40 = -11.5.
-\end{align}
-This corresponds to the negated objective value $-3$, confirming correctness. Any infeasible configuration, such as $\mathbf{x} = (1, 1, 0)$, yields $H = 9.5 - 60 + 40 = -10.5$, which is strictly higher than $-11.5$.</pre>
+\begin{equation}
+    H(x) = -21(x_0 + x_1 + x_2) + 13 x_0 x_1 + 12 x_0 x_2 + 11 x_1 x_2 + 28.
+\end{equation}
+Evaluating $H(x)$ for feasible solutions (those with exactly two 1s):
+\begin{itemize}
+    \item $x = (1,1,0)$: $H = -42 + 13 + 28 = -1$ (induced weight $1$).
+    \item $x = (1,0,1)$: $H = -42 + 12 + 28 = -2$ (induced weight $2$).
+    \item $x = (0,1,1)$: $H = -42 + 11 + 28 = -3$ (induced weight $3$).
+\end{itemize}
+The infeasible solution $x=(1,1,1)$ yields $H = -63 + 13 + 12 + 11 + 28 = 1$, which is higher than any feasible energy. The minimum energy is $-3$, achieved at $x^* = (0,1,1)$, corresponding to the optimal vertex subset $\{1,2\}$ with maximum induced weight $3$.</pre>
 
   <script>
     function copyLatex(btn) {

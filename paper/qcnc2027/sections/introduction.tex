@@ -1,0 +1,43 @@
+\section{Introduction}
+Quadratic unconstrained binary optimization (QUBO) provides a common input for quantum annealers,
+quantum-inspired devices and hybrid services. Formulations exist for many combinatorial problems\cite{lucas2014ising}.
+However, a person asking where to install charging stations or how to organize an inspection route does not
+start with a QUBO matrix. Their request must be clarified, relevant data found and cleaned, a formulation
+written, solver resources allocated, and the returned decision explained. Errors at any stage can yield a
+feasible solution to a different problem.
+
+Language models can assist this translation. NL4Opt studies natural-language optimization
+representations\cite{ramamonjison2023nl4opt}; OptiMUS formulates and solves mixed-integer linear
+programs\cite{ahmaditeshnizi2024optimus}. QuantumQUBO Agent decomposes QUBO generation into specialized roles
+and evaluates generated formulations on a 100-problem benchmark\cite{mondal2026quantumqubo}.
+LLM-QUBO combines language-based formulation with hybrid decomposition\cite{llmqubo2025}.
+These lines of work motivate separating modelling from execution and checking. Our focus is the surrounding
+workflow: whether the data represents the request, whether the model preserves its requirements, and whether
+its output is a usable decision.
+
+The distinction matters in public-data applications. Two tables can use different coordinate systems or spell
+the same administrative unit differently. A join by village name can discard entities when names recur across
+districts. Separately, a model may enforce a bound of 200 where the user requested five facilities.
+Increasing penalties cannot restore missing entities or correct that bound. Consequently, solver feedback must
+be interpreted alongside data and formulation evidence before deciding where to repair.
+
+We study the following question: \emph{How can a locally served LLM, supported by specialized roles and executable
+feedback, take a confirmed request through data preparation, modelling and annealing while making failures
+observable and recoverable?} The operational goal is a feasible, interpretable decision within a bounded budget,
+or a concrete explanation of the unresolved gap. A certified optimum is not required for every application.
+People confirm the specification, approve data assumptions and review delivery.
+
+Our contributions are threefold:
+\begin{enumerate}
+  \item A local-LLM workflow with typed data interfaces, tool-supported acquisition and preprocessing,
+        versioned artifacts, interchangeable annealing backends and bounded cross-stage repair.
+  \item A verification design that separates data correctness, requirement consistency and solver feasibility.
+        For small benchmark instances, decoded ground states are evaluated against a checker anchored on the
+        benchmark's stated optimum, avoiding dependence on a particular bit layout.
+  \item An evidence-separated evaluation: repeated formulation benchmarks, a synthetic end-to-end suite,
+        fixed-model backend experiments and specified-source real-data pilots. An implemented autonomous
+        acceptance protocol defines the remaining checker, repair and modelling-retrieval comparisons.
+\end{enumerate}
+The solver-side components reuse established software and encoding methods rather than introduce a new penalty
+search algorithm. More agent roles or retrieved patterns are not assumed to help; their incremental effects
+require controlled measurements.

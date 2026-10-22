@@ -1,0 +1,252 @@
+{
+ "case": "youbike_tour_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 261.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 365.9
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 0.2,
+   "error": "PromptTooLong: step 'req_checker': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 28052 output tokens and your prompt contains at least 4717 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested "
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1260.2
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 363.2
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 4.5
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 2,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-encoding TSP (N^2 variables). Fits CGA backend limit of 3,600 for N <= 60. Guarantees single tour via one-hot constraints without MTZ or auxiliary variables.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike stations including Daan Station",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "radius"
+    }
+   },
+   "positions": {
+    "meaning": "Tour positions (0 to N-1)",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "start_site": {
+    "meaning": "ID of the start/end station (Daan Station)",
+    "index": [],
+    "type": "text",
+    "source": "user",
+    "value": "Daan"
+   },
+   "radius": {
+    "meaning": "Maximum distance from start site to include a station",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 800,
+    "unit": "m"
+   },
+   "dist": {
+    "meaning": "Straight-line distance matrix between sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "sparse": false,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "raw:lat",
+      "raw:lon"
+     ],
+     "how": "Compute pairwise haversine distances from coordinates"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "政府資料開放平臺.json",
+  "臺北市YouBike見位率統計_CSV.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 800m of MRT Daan Station using Haversine distance. Used '政府資料開放平臺' for station coordinates. Start site 'Daan' added per spec. Distances computed via prep.haversine_matrix. All operating statuses included.",
+  "prep_log": "**資料來源**\n\n- 政府資料開放平臺（data.gov.tw） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-13T08:00:26.711355+00:00\n- 臺北市YouBike見位率統計 — CSV（catalogue data.gov.tw） <https://data.gov.tw/dataset/174976>，授權：待確認，取得 2026-10-13T08:00:29.000365+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| load_raw | 1819 | 1819 | Loaded YouBike immediate data |\n| drop_invalid_coords | 1819 | 1819 | Dropped rows with missing/invalid lat/lon |\n| 只保留距離 (25.033, 121.5436) 800 公尺內的資料 | 1819 | 38 |  |\n| filter_radius | 1819 | 38 | Kept stations within 800m of Daan Station |\n| define_sites | 38 | 39 | Added Daan station to sites list |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "radius: 尚未聲明 unit，需求為 m",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, positions, radius, sites, start_site"
+  ],
+  "sources": [
+   {
+    "title": "政府資料開放平臺",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T08:00:26.711355+00:00",
+    "sha256": "926a3c914079785313408c9fd9649d9ba7f2e33d2b6751b590b9956c8b6d10a9",
+    "bytes": 952855
+   },
+   {
+    "title": "臺北市YouBike見位率統計 — CSV",
+    "url": "https://data.gov.tw/dataset/174976",
+    "resource_url": "https://data.taipei/api/dataset/65f4c67c-56c8-4b52-abda-5b58946dfecd/resource/d969e222-7fb3-49f1-95f7-3894a8b9f2bb/download",
+    "publisher": "catalogue data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T08:00:29.000365+00:00",
+    "sha256": "cc06f53f01d102bf8437db0d85faca5476541224490202467b0feafae543d08e",
+    "bytes": 147256
+   }
+  ],
+  "n_variables": 1521,
+  "n_constraints": 79,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 39
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.7220456704901104,
+  "objective": 7844.312861233662,
+  "baseline_objective": 28221.589046896137
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (政府資料開放平臺.json)",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match + coordinates within 30 m",
+    "entity_set_declared": true,
+    "instance_entities": 39,
+    "mapped": 39,
+    "duplicates": [
+     "YouBike2.0_捷運大安站(5號出口)"
+    ],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 39,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 7842.9419460474155,
+    "reference_quality": 7426.4082799077005,
+    "gap_vs_reference": 0.0561
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 235922,
+  "solver_calls": 3
+ },
+ "seconds": 2255.7
+}

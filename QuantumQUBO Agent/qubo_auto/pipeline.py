@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 import time
 import traceback
 import uuid
@@ -7,19 +8,26 @@ from typing import Callable
 
 import yaml
 
-from .agents.coder_agent import compile_build_qubo, generate_code
+from .agents.checker_agent import compile_checker, generate_checker
+from .agents.coder_agent import compile_functions, generate_code
 from .agents.formulizer_agent import formulate
 from .agents.planner_agent import restructure
-from .agents.debugger_agent import build_test_cases
+from .agents.debugger_agent import build_reference_cases, build_test_cases
 from .agents.judge_agent import verify_formulation, verify_spec
 from .llm_client import LLMClient, TokenBudgetExceeded
 from .schemas import QUBOFormulation, RunResult, StructuredSpec
 from .verification.test_cases import load_test_cases
+from .verification.reference import load_reference_cases, run_reference_tests, validate_checker
 from .verification.test_runner import run_tests
 
 
 def load_config(config_path: Path) -> dict:
-    return yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    # LLM_MODEL routes every agent to one model (e.g. the single local vLLM model)
+    model_override = os.environ.get("LLM_MODEL")
+    if model_override:
+        config["models"] = {agent: model_override for agent in config["models"]}
+    return config
 
 
 def _log(msg: str) -> None:
@@ -50,6 +58,11 @@ class Pipeline:
         temps = cfg["temperatures"]
         retries = cfg["retries"]
         verif_cfg = cfg["verification"]
+        # problem_level: judge ground states by what they mean (verification/reference.py);
+        # bitstring: the original comparison with LLM-derived optimal bitstrings
+        problem_level = verif_cfg.get("mode", "bitstring") == "problem_level" and bool(raw_test_input and benchmark_dir)
+        solution_format: str | None = None
+        evaluate_fn = None
         limits = cfg.get("limits", {})
         max_tokens = limits.get("max_tokens_per_run", 50_000)
         use_cache = limits.get("use_cache", True)
@@ -160,7 +173,87 @@ class Pipeline:
             # ----------------------------------------------------------------
             # Stage 2.5: Build test cases from raw input (if provided)
             # ----------------------------------------------------------------
-            if raw_test_input and benchmark_dir:
+            if problem_level:
+                _log(f"[Stage 2.5] Building problem-level reference cases from user input ...")
+                try:
+                    transcript_cases_dir = self.transcript_root / run_id / "cases"
+                    build_reference_cases(
+                        benchmark_dir=benchmark_dir, raw_input=raw_test_input, client=client,
+                        model=models.get("debugger_agent", models["planner_agent"]), spec=spec,
+                        temperature=temps.get("debugger_agent", 0.1), cases_dir=transcript_cases_dir)
+                    ref_cases, solution_format = load_reference_cases(transcript_cases_dir)
+                    _log(f"[Stage 2.5] {len(ref_cases)} reference case(s); solution format: {solution_format[:160]}")
+                except Exception as e:
+                    _log(f"[Stage 2.5] Reference case building FAILED: {e}")
+                    result.error_trace = traceback.format_exc()
+                    return self._finalize(result, client, start)
+
+                # Stage 2.6: independent Checker, trusted only where it reproduces the benchmark's optimum
+                checker_model = models.get("checker_agent", models["judge_agent"])
+                checker_temp = temps.get("checker_agent", temps["judge_agent"])
+                best: tuple[int, object, list[bool], list[str]] | None = None
+                issues: list[str] = []
+                rebuilt = False
+                n_attempts = retries.get("checker", 2) + 1
+                attempt = 0
+                while attempt < n_attempts:
+                    attempt += 1
+                    _log(f"[Stage 2.6] Checker — attempt {attempt}/{n_attempts}")
+                    try:
+                        fn = compile_checker(generate_checker(nl_problem, spec.objective.direction, solution_format,
+                                                              ref_cases[0].instance, client, checker_model,
+                                                              checker_temp, issues or None))
+                        trusted, notes = validate_checker(fn, ref_cases)
+                    except Exception as e:
+                        _log(f"[Stage 2.6] Checker EXCEPTION: {e}")
+                        issues = [f"{type(e).__name__}: {str(e)[:300]}"]
+                        continue
+                    if best is None or sum(trusted) > best[0]:
+                        best = (sum(trusted), fn, trusted, notes)
+                    for note in notes:
+                        _log(f"[Stage 2.6] {note}")
+                    if all(trusted):
+                        break
+                    format_errors = [n for n in notes if "raised on the reference solution" in n]
+                    if format_errors and not rebuilt:
+                        # the checker follows solution_format but cannot read a reference solution: the case
+                        # transcription broke its own format; redo the cases once, then start the checker afresh
+                        rebuilt = True
+                        _log(f"[Stage 2.6] Reference solutions do not match the solution format — rebuilding cases")
+                        try:
+                            rejected = transcript_cases_dir.parent / "cases_rejected"     # kept for the record
+                            rejected.mkdir(exist_ok=True)
+                            for old in transcript_cases_dir.iterdir():
+                                old.rename(rejected / old.name)
+                            build_reference_cases(
+                                benchmark_dir=benchmark_dir, raw_input=raw_test_input, client=client,
+                                model=models.get("debugger_agent", models["planner_agent"]), spec=spec,
+                                temperature=temps.get("debugger_agent", 0.1), cases_dir=transcript_cases_dir,
+                                feedback=("\nPREVIOUS TRANSCRIPTION: a checker written from your solution_format "
+                                          f"could not read your reference_solution values. Format was: {solution_format}\n"
+                                          + "\n".join(f"  - {n}" for n in format_errors)
+                                          + "\nWrite every reference_solution exactly in solution_format.\n"))
+                            ref_cases, solution_format = load_reference_cases(transcript_cases_dir)
+                        except Exception as e:
+                            _log(f"[Stage 2.6] Rebuilding cases FAILED: {e}")
+                        best, issues, attempt = None, [], 0
+                        continue
+                    issues = notes
+                if best is None or best[0] == 0:
+                    _log(f"=== Pipeline UNVERIFIABLE — no reference case the checker can be anchored on ===")
+                    result.status = "unverifiable"
+                    result.error_trace = "Checker could not be validated on any reference case: " + \
+                        " | ".join(best[3] if best else issues)
+                    result.failure_modes = failure_modes + ["checker_unanchored"]
+                    return self._finalize(result, client, start)
+                _, evaluate_fn, trusted, notes = best
+                dropped = [c.name for c, t in zip(ref_cases, trusted) if not t]
+                if dropped:
+                    failure_modes.append("reference_cases_dropped:" + ",".join(dropped))
+                test_cases = [c for c, t in zip(ref_cases, trusted) if t]
+                _log(f"[Stage 2.6] Checker trusted on {len(test_cases)}/{len(ref_cases)} case(s)"
+                     + (f"; dropped {dropped}" if dropped else ""))
+            elif raw_test_input and benchmark_dir:
                 _log(f"[Stage 2.5] Building test cases from user input ...")
                 try:
                     transcript_cases_dir = self.transcript_root / run_id / "cases"
@@ -193,8 +286,11 @@ class Pipeline:
                 _log(f"[Stage 3] Coder — attempt {attempt + 1}/{retries['code'] + 1}")
                 try:
                     code = generate_code(spec, formulation, client, models["coder_agent"], temps["coder_agent"],
-                                         previous_error, sample_instance=sample_instance)
-                    build_qubo_fn = compile_build_qubo(code)
+                                         previous_error, sample_instance=sample_instance,
+                                         solution_format=solution_format if problem_level else None)
+                    build_qubo_fn, decode_fn = compile_functions(code)
+                    if problem_level and decode_fn is None:
+                        raise ValueError("Coder did not define `decode(instance, x)`, required for verification")
                     _log(f"[Stage 3] Code generated and compiled OK")
                 except Exception as e:
                     _log(f"[Stage 3] Coder EXCEPTION: {e}")
@@ -206,10 +302,13 @@ class Pipeline:
                     continue
 
                 _log(f"[Stage 3b] Test Runner — running {n_cases} pre-computed test cases ...")
-                test_results, failure_class = run_tests(
-                    build_qubo=build_qubo_fn,
-                    test_cases=test_cases,
-                )
+                if problem_level:
+                    test_results, failure_class = run_reference_tests(build_qubo_fn, decode_fn, evaluate_fn, test_cases)
+                else:
+                    test_results, failure_class = run_tests(
+                        build_qubo=build_qubo_fn,
+                        test_cases=test_cases,
+                    )
 
                 n_pass = sum(1 for r in test_results if r.match)
                 result.verification = {"passed": n_pass, "total": n_cases}
@@ -229,6 +328,12 @@ class Pipeline:
                     return self._finalize(result, client, start)
 
                 failure_modes.append(failure_class)
+                if failure_class == "unverifiable":       # cases too large to enumerate: the Coder cannot fix that
+                    _log(f"=== Pipeline UNVERIFIABLE — test case too large for brute-force verification ===")
+                    result.status = "unverifiable"
+                    result.error_trace = "; ".join(r.error_message for r in test_results if r.status == "unverifiable")
+                    result.failure_modes = failure_modes
+                    return self._finalize(result, client, start)
                 errors = [r.error_message for r in test_results if r.error_message]
                 previous_error = "\n".join(errors[:3])
 

@@ -1,0 +1,143 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 595.7
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1721.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 132.7
+  },
+  "data": {
+   "ok": false,
+   "seconds": 7728.9,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: LSOA centroid coordinates (lat/lon or geometry) are not provided in any of the input tables.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 196, in load_data\nValueError: DATA GAP: LSOA centroid coordinates (lat/lon or geometry) are not provided in any of the input tables.\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "p-median formulation; ~3,612 variables for N=300, M=12; fits CGA limit.",
+ "schema": {
+  "sets": {
+   "lsoas": {
+    "meaning": "LSOA (Lower Layer Super Output Area) demand points",
+    "source": "public"
+   },
+   "candidates": {
+    "meaning": "Candidate locations for ambulance stations",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Resident population of LSOA",
+    "index": [
+     "lsoas"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "people"
+   },
+   "lat": {
+    "meaning": "Latitude of centroid",
+    "index": [
+     "lsoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of centroid",
+    "index": [
+     "lsoas"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "cand_lat": {
+    "meaning": "Latitude of candidate site",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "cand_lon": {
+    "meaning": "Longitude of candidate site",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between LSOA and candidate",
+    "index": [
+     "lsoas",
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon",
+      "cand_lat",
+      "cand_lon"
+     ],
+     "how": "haversine"
+    }
+   },
+   "p": {
+    "meaning": "Number of stations to deploy",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "LSOA_2011_to_LSOA_2021_to_Local_Authority_District_2022_Exac.csv",
+  "LSOA_Atlas_Current_LSOA_boundaries_post-2011.csv",
+  "Rural_Urban_Classification_2021_of_LSOAs_in_EW_Shapefile.zip",
+  "TS001_-_Number_of_usual_residents_in_households_and_communal.csv"
+ ],
+ "cost": {
+  "llm_tokens": 353536,
+  "solver_calls": null
+ },
+ "seconds": 10179.3
+}

@@ -1,0 +1,126 @@
+{
+ "case": "ev_chargers_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 702.7
+  },
+  "model": {
+   "ok": true,
+   "seconds": 552.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 115.5
+  },
+  "data": {
+   "ok": false,
+   "seconds": 3262.2,
+   "error": "ValueError: data preparation failed: 預處理失敗：PromptTooLong: step 'adapter_plan': Error code: 400 - {'error': {'message': \"This model's maximum context length is 32768 tokens. However, you requested 19896 output tokens and your prompt contains at least 12873 input tokens, for a total of at least 32769 tokens. Please reduce the length of the input prompt or the number of requested"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Maximum Covering Location Problem (MCLP) formulation. 106 binary variables (53 for site selection x_j, 53 for coverage indicators y_i). This fits well within the CGA backend limit of 3,600 variables.",
+ "schema": {
+  "sets": {
+   "villages": {
+    "meaning": "Village (里) in Da'an District",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Total population of the village",
+    "index": [
+     "villages"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "people"
+   },
+   "lat": {
+    "meaning": "Latitude of village centroid",
+    "index": [
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of village centroid",
+    "index": [
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of charging stations to place",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   },
+   "radius": {
+    "meaning": "Coverage radius",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "unit": "m",
+    "value": 1000
+   },
+   "dist_matrix": {
+    "meaning": "Straight-line distance between village centroids",
+    "index": [
+     "villages",
+     "villages"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ]
+    }
+   }
+  }
+ },
+ "data_found": [
+  "台北市村里界.geojson",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市各里人口數按年齡分_CSV.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 122997,
+  "solver_calls": null
+ },
+ "seconds": 4633.7
+}

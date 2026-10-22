@@ -1,0 +1,113 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 112.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 208.0
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 37.7
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1793.0,
+   "error": "ValueError: data preparation failed: the output cannot be stored as JSON (Out of range float values are not JSON compliant: nan); use lists, numbers and strings only | DATA PROBLEM FOUND BY A TOOL: join on ['區代碼', 'VNAME'] / ['區代碼', 'VNAME'] matched NOTHING. Example keys: left ['630000|三張里', '630000|三愛里', '630000|三民里'], right ['63005|龍福里', '63007|福星里', '63003|龍坡里']. Check that the columns hold the same thing at the same level"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact MCLP formulation with N auxiliary coverage indicators. 2N variables for N=280 -> 560 vars. Fits CGA backend (<3600 vars).",
+ "schema": {
+  "sets": {
+   "districts": {
+    "meaning": "Taipei administrative district center",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of district center",
+    "index": [
+     "districts"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of district center",
+    "index": [
+     "districts"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Population of district",
+    "index": [
+     "districts"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "person"
+   },
+   "k": {
+    "meaning": "Number of stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "coverage": {
+    "meaning": "1 if district i is within 1km of district j",
+    "index": [
+     "districts",
+     "districts"
+    ],
+    "type": "int",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "1 if dist <= 1000m"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 343723,
+  "solver_calls": null
+ },
+ "seconds": 2151.5
+}

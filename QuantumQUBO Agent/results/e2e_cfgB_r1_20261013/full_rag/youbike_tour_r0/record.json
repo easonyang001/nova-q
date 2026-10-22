@@ -1,0 +1,114 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 183.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 298.7
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 70.6
+  },
+  "data": {
+   "ok": false,
+   "seconds": 936.2,
+   "error": "ValueError: data preparation failed: RuntimeError: SyntaxError: positional argument follows keyword argument (<model>, line 83)\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 166, in _execute_adapter\n    exec(compile(code, \"<model>\", \"exec\"), ns)\n         ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<model>\", line 83\n    )\n    ^\nSyntaxError: positional argument follows keyword argument\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "TSP position encoding (mp-position-tour). For N=20 sites, variables = N^2 = 400. This fits well within the CGA GPU annealer's capacity (<1,500 for high quality).",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike stations within 500m of Da'an station, including Da'an station as site 0",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "pos": {
+    "meaning": "The sequence position in the tour",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "YouBike2_0臺北市公共自行車即時資訊.json"
+ ],
+ "cost": {
+  "llm_tokens": 130336,
+  "solver_calls": null
+ },
+ "seconds": 1489.3
+}

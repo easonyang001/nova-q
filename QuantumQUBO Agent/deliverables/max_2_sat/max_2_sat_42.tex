@@ -10,72 +10,81 @@
 \subsection*{Weighted Max-2-SAT}
 
 \paragraph{Problem Statement.}
-Given a set of $N$ Boolean variables $\mathcal{X} = \{x_1, \dots, x_N\}$ and a collection of $M$ weighted clauses $\mathcal{C} = \{C_1, \dots, C_M\}$, where each clause $C_j$ contains at most two literals and carries a non-negative weight $w_j \geq 0$, the Weighted Max-2-SAT problem seeks a truth assignment to $\mathcal{X}$ that maximizes the total weight of satisfied clauses.
+Given a set of $n$ Boolean variables and a collection $\mathcal{C}$ of weighted clauses, where each clause contains at most two literals, the objective is to assign truth values to all variables so as to maximize the total weight of satisfied clauses. A clause is satisfied if at least one of its literals evaluates to true under the assignment.
 
 \paragraph{Decision Variables.}
-For each Boolean variable $x_i \in \{0,1\}$, $i \in \{1, \dots, N\}$, we introduce a binary decision variable $x_i \in \{0,1\}$ representing its truth value (1 for true, 0 for false). Each clause $C_j$ involves a set of literals $\mathcal{L}_j$. For each literal $\ell \in \mathcal{L}_j$, we define a binary indicator $y_{j,\ell} \in \{0,1\}$ that evaluates to 1 if the literal is true under the assignment and 0 otherwise. Specifically, if $\ell = x_i$, then $y_{j,\ell} = x_i$; if $\ell = \neg x_i$, then $y_{j,\ell} = 1 - x_i$.
+Let $x_i \in \{0,1\}$ for $i \in \{1, \dots, n\}$ denote the binary decision variables, where $x_i = 1$ represents the variable being true and $x_i = 0$ represents it being false. Each clause $c \in \mathcal{C}$ has an associated positive weight $w_c > 0$. Each literal in a clause is associated with a variable index and a sign $s \in \{+1, -1\}$, where $+1$ denotes a positive literal ($x_i$) and $-1$ denotes a negated literal ($\neg x_i$).
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1.} The original objective is to maximize the total weight of satisfied clauses:
+\textbf{Step 1 --- Original Objective.} The problem requires maximizing the total weight of satisfied clauses:
 \begin{align}
-    \max_{\mathbf{x} \in \{0,1\}^N} \sum_{j=1}^M w_j s_j,
+    \max_{x \in \{0,1\}^n} \sum_{c \in \mathcal{C}} w_c \cdot \mathbb{I}(c \text{ is satisfied}),
 \end{align}
-where $s_j \in \{0,1\}$ is the satisfaction indicator for clause $C_j$. For a clause with two literals $\ell_{j,1}$ and $\ell_{j,2}$, the indicator is given by the logical OR:
+where $\mathbb{I}(\cdot)$ is the indicator function. Since QUBO solvers minimize energy, we negate the objective:
 \begin{align}
-    s_j = 1 - (1 - y_{j,\ell_{j,1}})(1 - y_{j,\ell_{j,2}}) = y_{j,\ell_{j,1}} + y_{j,\ell_{j,2}} - y_{j,\ell_{j,1}}y_{j,\ell_{j,2}}.
-\end{align}
-Since QUBO solvers minimize energy, we define the Hamiltonian as the negative of the objective:
-\begin{align}
-    H(\mathbf{x}) = -\sum_{j=1}^M w_j s_j = -\sum_{j=1}^M w_j \left( y_{j,\ell_{j,1}} + y_{j,\ell_{j,2}} - y_{j,\ell_{j,1}}y_{j,\ell_{j,2}} \right).
+    \min_{x \in \{0,1\}^n} H_0(x) = -\sum_{c \in \mathcal{C}} w_c \cdot \mathbb{I}(c \text{ is satisfied}).
 \end{align}
 
-\textbf{Step 2.} The problem is an unconstrained maximization over the binary hypercube $\{0,1\}^N$. There are no explicit constraints on the variable assignments.
+\textbf{Step 2 --- Constraints.} The problem is unconstrained; any binary assignment is feasible. Thus, no constraint terms are introduced.
 
-\textbf{Step 3.} Consequently, no penalty terms are required. The feasible space is the entire domain $\{0,1\}^N$, and the Hamiltonian directly encodes the objective function.
+\textbf{Step 3 --- Algebraic Expansion of Satisfaction.} A clause $c$ is satisfied if at least one literal evaluates to true. Let $L_c$ be the set of literals in clause $c$. For a literal $l \in L_c$ on variable $i$ with sign $s_l$, its truth value is $y_l = \frac{1+s_l}{2}x_i + \frac{1-s_l}{2}(1-x_i)$. The clause is unsatisfied if and only if $\prod_{l \in L_c} (1-y_l) = 1$. Therefore,
+\begin{align}
+    \mathbb{I}(c \text{ is satisfied}) = 1 - \prod_{l \in L_c} (1-y_l).
+\end{align}
+Substituting into $H_0$ yields:
+\begin{align}
+    H_0(x) = \sum_{c \in \mathcal{C}} w_c \prod_{l \in L_c} (1-y_l) - \sum_{c \in \mathcal{C}} w_c.
+\end{align}
+We expand the product for clauses of size one and two. For a unit clause $c$ with literal $l$ on variable $i$:
+\begin{align}
+    1-y_l = \frac{1+s_l}{2} - s_l x_i.
+\end{align}
+For a binary clause $c$ with literals $l_1, l_2$ on variables $i, j$ with signs $s_1, s_2$:
+\begin{align}
+    (1-y_{l_1})(1-y_{l_2}) = \left(\frac{1+s_1}{2} - s_1 x_i\right)\left(\frac{1+s_2}{2} - s_2 x_j\right) = \frac{(1+s_1)(1+s_2)}{4} - \frac{s_2(1+s_1)}{2}x_i - \frac{s_1(1+s_2)}{2}x_j + s_1 s_2 x_i x_j.
+\end{align}
 
-\textbf{Step 4.} Combining the objective terms yields the single QUBO Hamiltonian:
+\textbf{Step 4 --- Combined Hamiltonian.} Collecting all linear, quadratic, and constant terms across all clauses, the total energy function $H(x)$ takes the standard QUBO form:
 \begin{align}
-    H(\mathbf{x}) = \sum_{j=1}^M w_j \left( -y_{j,\ell_{j,1}} - y_{j,\ell_{j,2}} + y_{j,\ell_{j,1}}y_{j,\ell_{j,2}} \right).
+    H(x) = \sum_{i=1}^n Q_{i,i} x_i + \sum_{1 \le i < j \le n} Q_{i,j} x_i x_j + c.
 \end{align}
-Substituting the literal mappings $y_{j,\ell} \in \{x_i, 1-x_i\}$ and expanding using the idempotent property $x_i^2 = x_i$, each clause $C_j$ contributes linear, quadratic, and constant terms to $H(\mathbf{x})$. For a clause involving variables $x_i$ and $x_k$ with polarities $p_{j,1}, p_{j,2} \in \{0,1\}$ (where $0$ denotes a positive literal and $1$ denotes a negated literal), the expansion yields:
-\begin{align}
-    H_j(\mathbf{x}) = -w_j(1-2p_{j,1})x_i - w_j(1-2p_{j,2})x_k + w_j(1-2p_{j,1})(1-2p_{j,2})x_i x_k - w_j(1 - p_{j,1} - p_{j,2} + p_{j,1}p_{j,2}).
-\end{align}
-Summing over all clauses gives the full Hamiltonian $H(\mathbf{x}) = \sum_{j=1}^M H_j(\mathbf{x})$.
 
-\textbf{Step 5.} Reading off the coefficients from the expanded Hamiltonian, the QUBO matrix entries $Q_{i,k}$ and offset $c$ are given in closed form by:
+\textbf{Step 5 --- Q Matrix and Offset.} Reading off the coefficients from the expanded terms gives the general closed-form expressions for the QUBO parameters:
 \begin{align}
-    Q_{i,i} &= \sum_{j: x_i \in C_j} -w_j(1-2p_{j,m}), \\
-    Q_{i,k} &= \sum_{j: x_i, x_k \in C_j} w_j(1-2p_{j,1})(1-2p_{j,2}), \\
-    c &= \sum_{j=1}^M -w_j(1 - p_{j,1} - p_{j,2} + p_{j,1}p_{j,2}),
+    Q_{i,i} &= \sum_{c \in \mathcal{C}_1(i)} -w_c s_{l_c} + \sum_{j \neq i} \sum_{c \in \mathcal{C}_2(i,j)} -\frac{s_{c,j}(1+s_{c,i})}{2} w_c, \\
+    Q_{i,j} &= \sum_{c \in \mathcal{C}_2(i,j)} w_c s_{c,i} s_{c,j} \quad \text{for } i < j, \\
+    c &= -\sum_{c \in \mathcal{C}} w_c + \sum_{c \in \mathcal{C}_1} w_c \frac{1+s_{l_c}}{2} + \sum_{c \in \mathcal{C}_2} w_c \frac{(1+s_{c,i})(1+s_{c,j})}{4},
 \end{align}
-where $p_{j,m}$ is the polarity of the $m$-th literal in clause $C_j$ mapping to variable $x_i$ or $x_k$. For clauses with only one literal, the corresponding quadratic and second linear terms vanish.
+where $\mathcal{C}_1(i)$ denotes unit clauses containing variable $i$, $\mathcal{C}_2(i,j)$ denotes binary clauses containing both variables $i$ and $j$, and $s_{c,i}, s_{c,j}$ are the signs of the literals on variables $i$ and $j$ in clause $c$.
 
 \paragraph{Penalty Weight Justification.}
-The Weighted Max-2-SAT problem is inherently unconstrained over the binary assignment space. Therefore, no penalty weights $\lambda$ are introduced, and the penalty term set is empty. The Hamiltonian $H(\mathbf{x})$ directly represents the negative of the objective function, eliminating the need for constraint penalties or weight tuning.
+The Weighted Max-2-SAT problem is inherently unconstrained; every binary assignment corresponds to a valid truth valuation. Consequently, no penalty terms or penalty weights are required. The QUBO formulation directly encodes the objective function without auxiliary variables or constraint penalties.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ is mathematically equivalent to maximizing $\sum_{j=1}^M w_j s_j$. Since $w_j \geq 0$ and $s_j \in \{0,1\}$, each term $-w_j s_j$ in the Hamiltonian is minimized when $s_j = 1$. Any assignment that leaves a clause $C_j$ unsatisfied ($s_j = 0$) results in a strictly higher energy contribution ($0$) compared to a satisfied assignment ($-w_j$). Consequently, the global minimum of $H(\mathbf{x})$ must occur at a truth assignment that maximizes the total satisfied clause weight, guaranteeing that the QUBO ground state corresponds to the optimal solution of the original problem.
+Minimizing $H(x)$ over $\{0,1\}^n$ recovers the optimal assignment because the energy function is constructed as a linear transformation of the clause-satisfaction weight. For any assignment $x$, the term $\sum_{c \in \mathcal{C}} w_c \prod_{l \in L_c} (1-y_l)$ evaluates exactly to the total weight of unsatisfied clauses. Thus, $H(x) = W_{\text{unsat}}(x) - W_{\text{total}}$, where $W_{\text{total}} = \sum_{c \in \mathcal{C}} w_c$ is constant. Minimizing $H(x)$ is therefore equivalent to minimizing the weight of unsatisfied clauses, which is mathematically identical to maximizing the weight of satisfied clauses. Since the domain is unconstrained, the global minimum of $H(x)$ must correspond to a feasible assignment that achieves the maximum possible satisfied weight.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=3$ variables and $M=2$ clauses. Let $C_1 = (x_1 \lor x_2)$ with weight $w_1 = 5$, and $C_2 = (\neg x_2 \lor x_3)$ with weight $w_2 = 3$. 
-For $C_1$, both literals are positive ($p_{1,1}=0, p_{1,2}=0$). Applying the general formula:
+Consider an instance with $n=3$ variables and three clauses:
+\begin{itemize}
+    \item $c_1: (x_1 \lor \neg x_2)$ with weight $w_1 = 3$. Literals have signs $s_{1,1}=+1, s_{1,2}=-1$.
+    \item $c_2: (\neg x_1 \lor x_3)$ with weight $w_2 = 2$. Literals have signs $s_{2,1}=-1, s_{2,3}=+1$.
+    \item $c_3: (x_2)$ with weight $w_3 = 4$. Literal has sign $s_{3,2}=+1$.
+\end{itemize}
+Applying the general formulas:
 \begin{align}
-    H_1(\mathbf{x}) = -5x_1 - 5x_2 + 5x_1x_2.
+    Q_{1,1} &= -\frac{(-1)(1+1)}{2}(3) - \frac{(1)(1-1)}{2}(2) = 3, \\
+    Q_{2,2} &= -(4)(1) - \frac{(1)(1-1)}{2}(3) = -4, \\
+    Q_{3,3} &= -\frac{(-1)(1+1)}{2}(2) = 2, \\
+    Q_{1,2} &= (3)(+1)(-1) = -3, \quad Q_{1,3} = (2)(-1)(+1) = -2, \quad Q_{2,3} = 0.
 \end{align}
-For $C_2$, the first literal is negated ($p_{2,1}=1$) and the second is positive ($p_{2,2}=0$). Applying the general formula:
+The constant offset is:
 \begin{align}
-    H_2(\mathbf{x}) = -3(1-2)x_2 - 3(1)x_3 + 3(1-2)(1)x_2x_3 - 3(1 - 1 - 0 + 0) = 3x_2 - 3x_3 - 3x_2x_3.
+    c = -(3+2+4) + (4)\frac{1+1}{2} + (3)\frac{(2)(0)}{4} + (2)\frac{(0)(2)}{4} = -9 + 4 = -5.
 \end{align}
-Summing $H_1$ and $H_2$ gives the concrete Hamiltonian:
+The resulting QUBO energy function is:
 \begin{align}
-    H(\mathbf{x}) = -5x_1 - 2x_2 - 3x_3 + 5x_1x_2 - 3x_2x_3.
+    H(x) = 3x_1 - 4x_2 + 2x_3 - 3x_1x_2 - 2x_1x_3 - 5.
 \end{align}
-The corresponding QUBO matrix entries and offset are:
-\begin{align}
-    Q_{1,1} &= -5, & Q_{2,2} &= -2, & Q_{3,3} &= -3, \\
-    Q_{1,2} &= 5, & Q_{2,3} &= -3, & Q_{1,3} &= 0, \\
-    c &= 0.
-\end{align}
-Evaluating $H(\mathbf{x})$ over the $2^3=8$ possible assignments reveals that the assignment $\mathbf{x}^* = (1, 0, 1)$ yields the minimum energy $H(\mathbf{x}^*) = -8$. This corresponds to satisfying both clauses, achieving the maximum possible weight of $5 + 3 = 8$.
+Evaluating $H(x)$ over all $2^3=8$ assignments yields the minimum energy $H(1,0,1) = -5$. This corresponds to the assignment $x_1=1, x_2=0, x_3=1$, which satisfies $c_1$ and $c_2$ (total weight $3+2=5$) and leaves $c_3$ unsatisfied, confirming the formulation correctly recovers the optimal solution.
+
 \end{document}

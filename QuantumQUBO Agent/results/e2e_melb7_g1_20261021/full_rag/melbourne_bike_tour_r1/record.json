@@ -1,0 +1,262 @@
+{
+ "case": "melbourne_bike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 303.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1628.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 275.4
+  },
+  "data": {
+   "ok": true,
+   "seconds": 2667.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 2.0
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP encoding (x[i,t]). For 50 sites, variables = 50*50 = 2500. Fits SA backend.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Shared bike stations within 1km of Flinders Street Station",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "dist_to_center"
+    }
+   },
+   "positions": {
+    "meaning": "The sequence order in the inspection tour",
+    "source": "mock"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the bike station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist_to_center": {
+    "meaning": "Distance from the station to Flinders Street Station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m"
+   },
+   "dist_matrix": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Bike_Share_Dock_Locations_Bike_Share_Dock_Locations_CSV.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "distance_to",
+   "haversine_matrix",
+   "merge_same_place",
+   "to_number",
+   "within_radius"
+  ],
+  "notes": "\n1. Filtered bike share stations to those within a 1km radius of Flinders Street Station (-37.8183, 144.9671).\n2. Handled the 'location' column using prep.to_number as required by the system detection, although 'lat' and 'lon' columns were used for calculations.\n3. Merged stations that are effectively the same place using prep.merge_same_place.\n4. Calculated straight-line distance from each station to the center using prep.distance_to.\n5. Generated a pairwise distance matrix using prep.haversine_matrix.\n6. Mapped 'station_id' as the unique identifier for 'sites' and 'positions'.\n",
+  "prep_log": "**資料來源**\n\n- Bike Share Dock Locations — Bike Share Dock Locations CSV（catalogue data.gov.au） <https://data.gov.au/data/dataset/bike-share-dock-locations>，授權：待確認，取得 2026-10-21T18:50:58.960589+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 數字清理 location | 50 | 50 | 50 個值無法轉成數字 |\n| Convert location column to number | 50 | 50 | Handled system detection requirement |\n| Drop missing values | 50 | 50 | Removed rows missing lat, lon, name, or station_id |\n| 只保留距離 (-37.8183, 144.9671) 1000 公尺內的資料 | 50 | 11 |  |\n| Filter by 1km radius | 50 | 11 | Kept stations within 1000m of Flinders St Station |\n| 合併同名且相距 150 m 內的同一地點 | 11 | 11 | 合併 0 筆 |\n| Merge same places | 11 | 11 | Merged stations with same name and close proximity |\n| Calculate distance to center | 11 | 11 | Computed distance from each station to Flinders St Station |",
+  "flags": [],
+  "review_required": [
+   "sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "site_name: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist_to_center: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist_matrix: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）"
+  ],
+  "sources": [
+   {
+    "title": "Bike Share Dock Locations — Bike Share Dock Locations CSV",
+    "url": "https://data.gov.au/data/dataset/bike-share-dock-locations",
+    "resource_url": "https://data.melbourne.vic.gov.au/api/v2/catalog/datasets/bike-share-dock-locations/exports/csv?delimiter=%2C",
+    "publisher": "catalogue data.gov.au",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-21T18:50:58.960589+00:00",
+    "sha256": "33495c5ffa4afb2c3cbf748eb350bd57e18129e534f6e2319c58ab211e842502",
+    "bytes": 5755
+   }
+  ],
+  "n_variables": 121,
+  "n_constraints": 22,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 11
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "c3c4b8957b5e3707e8a51565",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 57,
+    "invalid": 57,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "c3c4b8957b5e3707e8a51565",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.1897871762467134,
+  "objective": 5311.023956558629,
+  "baseline_objective": 6555.097377940119
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 11,
+    "mapped": 11,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 11,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 5311.023956558629,
+    "reference_quality": 5311.023956558629,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 159410,
+  "solver_calls": 3
+ },
+ "seconds": 4876.6
+}

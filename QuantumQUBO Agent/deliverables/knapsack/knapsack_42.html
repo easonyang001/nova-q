@@ -42,67 +42,72 @@
     <h2 class='subsection'>0/1 Knapsack Problem</h2>
 
 <h3>Problem Statement</h3>
-Given a set of $N$ items, each item $i \in \{0, \dots, N-1\}$ has an associated value $v_i$ and weight $w_i$. A knapsack has a maximum weight capacity $W$. The goal is to select a subset of items to maximize the total value without exceeding the capacity $W$. Each item may be selected at most once.
+Given $N$ items, each characterized by a value $v_i$ and a weight $w_i$ for $i \in \{0, \dots, N-1\}$, and a knapsack with a maximum weight capacity $W$, the goal is to select a subset of items to maximize the total value without exceeding the capacity $W$.
 
 <h3>Decision Variables</h3>
-We introduce binary decision variables $x_i \in \{0,1\}$ for each item $i \in \{0, \dots, N-1\}$, where $x_i = 1$ if item $i$ is selected and $x_i = 0$ otherwise. To convert the inequality constraint into an equality suitable for penalty-based optimization, we introduce auxiliary slack variables $s_j \in \{0,1\}$ for $j \in \{0, \dots, N-1\}$.
+For each item $i \in \{0, \dots, N-1\}$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ takes the value $1$ if item $i$ is included in the knapsack, and $0$ otherwise.
 
 <h3>QUBO Derivation</h3>
-<strong>Step 1 -- Objective Function.</strong> The original problem maximizes $\sum_{i=0}^{N-1} v_i x_i$. Since QUBO solvers minimize energy, we negate the objective:
+<strong>Step 1.</strong> The original optimization problem seeks to maximize $\sum_{i=0}^{N-1} v_i x_i$. Since QUBO solvers minimize quadratic functions, we negate the objective to obtain the minimization form:
 \begin{align}
-H_{\text{obj}} = -\sum_{i=0}^{N-1} v_i x_i.
+    \min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} v_i x_i \right).
 \end{align}
 
-<strong>Step 2 -- Constraint Formulation.</strong> The weight capacity constraint is $\sum_{i=0}^{N-1} w_i x_i \le W$. Using the slack variables, we enforce equality:
+<strong>Step 2.</strong> The weight capacity constraint is expressed as:
 \begin{align}
-\sum_{i=0}^{N-1} w_i x_i + \sum_{j=0}^{N-1} s_j = W.
-\end{align}
-For the purpose of the provided QUBO mapping, we consider the unit-weight case $w_i = 1$ for all $i$, yielding:
-\begin{align}
-\sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j = W.
+    \sum_{i=0}^{N-1} w_i x_i \le W.
 \end{align}
 
-<strong>Step 3 -- Penalty Term Expansion.</strong> We introduce a penalty parameter $\lambda > 0$ and construct the penalty Hamiltonian:
+<strong>Step 3.</strong> We enforce the constraint via a quadratic penalty term with weight $\lambda > 0$. To convert the inequality into a penalty that activates upon violation, we write:
 \begin{align}
-H_{\text{pen}} = \lambda \left( \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j - W \right)^2.
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} w_i x_i - W \right)^2.
 \end{align}
-Expanding the square and applying the idempotent property $x_k^2 = x_k$ and $s_k^2 = s_k$ for binary variables:
+Expanding the square yields:
 \begin{align}
-\left( \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j - W \right)^2 &= \left( \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j \right)^2 - 2W \left( \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j \right) + W^2 \nonumber \\
-&= \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j + 2 \sum_{0 \le i < k \le N-1} x_i x_k + 2 \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} x_i s_j - 2W \sum_{i=0}^{N-1} x_i - 2W \sum_{j=0}^{N-1} s_j + W^2.
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} w_i^2 x_i^2 - 2W \sum_{i=0}^{N-1} w_i x_i + W^2 + \sum_{i=0}^{N-1} \sum_{j \neq i} w_i w_j x_i x_j \right).
 \end{align}
-Following the provided formulation, linear penalty contributions are absorbed into the diagonal bias terms and the constant offset, resulting in the simplified quadratic structure where diagonal coefficients are $\lambda$, off-diagonal coefficients are $2\lambda$, and the constant offset is $\lambda W^2$.
-
-<strong>Step 4 -- Combined Hamiltonian.</strong> The total QUBO energy function is the sum of the objective and penalty terms:
+Using the idempotent property of binary variables, $x_i^2 = x_i$, the linear terms simplify. Additionally, we symmetrize the double sum by restricting to $i < j$ and multiplying by $2$:
 \begin{align}
-H(x, s) = H_{\text{obj}} + H_{\text{pen}}.
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} (w_i^2 - 2W w_i) x_i + \sum_{0 \le i < j \le N-1} 2 w_i w_j x_i x_j + W^2 \right).
 \end{align}
 
-<strong>Step 5 -- Q Matrix Entries and Offset.</strong> Reading off the coefficients from the expanded form, the QUBO matrix entries $Q$ and constant offset $c$ are given by:
+<strong>Step 4.</strong> Combining the negated objective and the penalty term gives the full QUBO Hamiltonian $H(x)$:
 \begin{align}
-Q_{i,i} &= -v_i + \lambda, & i \in \{0, \dots, N-1\}, \\
-Q_{N+j, N+j} &= \lambda, & j \in \{0, \dots, N-1\}, \\
-Q_{i,k} &= 2\lambda, & 0 \le i < k \le N-1, \\
-Q_{i, N+j} &= 2\lambda, & i \in \{0, \dots, N-1\}, \ j \in \{0, \dots, N-1\}, \\
-c &= \lambda W^2.
+    H(x) = -\sum_{i=0}^{N-1} v_i x_i + \lambda \sum_{i=0}^{N-1} (w_i^2 - 2W w_i) x_i + \lambda \sum_{0 \le i < j \le N-1} 2 w_i w_j x_i x_j + \lambda W^2.
+\end{align}
+
+<strong>Step 5.</strong> Reading off the coefficients from $H(x) = \sum_{i \le j} Q_{i,j} x_i x_j + c$, the QUBO matrix entries and offset are given in closed form as:
+\begin{align}
+    Q_{i,i} &= -v_i + \lambda(w_i^2 - 2W w_i), \quad \text{for } i \in \{0, \dots, N-1\}, \\
+    Q_{i,j} &= 2\lambda w_i w_j, \quad \text{for } 0 \le i < j \le N-1, \\
+    Q_{i,j} &= 0, \quad \text{for } i > j, \\
+    c &= \lambda W^2.
 \end{align}
 
 <h3>Penalty Weight Justification</h3>
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the capacity constraint increases the total energy more than the maximum possible gain from the objective function. Specifically, the maximum objective improvement achievable by flipping any single variable is bounded by $\max_i v_i$. Therefore, selecting $\lambda > \max_i v_i$ guarantees that infeasible configurations incur a strictly higher energy penalty than any feasible configuration, effectively enforcing the constraint during minimization.
+The penalty parameter $\lambda$ must be chosen sufficiently large to ensure that constraint violations are strictly penalized over any potential gain in the objective function. A sufficient condition is $\lambda > \sum_{i=0}^{N-1} v_i$. This guarantees that the minimum penalty incurred by any infeasible assignment exceeds the maximum possible total value achievable by any feasible subset, thereby forcing the global minimum of $H(x)$ to reside within the feasible region.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(x,s)$ over $\{0,1\}^{2N}$ recovers the optimal solution to the original knapsack problem. For any feasible assignment, the constraint is satisfied, causing the penalty term to vanish and $H$ to reduce exactly to the negated objective function. For any infeasible assignment, the penalty term evaluates to at least $\lambda$, which by construction exceeds the maximum possible objective value. Consequently, the global minimum of $H$ must occur at a feasible point that maximizes the original objective, ensuring correctness.
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution to the original knapsack problem. For any feasible solution, the constraint is satisfied, the penalty term vanishes, and $H(x)$ reduces exactly to the negated objective value. For any infeasible solution, the penalty term is strictly positive. By the choice of $\lambda$, the energy increase from violating the constraint outweighs any possible decrease in the objective term, ensuring that the energy of every infeasible point is strictly greater than that of at least one feasible point. Consequently, the global minimum of $H(x)$ must correspond to a feasible solution that maximizes the original objective.
 
 <h3>Illustrative Example</h3>
-Consider a small instance with $N=3$ items, values $v_0=10$, $v_1=15$, $v_2=20$, unit weights $w_i=1$ for all $i$, capacity $W=100$, and penalty weight $\lambda=1000$. The decision variables are $x_0, x_1, x_2$ and slacks $s_0, s_1, s_2$. The objective term is $-10x_0 - 15x_1 - 20x_2$. The constraint becomes $x_0 + x_1 + x_2 + s_0 + s_1 + s_2 = 100$. Substituting into the general formulas yields the following QUBO matrix entries and offset:
+Consider a concrete instance with $N=3$ items, values $v = [10, 20, 30]$, weights $w = [5, 10, 15]$, capacity $W = 20$, and penalty weight $\lambda = 100$. Substituting these into the general formulation yields the following components:
+
+The concrete minimization objective is $\min -10x_0 - 20x_1 - 30x_2$.
+The concrete penalty term is $100(5x_0 + 10x_1 + 15x_2 - 20)^2$.
+Expanding the penalty using the general derivation gives:
 \begin{align}
-Q_{0,0} &= -10 + 1000 = 990, & Q_{3,3} &= 1000, \\
-Q_{1,1} &= -15 + 1000 = 985, & Q_{4,4} &= 1000, \\
-Q_{2,2} &= -20 + 1000 = 980, & Q_{5,5} &= 1000, \\
-Q_{i,k} &= 2000 & \text{for all } 0 \le i < k \le 5, \\
-c &= 1000000.
+    P(x) = 100 \left[ (25 - 200)x_0 + (100 - 400)x_1 + (225 - 600)x_2 + 2(50x_0x_1 + 75x_0x_2 + 150x_1x_2) + 400 \right].
 \end{align}
-The resulting Hamiltonian is $H(x,s) = -10x_0 - 15x_1 - 20x_2 + 1000(x_0 + x_1 + x_2 + s_0 + s_1 + s_2 - 100)^2$. The optimal selection is $x_0=0, x_1=1, x_2=1$ (total value $35$, weight $2$), with slack variables $s_0=98, s_1=0, s_2=0$. This assignment satisfies the constraint, yielding an energy of $-35$. Any infeasible assignment incurs an energy penalty of at least $1000$, confirming that the global minimum corresponds to the optimal knapsack solution.
+Combining objective and penalty yields the resulting Hamiltonian:
+\begin{align}
+    H(x) = -1810 x_0 - 30200 x_1 - 37530 x_2 + 10000 x_0 x_1 + 15000 x_0 x_2 + 30000 x_1 x_2 + 40000.
+\end{align}
+Evaluating $H(x)$ over all $2^3 = 8$ binary assignments reveals that the feasible solutions (total weight $\le 20$) are $x \in \{(0,0,0), (1,0,0), (0,1,0), (0,0,1), (1,1,0)\}$. Among these, the assignment $x^* = (0,0,1)$ achieves the maximum value of $30$ and yields the minimum energy:
+\begin{align}
+    H(x^*) = -37530 + 40000 = 2470.
+\end{align}
+Thus, $x^* = (0,0,1)$ is the optimal solution with energy $2470$.
   </div>
 
   <div class="src-header">
@@ -114,67 +119,72 @@ The resulting Hamiltonian is $H(x,s) = -10x_0 - 15x_1 - 20x_2 + 1000(x_0 + x_1 +
 \subsection*{0/1 Knapsack Problem}
 
 \paragraph{Problem Statement.}
-Given a set of $N$ items, each item $i \in \{0, \dots, N-1\}$ has an associated value $v_i$ and weight $w_i$. A knapsack has a maximum weight capacity $W$. The goal is to select a subset of items to maximize the total value without exceeding the capacity $W$. Each item may be selected at most once.
+Given $N$ items, each characterized by a value $v_i$ and a weight $w_i$ for $i \in \{0, \dots, N-1\}$, and a knapsack with a maximum weight capacity $W$, the goal is to select a subset of items to maximize the total value without exceeding the capacity $W$.
 
 \paragraph{Decision Variables.}
-We introduce binary decision variables $x_i \in \{0,1\}$ for each item $i \in \{0, \dots, N-1\}$, where $x_i = 1$ if item $i$ is selected and $x_i = 0$ otherwise. To convert the inequality constraint into an equality suitable for penalty-based optimization, we introduce auxiliary slack variables $s_j \in \{0,1\}$ for $j \in \{0, \dots, N-1\}$.
+For each item $i \in \{0, \dots, N-1\}$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ takes the value $1$ if item $i$ is included in the knapsack, and $0$ otherwise.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 -- Objective Function.} The original problem maximizes $\sum_{i=0}^{N-1} v_i x_i$. Since QUBO solvers minimize energy, we negate the objective:
+\textbf{Step 1.} The original optimization problem seeks to maximize $\sum_{i=0}^{N-1} v_i x_i$. Since QUBO solvers minimize quadratic functions, we negate the objective to obtain the minimization form:
 \begin{align}
-H_{\text{obj}} = -\sum_{i=0}^{N-1} v_i x_i.
+    \min_{x \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} v_i x_i \right).
 \end{align}
 
-\textbf{Step 2 -- Constraint Formulation.} The weight capacity constraint is $\sum_{i=0}^{N-1} w_i x_i \le W$. Using the slack variables, we enforce equality:
+\textbf{Step 2.} The weight capacity constraint is expressed as:
 \begin{align}
-\sum_{i=0}^{N-1} w_i x_i + \sum_{j=0}^{N-1} s_j = W.
-\end{align}
-For the purpose of the provided QUBO mapping, we consider the unit-weight case $w_i = 1$ for all $i$, yielding:
-\begin{align}
-\sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j = W.
+    \sum_{i=0}^{N-1} w_i x_i \le W.
 \end{align}
 
-\textbf{Step 3 -- Penalty Term Expansion.} We introduce a penalty parameter $\lambda &gt; 0$ and construct the penalty Hamiltonian:
+\textbf{Step 3.} We enforce the constraint via a quadratic penalty term with weight $\lambda &gt; 0$. To convert the inequality into a penalty that activates upon violation, we write:
 \begin{align}
-H_{\text{pen}} = \lambda \left( \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j - W \right)^2.
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} w_i x_i - W \right)^2.
 \end{align}
-Expanding the square and applying the idempotent property $x_k^2 = x_k$ and $s_k^2 = s_k$ for binary variables:
+Expanding the square yields:
 \begin{align}
-\left( \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j - W \right)^2 &amp;= \left( \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j \right)^2 - 2W \left( \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j \right) + W^2 \nonumber \\
-&amp;= \sum_{i=0}^{N-1} x_i + \sum_{j=0}^{N-1} s_j + 2 \sum_{0 \le i &lt; k \le N-1} x_i x_k + 2 \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} x_i s_j - 2W \sum_{i=0}^{N-1} x_i - 2W \sum_{j=0}^{N-1} s_j + W^2.
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} w_i^2 x_i^2 - 2W \sum_{i=0}^{N-1} w_i x_i + W^2 + \sum_{i=0}^{N-1} \sum_{j \neq i} w_i w_j x_i x_j \right).
 \end{align}
-Following the provided formulation, linear penalty contributions are absorbed into the diagonal bias terms and the constant offset, resulting in the simplified quadratic structure where diagonal coefficients are $\lambda$, off-diagonal coefficients are $2\lambda$, and the constant offset is $\lambda W^2$.
-
-\textbf{Step 4 -- Combined Hamiltonian.} The total QUBO energy function is the sum of the objective and penalty terms:
+Using the idempotent property of binary variables, $x_i^2 = x_i$, the linear terms simplify. Additionally, we symmetrize the double sum by restricting to $i &lt; j$ and multiplying by $2$:
 \begin{align}
-H(x, s) = H_{\text{obj}} + H_{\text{pen}}.
+    P(x) = \lambda \left( \sum_{i=0}^{N-1} (w_i^2 - 2W w_i) x_i + \sum_{0 \le i &lt; j \le N-1} 2 w_i w_j x_i x_j + W^2 \right).
 \end{align}
 
-\textbf{Step 5 -- Q Matrix Entries and Offset.} Reading off the coefficients from the expanded form, the QUBO matrix entries $Q$ and constant offset $c$ are given by:
+\textbf{Step 4.} Combining the negated objective and the penalty term gives the full QUBO Hamiltonian $H(x)$:
 \begin{align}
-Q_{i,i} &amp;= -v_i + \lambda, &amp; i \in \{0, \dots, N-1\}, \\
-Q_{N+j, N+j} &amp;= \lambda, &amp; j \in \{0, \dots, N-1\}, \\
-Q_{i,k} &amp;= 2\lambda, &amp; 0 \le i &lt; k \le N-1, \\
-Q_{i, N+j} &amp;= 2\lambda, &amp; i \in \{0, \dots, N-1\}, \ j \in \{0, \dots, N-1\}, \\
-c &amp;= \lambda W^2.
+    H(x) = -\sum_{i=0}^{N-1} v_i x_i + \lambda \sum_{i=0}^{N-1} (w_i^2 - 2W w_i) x_i + \lambda \sum_{0 \le i &lt; j \le N-1} 2 w_i w_j x_i x_j + \lambda W^2.
+\end{align}
+
+\textbf{Step 5.} Reading off the coefficients from $H(x) = \sum_{i \le j} Q_{i,j} x_i x_j + c$, the QUBO matrix entries and offset are given in closed form as:
+\begin{align}
+    Q_{i,i} &amp;= -v_i + \lambda(w_i^2 - 2W w_i), \quad \text{for } i \in \{0, \dots, N-1\}, \\
+    Q_{i,j} &amp;= 2\lambda w_i w_j, \quad \text{for } 0 \le i &lt; j \le N-1, \\
+    Q_{i,j} &amp;= 0, \quad \text{for } i &gt; j, \\
+    c &amp;= \lambda W^2.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the capacity constraint increases the total energy more than the maximum possible gain from the objective function. Specifically, the maximum objective improvement achievable by flipping any single variable is bounded by $\max_i v_i$. Therefore, selecting $\lambda &gt; \max_i v_i$ guarantees that infeasible configurations incur a strictly higher energy penalty than any feasible configuration, effectively enforcing the constraint during minimization.
+The penalty parameter $\lambda$ must be chosen sufficiently large to ensure that constraint violations are strictly penalized over any potential gain in the objective function. A sufficient condition is $\lambda &gt; \sum_{i=0}^{N-1} v_i$. This guarantees that the minimum penalty incurred by any infeasible assignment exceeds the maximum possible total value achievable by any feasible subset, thereby forcing the global minimum of $H(x)$ to reside within the feasible region.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x,s)$ over $\{0,1\}^{2N}$ recovers the optimal solution to the original knapsack problem. For any feasible assignment, the constraint is satisfied, causing the penalty term to vanish and $H$ to reduce exactly to the negated objective function. For any infeasible assignment, the penalty term evaluates to at least $\lambda$, which by construction exceeds the maximum possible objective value. Consequently, the global minimum of $H$ must occur at a feasible point that maximizes the original objective, ensuring correctness.
+Minimizing $H(x)$ over $\{0,1\}^N$ recovers the optimal solution to the original knapsack problem. For any feasible solution, the constraint is satisfied, the penalty term vanishes, and $H(x)$ reduces exactly to the negated objective value. For any infeasible solution, the penalty term is strictly positive. By the choice of $\lambda$, the energy increase from violating the constraint outweighs any possible decrease in the objective term, ensuring that the energy of every infeasible point is strictly greater than that of at least one feasible point. Consequently, the global minimum of $H(x)$ must correspond to a feasible solution that maximizes the original objective.
 
 \paragraph{Illustrative Example.}
-Consider a small instance with $N=3$ items, values $v_0=10$, $v_1=15$, $v_2=20$, unit weights $w_i=1$ for all $i$, capacity $W=100$, and penalty weight $\lambda=1000$. The decision variables are $x_0, x_1, x_2$ and slacks $s_0, s_1, s_2$. The objective term is $-10x_0 - 15x_1 - 20x_2$. The constraint becomes $x_0 + x_1 + x_2 + s_0 + s_1 + s_2 = 100$. Substituting into the general formulas yields the following QUBO matrix entries and offset:
+Consider a concrete instance with $N=3$ items, values $v = [10, 20, 30]$, weights $w = [5, 10, 15]$, capacity $W = 20$, and penalty weight $\lambda = 100$. Substituting these into the general formulation yields the following components:
+
+The concrete minimization objective is $\min -10x_0 - 20x_1 - 30x_2$.
+The concrete penalty term is $100(5x_0 + 10x_1 + 15x_2 - 20)^2$.
+Expanding the penalty using the general derivation gives:
 \begin{align}
-Q_{0,0} &amp;= -10 + 1000 = 990, &amp; Q_{3,3} &amp;= 1000, \\
-Q_{1,1} &amp;= -15 + 1000 = 985, &amp; Q_{4,4} &amp;= 1000, \\
-Q_{2,2} &amp;= -20 + 1000 = 980, &amp; Q_{5,5} &amp;= 1000, \\
-Q_{i,k} &amp;= 2000 &amp; \text{for all } 0 \le i &lt; k \le 5, \\
-c &amp;= 1000000.
+    P(x) = 100 \left[ (25 - 200)x_0 + (100 - 400)x_1 + (225 - 600)x_2 + 2(50x_0x_1 + 75x_0x_2 + 150x_1x_2) + 400 \right].
 \end{align}
-The resulting Hamiltonian is $H(x,s) = -10x_0 - 15x_1 - 20x_2 + 1000(x_0 + x_1 + x_2 + s_0 + s_1 + s_2 - 100)^2$. The optimal selection is $x_0=0, x_1=1, x_2=1$ (total value $35$, weight $2$), with slack variables $s_0=98, s_1=0, s_2=0$. This assignment satisfies the constraint, yielding an energy of $-35$. Any infeasible assignment incurs an energy penalty of at least $1000$, confirming that the global minimum corresponds to the optimal knapsack solution.</pre>
+Combining objective and penalty yields the resulting Hamiltonian:
+\begin{align}
+    H(x) = -1810 x_0 - 30200 x_1 - 37530 x_2 + 10000 x_0 x_1 + 15000 x_0 x_2 + 30000 x_1 x_2 + 40000.
+\end{align}
+Evaluating $H(x)$ over all $2^3 = 8$ binary assignments reveals that the feasible solutions (total weight $\le 20$) are $x \in \{(0,0,0), (1,0,0), (0,1,0), (0,0,1), (1,1,0)\}$. Among these, the assignment $x^* = (0,0,1)$ achieves the maximum value of $30$ and yields the minimum energy:
+\begin{align}
+    H(x^*) = -37530 + 40000 = 2470.
+\end{align}
+Thus, $x^* = (0,0,1)$ is the optimal solution with energy $2470$.</pre>
 
   <script>
     function copyLatex(btn) {

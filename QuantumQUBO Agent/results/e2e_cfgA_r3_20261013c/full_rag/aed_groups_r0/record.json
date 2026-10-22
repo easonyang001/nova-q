@@ -1,0 +1,250 @@
+{
+ "case": "aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 225.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 197.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 78.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 540.7
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 370.9
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 2,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location (deduplicated by place)",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "Inspection team identifier",
+    "source": "user"
+   }
+  },
+  "params": {
+   "name": {
+    "meaning": "Name or ID of the AED location",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the AED location",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the AED location",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of sites per team (N / 3)",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 4
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "in_area",
+   "merge_same_place",
+   "reduce_points"
+  ],
+  "notes": "Filtered to Da'an District using area codes. Excluded '學校、大型集會場所' and '其他'. Merged duplicate locations within 150m. Renamed coordinate columns to 'lat'/'lon' for toolkit compatibility. Reduced to exactly 12 sites (k=4 per team) using k-means representative selection.",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-13T08:35:30.191006+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依實際邊界保留區域 ['大安區', '臺北市'] | 2729 | 320 | 各區點數 {'大安區': 327, '臺北市': 2726}；對應的區域代碼 {'大安區': 63000030, '臺北市': 63000030}（以發布者代碼篩選） |\n| Filter Da'an District | 320 | 320 | Using area codes |\n| Filter categories | 54 | 54 | Excluded ['學校、大型集會場所', '其他'] |\n| 合併同名且相距 150 m 內的同一地點 | 54 | 48 | 合併 6 筆 |\n| Deduplicate places | 48 | 48 | Merged within 150m |\n| 規模縮減：k-means 分 12 群，每群取最接近中心的代表點 | 48 | 12 | 未加權 |\n| Reduce to target size | 12 | 12 | Reduced to 12 sites for k=4 |",
+  "flags": [],
+  "review_required": [
+   "sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "name: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "k: ['Confirmed user setting: 4 sites per team.']",
+   "獨立資料核對不一致：set 'sites' has 12 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 48. Check which rows you keep and whether duplicates of the same place are merged",
+   "獨立資料核對不一致：parameter 'lat' sums to 300.337, but an independent computation from the raw tables expects 1,201.54. Rows may be missing, duplicated, from the wrong period or include totals of a higher level",
+   "獨立資料核對不一致：parameter 'lon' sums to 1,458.51, but an independent computation from the raw tables expects 5,834.05. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T08:35:30.191006+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 36,
+  "n_constraints": 15,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 48
+    },
+    "totals": {
+     "lat": 1201.5419225,
+     "lon": 5834.0494893
+    }
+   },
+   "issues": [
+    "set 'sites' has 12 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 48. Check which rows you keep and whether duplicates of the same place are merged",
+    "parameter 'lat' sums to 300.337, but an independent computation from the raw tables expects 1,201.54. Rows may be missing, duplicated, from the wrong period or include totals of a higher level",
+    "parameter 'lon' sums to 1,458.51, but an independent computation from the raw tables expects 5,834.05. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "53d44d589342566e29f02fc4",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 48,
+    "invalid": 48,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "53d44d589342566e29f02fc4",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.3954996306161693,
+  "objective": 22921.232891939973,
+  "baseline_objective": 37917.64910797931
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 12,
+    "mapped": 12,
+    "duplicates": [],
+    "missing_real_entities": 36,
+    "missing_examples": [
+     "Pro Space",
+     "Vital Essence Fitness 運動賦能",
+     "亞東百貨股份有限公司遠企分公司",
+     "低氧喜客",
+     "台北大安伊普索酒店",
+     "台北市建國假日玉市A區",
+     "台北福華大飯店",
+     "台北美侖大飯店",
+     "台北遠東香格里拉/Shangri-La Far Eastern Taipei (鼎鼎大飯店股份有限公司)",
+     "和苑三井花園飯店 台北忠孝"
+    ],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "structure": "the instance has 12 mapped places instead of 48: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 12,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 370657.2329274105
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 138856,
+  "solver_calls": 3
+ },
+ "seconds": 1412.7
+}

@@ -1,0 +1,326 @@
+{
+ "case": "ev_chargers_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 116.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 641.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 46.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 889.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1508.3
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "model 修復完成"
+  },
+  {
+   "workflow": "修正未通過檢查，保留先前版本：修正後仍與需求檢查不一致：the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'sites': '龍雲里'}, {'sites': '敦煌里'}, {'sites': '住安里'}]; the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'sites': '車層里'}, {'sites': '錦泰里'}, {'sites': '臨江里'}]; the model rejects a solution that satisfies the confirmed requirements (infeasible): [{'sites': '誠安里'}, {'sites': '敦煌里'}, {'sites': '民輝里'}]"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact MCLP with Coverage Indicators. For ~24 candidate sites and ~24 demand points, we have 48 binary variables. This is well within the CGA backend limit of ~3,600 variables. The formulation uses standard linear constraints for coverage logic, which are converted to QUBO penalties by the backend solver infrastructure.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Candidate locations for charging stations (district centers)",
+    "source": "public"
+   },
+   "demands": {
+    "meaning": "Districts to be covered (same set as sites in this specific problem context)",
+    "source": "public"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the candidate site",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the candidate site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the candidate site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "demand_name": {
+    "meaning": "Name of the demand district",
+    "index": [
+     "demands"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "population": {
+    "meaning": "Population of the demand district",
+    "index": [
+     "demands"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "k": {
+    "meaning": "Number of charging stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   },
+   "radius_km": {
+    "meaning": "Coverage radius in kilometers",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1.0
+   }
+  }
+ },
+ "data_found": [
+  "臺北市各里人口數按年齡分_CSV.csv",
+  "臺北市里界圖.zip"
+ ],
+ "prep": {
+  "tools_used": [
+   "keep_category",
+   "keep_level",
+   "latest_period",
+   "match",
+   "merge_same_place",
+   "to_wgs84"
+  ],
+  "notes": "Filtered population data to latest period (110年), total gender (計), and village level. Filtered boundary data to Da'an District. Converted TWD97 projected coordinates to WGS84 lat/lon. Merged duplicate boundary rows per village. Joined population and boundary data on village name to form the final set of sites/demands with coordinates and population.",
+  "prep_log": "**資料來源**\n\n- 臺北市各里人口數按年齡分 — CSV（catalogue data.gov.tw） <https://data.gov.tw/dataset/136896>，授權：待確認，取得 2026-10-13T03:42:59.210506+00:00\n- 臺北市里界圖（政府資料開放平台） <https://data.gov.tw/dataset/121163>，授權：待確認，取得 2026-10-13T03:41:18.441636+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只取最新一期 {'年份': 110, '月份': 12} | 16884 | 1407 |  |\n| 只保留 性別=計 | 1407 | 469 |  |\n| 只保留行政層級「里」 | 469 | 456 | 移除 13 列上層彙總 |\n| filter_bound_daan | 53 | 53 | Filtered boundary data to Da'an District |\n| 座標轉換 EPSG:3826 → WGS84 | 53 | 53 | 無 .prj，依數值範圍判斷為 TWD97 |\n| 合併同名且相距 150 m 內的同一地點 | 53 | 53 | 合併 0 筆 |\n| filter_pop_daan | 53 | 53 | Filtered population data to Da'an District villages |\n| 合併（name ↔ name） | 53 | 53 | 完全對上 53、模糊對上 0、對不上 0 |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "demands: 缺少實際來源對應，不能確認為公開真實資料",
+   "site_name: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "demand_name: 缺少實際來源對應，不能確認為公開真實資料",
+   "population: 尚未聲明 unit，需求為 persons",
+   "population: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：demand_name, demands, k, lat, lon, population, radius_km, site_name, sites"
+  ],
+  "sources": [
+   {
+    "title": "臺北市各里人口數按年齡分 — CSV",
+    "url": "https://data.gov.tw/dataset/136896",
+    "resource_url": "https://data.taipei/api/dataset/a6394e3f-3514-4542-87bd-de4310a40db3/resource/09c661ed-368c-44cb-8d1e-cbe7ececf2ec/download",
+    "publisher": "catalogue data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T03:42:59.210506+00:00",
+    "sha256": "24fdee2b6d17b18ad185403e54be48dc07a60f578ee22cea5970bf34901adaf3",
+    "bytes": 5564358
+   },
+   {
+    "title": "臺北市里界圖",
+    "url": "https://data.gov.tw/dataset/121163",
+    "resource_url": "https://data.taipei/api/dataset/6b17b31d-4e16-495e-95b1-9fd1f47c80d8/resource/145e30da-58f3-45db-a125-8adc3fde2620/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T03:41:18.441636+00:00",
+    "sha256": "acff9aebcaa04c26d1fd8beceff1e7a3b95a2d35177ec0bafef08499e1e276ac",
+    "bytes": 521114
+   }
+  ],
+  "n_variables": 106,
+  "n_constraints": 54,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 53,
+     "demands": 53
+    },
+    "totals": {
+     "population": 291410.0
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "issues",
+   "version": "ae9babe25942c5f3f08d2d96",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.19 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.194
+   }
+  },
+  {
+   "status": "issues",
+   "version": "c923d018855a6b47ad231fd4",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.19 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.194
+   }
+  },
+  {
+   "status": "issues",
+   "version": "c923d018855a6b47ad231fd4",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.19 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.194
+   }
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:repaired",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:solve",
+  "delivery:no_solution",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": -250111.0,
+  "baseline_objective": -250111.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 53,
+    "mapped": 53,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "lat",
+    "population_exact_matches": 0,
+    "population_total": 1326.6089966316888,
+    "population_truth_total": 279617
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "demands"
+     ],
+     [
+      "sites"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 47,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 241701
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 391444,
+  "solver_calls": 3
+ },
+ "seconds": 3201.8
+}

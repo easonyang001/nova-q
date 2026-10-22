@@ -1,0 +1,77 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Minimum Vertex Cover}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Minimum Vertex Cover}
+
+\paragraph{Problem Statement.}
+Let $G = (V, E)$ be an undirected graph with vertex set $V$ and edge set $E$. The Minimum Vertex Cover problem seeks a subset $S \subseteq V$ of minimum cardinality such that for every edge $(u, v) \in E$, at least one of its endpoints belongs to $S$.
+
+\paragraph{Decision Variables.}
+For each vertex $i \in V$, introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ takes the value $1$ if vertex $i$ is included in the vertex cover $S$, and $0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- The original objective is to minimize the number of selected vertices:
+\begin{align}
+\min \sum_{i \in V} x_i.
+\end{align}
+Since QUBO solvers minimize a quadratic function, we retain this linear term directly in the objective function.
+
+Step 2 --- The edge coverage constraints require that for every edge $(u, v) \in E$, at least one endpoint is selected:
+\begin{align}
+x_u + x_v \ge 1 \quad \text{for all } (u, v) \in E.
+\end{align}
+
+Step 3 --- To incorporate these constraints into the objective, we construct a penalty term for each edge. For a given edge $(u, v) \in E$, the constraint violation is measured by $(x_u + x_v - 1)^2$. Multiplying by a penalty weight $\lambda > 0$, the penalty contribution for edge $(u, v)$ is $\lambda (x_u + x_v - 1)^2$. Expanding this expression yields:
+\begin{align}
+\lambda (x_u + x_v - 1)^2 &= \lambda (x_u^2 + x_v^2 + 1 + 2x_u x_v - 2x_u - 2x_v).
+\end{align}
+Using the idempotent property of binary variables, $x_k^2 = x_k$ for all $k \in V$, the expression simplifies to:
+\begin{align}
+\lambda (x_u + x_v - 1)^2 &= \lambda (2x_u x_v - x_u - x_v + 1).
+\end{align}
+This is the general penalty contribution to the Hamiltonian for each edge.
+
+Step 4 --- Combining the original objective with the sum of all edge penalty terms, the total QUBO Hamiltonian $H(\mathbf{x})$ is:
+\begin{align}
+H(\mathbf{x}) = \sum_{i \in V} x_i + \sum_{(u, v) \in E} \lambda (2x_u x_v - x_u - x_v + 1).
+\end{align}
+
+Step 5 --- To extract the QUBO matrix entries and constant offset, we collect coefficients for each variable and pairwise product. The coefficient of $x_i$ in $H(\mathbf{x})$ is $1 - \lambda \deg(i)$, where $\deg(i)$ denotes the degree of vertex $i$ in $G$. The coefficient of the product $x_u x_v$ is $2\lambda$ if $(u, v) \in E$, and $0$ otherwise. The constant offset is the sum of the constant terms from each edge penalty, which equals $\lambda |E|$. Thus, the QUBO parameters are given by:
+\begin{align}
+Q_{i,i} &= 1 - \lambda \deg(i) \quad \text{for all } i \in V, \\
+Q_{u,v} &= 2\lambda \quad \text{for all } (u, v) \in E, \\
+Q_{i,j} &= 0 \quad \text{for all } (i, j) \notin E \text{ with } i \neq j, \\
+c &= \lambda |E|.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the edge coverage constraints incurs an energy cost that outweighs any potential reduction in the objective function. The maximum possible decrease in the original objective $\sum_{i \in V} x_i$ from flipping a single variable is $1$. Therefore, any $\lambda > 1$ guarantees that the penalty for violating a single constraint strictly dominates the best-case objective improvement. In general, $\lambda$ can be set to any value strictly greater than the maximum absolute coefficient in the original objective function.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\mathbf{x} \in \{0, 1\}^{|V|}$ recovers the optimal vertex cover because feasible solutions satisfy $x_u + x_v \ge 1$ for all $(u, v) \in E$, causing all penalty terms to evaluate to zero. Consequently, the energy of any feasible solution equals its original objective value. In contrast, any infeasible assignment violates at least one edge constraint, resulting in a strictly positive penalty term. Since $\lambda > 1$, the energy increase from this penalty exceeds the maximum possible reduction in the linear objective term, ensuring that no infeasible solution can achieve a lower energy than the optimal feasible solution. Thus, the global minimum of $H(\mathbf{x})$ corresponds exactly to a minimum vertex cover.
+
+\paragraph{Illustrative Example.}
+Consider a graph with $N = 2$ vertices, $V = \{0, 1\}$, and a single edge $E = \{(0, 1)\}$. Here, $|E| = 1$, $\deg(0) = 1$, and $\deg(1) = 1$. Setting $\lambda = 2$ as specified, the general formulas yield the following concrete QUBO parameters:
+\begin{align}
+Q_{0,0} &= 1 - 2(1) = -1, \\
+Q_{1,1} &= 1 - 2(1) = -1, \\
+Q_{0,1} &= 2(2) = 4, \\
+c &= 2(1) = 2.
+\end{align}
+The resulting Hamiltonian is:
+\begin{align}
+H(x_0, x_1) = -x_0 - x_1 + 4x_0 x_1 + 2.
+\end{align}
+Evaluating $H$ over all four binary assignments yields:
+\begin{align}
+H(0,0) &= 2, \quad H(0,1) = -1, \quad H(1,0) = -1, \quad H(1,1) = 1.
+\end{align}
+The minimum energy is $-1$, achieved at $(x_0, x_1) = (0, 1)$ and $(1, 0)$. Both correspond to valid minimum vertex covers of size $1$, confirming the formulation.
+
+\end{document}

@@ -1,0 +1,209 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 157.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 234.7
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 42.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 187.9
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 94.1
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 2,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour",
+  "mp-cardinality"
+ ],
+ "model_choice": "Position encoding TSP (N^2 variables). Fits backend because N~30 yields ~900 vars, well under 1500 limit. No subtour constraints needed.",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "YouBike station ID",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Tour position index",
+    "source": "mock"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   }
+  }
+ },
+ "data_found": [
+  "政府資料開放平臺.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 500m straight-line distance of MRT Daan Station (25.0330, 121.5436) using the Government Data Open Platform table. Extracted station IDs, latitudes, and longitudes. Positions are auto-indexed 0..N-1.",
+  "prep_log": "**資料來源**\n\n- 政府資料開放平臺（data.gov.tw） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-12T03:40:08.297003+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Drop rows with missing coordinates | 1815 | 1815 |  |\n| 只保留距離 (25.033, 121.5436) 500 公尺內的資料 | 1815 | 18 |  |\n| Filter stations within 500m of MRT Daan Station | 1815 | 18 |  |",
+  "flags": [],
+  "review_required": [],
+  "sources": [
+   {
+    "title": "政府資料開放平臺",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "data.gov.tw",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T03:40:08.297003+00:00",
+    "sha256": "09e63a47d22f77fea8ad3217b8e51217256b8fdf950855c8623eb9f66d1a0bd5",
+    "bytes": 950728
+   }
+  ],
+  "n_variables": 324,
+  "n_constraints": 36,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: AssertionError: \nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/datacheck.py\", line 34, in _expected\n    out = ns[\"expected\"]({k: v.copy() for k, v in tables.items()})\n  File \"<data_checker>\", line 6, in expected\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/indexing.py\", line 1200, in __getitem__\n    return self._getitem_tuple(key)\n           ~~~~~~~~~~~~~~~~~~~^^^^^\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/indexing.py\", line 1395, in _getitem_tuple\n    return self._getitem_tuple_same_dim(tup)\n           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^\nAssertionError\n"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "7e608d2351bc59f51c111acf",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 39,
+    "invalid": 39,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "7e608d2351bc59f51c111acf",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.578585638745678,
+  "objective": 3417.0711754159815,
+  "baseline_objective": 8108.577897642627
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (政府資料開放平臺.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 18,
+    "mapped": 18,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 18,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 3417.071175415982,
+    "reference_quality": 3504.645699100399,
+    "gap_vs_reference": -0.025
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 120260,
+  "solver_calls": 3
+ },
+ "seconds": 716.1
+}

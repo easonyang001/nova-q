@@ -1,0 +1,124 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 391.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 420.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 109.0
+  },
+  "data": {
+   "ok": false,
+   "seconds": 5985.6,
+   "error": "ValueError: data preparation failed: 預處理失敗：APITimeoutError: Request timed out."
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "MCLP formulation, ~900 variables for 450 Li, fits CGA backend.",
+ "schema": {
+  "sets": {
+   "li": {
+    "meaning": "Neighborhood (Li) in Taipei City",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Total population of the Li",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "person"
+   },
+   "lat": {
+    "meaning": "Latitude of Li centroid",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of Li centroid",
+    "index": [
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "num_stations": {
+    "meaning": "Number of charging stations to be placed",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "coverage_radius": {
+    "meaning": "Coverage distance threshold",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "unit": "m",
+    "value": 1000
+   },
+   "distance_matrix": {
+    "meaning": "Distance between Li centroids",
+    "index": [
+     "li",
+     "li"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ]
+    }
+   }
+  }
+ },
+ "data_found": [
+  "台北市村里界.geojson",
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "cost": {
+  "llm_tokens": 254950,
+  "solver_calls": null
+ },
+ "seconds": 6906.4
+}

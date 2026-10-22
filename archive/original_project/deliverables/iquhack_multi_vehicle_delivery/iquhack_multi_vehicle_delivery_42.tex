@@ -1,0 +1,86 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Multi-Vehicle Delivery Assignment Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Multi-Vehicle Delivery Assignment Problem}
+
+\paragraph{Problem Statement.}
+Given a set of vehicles $\mathcal{V}$ and a set of customer jobs $\mathcal{J}$, a collection of candidate routes $\mathcal{R}$ is provided. Each route $r \in \mathcal{R}$ is associated with a delivery cost $c_r \ge 0$ and covers a subset of jobs $J_r \subseteq \mathcal{J}$. Each route is assigned to a specific vehicle $v(r) \in \mathcal{V}$. The objective is to select a subset of routes such that every job in $\mathcal{J}$ is covered exactly once, each vehicle in $\mathcal{V}$ is assigned at most one route, and the total delivery cost is minimized.
+
+\paragraph{Decision Variables.}
+For each candidate route $r \in \mathcal{R}$, introduce a binary decision variable $x_r \in \{0,1\}$, where $x_r = 1$ indicates that route $r$ is selected, and $x_r = 0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- The original objective is to minimize the total delivery cost:
+\begin{align}
+    \min_{\mathbf{x} \in \{0,1\}^{|\mathcal{R}|}} \sum_{r \in \mathcal{R}} c_r x_r.
+\end{align}
+
+Step 2 --- The constraints are expressed in general algebraic form as:
+\begin{align}
+    \sum_{r \in R_j} x_r &= 1, \quad \forall j \in \mathcal{J}, \\
+    \sum_{r \in R_v} x_r &\le 1, \quad \forall v \in \mathcal{V},
+\end{align}
+where $R_j = \{r \in \mathcal{R} : j \in J_r\}$ denotes the set of candidate routes covering job $j$, and $R_v = \{r \in \mathcal{R} : v(r) = v\}$ denotes the set of candidate routes available for vehicle $v$.
+
+Step 3 --- We convert each constraint into a quadratic penalty term added to the objective. Let $\lambda > 0$ be a penalty weight.
+For the exact coverage constraints, we use the squared equality penalty:
+\begin{align}
+    P_j(\mathbf{x}) &= \lambda \left( \sum_{r \in R_j} x_r - 1 \right)^2 \\
+    &= \lambda \left( \sum_{r \in R_j} x_r^2 - 2 \sum_{r \in R_j} x_r + 1 \right).
+\end{align}
+Using the idempotent property of binary variables, $x_r^2 = x_r$, this expands to:
+\begin{align}
+    P_j(\mathbf{x}) &= \lambda \left( \sum_{r \in R_j} x_r - 2 \sum_{r \in R_j} x_r + 1 \right) \\
+    &= \lambda \left( 1 - \sum_{r \in R_j} x_r \right) \\
+    &= \lambda - \lambda \sum_{r \in R_j} x_r.
+\end{align}
+Note that the squared expansion yields only linear and constant terms; cross-terms $x_r x_{r'}$ cancel out.
+For the vehicle route limit constraints, we enforce $\sum_{r \in R_v} x_r \le 1$ by penalizing pairwise selections within the same vehicle:
+\begin{align}
+    Q_v(\mathbf{x}) &= \lambda \sum_{\substack{r, r' \in R_v \\ r < r'}} x_r x_{r'}.
+\end{align}
+This term is zero when at most one route is selected for vehicle $v$, and strictly positive otherwise.
+
+Step 4 --- Combining the objective and all penalty terms yields the single QUBO Hamiltonian:
+\begin{align}
+    H(\mathbf{x}) &= \sum_{r \in \mathcal{R}} c_r x_r + \sum_{j \in \mathcal{J}} \left( \lambda - \lambda \sum_{r \in R_j} x_r \right) + \sum_{v \in \mathcal{V}} \lambda \sum_{\substack{r, r' \in R_v \\ r < r'}} x_r x_{r'}.
+\end{align}
+
+Step 5 --- Collecting terms by variable indices, the QUBO is expressed in the standard form $H(\mathbf{x}) = \sum_{r} Q_{rr} x_r + \sum_{r < r'} Q_{rr'} x_r x_{r'} + c_0$. The matrix entries and offset are given by:
+\begin{align}
+    Q_{rr} &= c_r - \lambda \cdot |\{j \in \mathcal{J} : r \in R_j\}|, \quad \forall r \in \mathcal{R}, \\
+    Q_{rr'} &= \begin{cases}
+        \lambda & \text{if } r, r' \in R_v \text{ for some } v \in \mathcal{V} \text{ and } r < r', \\
+        0 & \text{otherwise},
+    \end{cases} \quad \forall r, r' \in \mathcal{R}, r < r', \\
+    c_0 &= \lambda |\mathcal{J}|.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any constraint violation increases the total energy above the minimum possible objective value. Specifically, let $C_{\max} = \max_{r \in \mathcal{R}} c_r$ be the maximum single-route cost. The maximum possible reduction in the objective function from selecting any subset of routes is bounded by $C_{\max}$. Since each violated constraint contributes at least $\lambda$ to the energy, choosing $\lambda > C_{\max}$ guarantees that the energy of any infeasible solution strictly exceeds the energy of any feasible solution. Thus, $\lambda > \max_{r} c_r$ is a sufficient condition.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\mathbf{x} \in \{0,1\}^{|\mathcal{R}|}$ recovers the optimal delivery assignment because (i) for any feasible assignment, all penalty terms vanish, so $H(\mathbf{x})$ equals the total delivery cost; (ii) for any infeasible assignment, at least one constraint is violated, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, the energy of any infeasible solution is strictly greater than the energy of the best feasible solution. Consequently, the global minimum of $H(\mathbf{x})$ must occur at a feasible point, and among feasible points, $H(\mathbf{x})$ reduces to the original cost function, ensuring the global minimum corresponds to the optimal solution.
+
+\paragraph{Illustrative Example.}
+Consider a small instance with $M=4$ candidate routes $\mathcal{R} = \{0, 1, 2, 3\}$, costs $c_0=2, c_1=5, c_2=4, c_3=1$, two jobs $\mathcal{J}=\{1,2\}$, and two vehicles $\mathcal{V}=\{A,B\}$. The job coverage sets are $R_1 = \{0,1\}$ and $R_2 = \{2,3\}$. The vehicle route sets are $R_A = \{0,2\}$ and $R_B = \{1,3\}$.
+Substituting these into the general formulas yields:
+\begin{align}
+    H(\mathbf{x}) &= 2x_0 + 5x_1 + 4x_2 + 1x_3 + \lambda(1 - x_0 - x_1) + \lambda(1 - x_2 - x_3) + \lambda x_0 x_2 + \lambda x_1 x_3 \\
+    &= 2x_0 + 5x_1 + 4x_2 + 1x_3 + 2\lambda - \lambda x_0 - \lambda x_1 - \lambda x_2 - \lambda x_3 + \lambda x_0 x_2 + \lambda x_1 x_3.
+\end{align}
+The corresponding Q matrix entries and offset are:
+\begin{align}
+    Q_{00} &= 2 - \lambda, & Q_{11} &= 5 - \lambda, & Q_{22} &= 4 - \lambda, & Q_{33} &= 1 - \lambda, \\
+    Q_{02} &= \lambda, & Q_{13} &= \lambda, & \text{all other } Q_{rr'} &= 0, \\
+    c_0 &= 2\lambda.
+\end{align}
+Setting $\lambda = 6$ (satisfying $\lambda > \max c_r = 5$), the feasible solutions are $\mathbf{x} \in \{(1,0,0,1), (0,1,1,0)\}$. Evaluating $H(\mathbf{x})$ gives $H(1,0,0,1) = 3$ and $H(0,1,1,0) = 9$. The global minimum is $H=3$ at $\mathbf{x}^* = (1,0,0,1)$, corresponding to selecting routes $0$ and $3$ with minimum total cost $3$.
+
+\end{document}

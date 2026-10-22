@@ -1,0 +1,36 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 120.6
+  },
+  "model": {
+   "ok": false,
+   "seconds": 298.7,
+   "error": "ValueError: model validation failed: set 'sites' has members with no decision variable: [\"Da'an_Station\"]. Create variables for EVERY member (do not fix a decision such as the start of a tour by leaving its variables out; symmetric solutions are fine). A member that can never be chosen must be removed in the data stage"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "cost": {
+  "llm_tokens": 76341,
+  "solver_calls": null
+ },
+ "seconds": 419.2
+}

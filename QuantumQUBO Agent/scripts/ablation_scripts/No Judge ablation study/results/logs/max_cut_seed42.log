@@ -1,26 +1,18 @@
-[08:08:17] === No-Judge Pipeline START | run_id=max_cut_42_7f955942 ===
-[08:08:17] Benchmark : max_cut  |  seed=42
-[08:08:17] Models    : planner_agent=qwen/qwen3.6-35b-a3b
-[08:08:17]             formulizer_agent=qwen/qwen3.6-35b-a3b
-[08:08:17]             coder_agent=qwen/qwen3-coder-next
-[08:08:17] Cache     : disabled
-[08:08:17] [Stage 1] Planner — attempt 1/1
-[08:08:52] [Stage 1] Planner OK — 1 vars, 0 constraints
-[08:08:53] [Stage 2] Formulizer — attempt 1/1
-[08:09:10] [Stage 2] Formulation OK — n_vars=3, 9 obj terms, 0 penalty groups
-[08:09:10] [Stage 2.5] Building test cases from user input ...
-[08:11:04] [Stage 2.5] Wrote 8 case(s), loaded 8 total
-[08:11:04] [Stage 3] Coder — attempt 1/1
-[08:11:08] [Stage 3] Code generated and compiled OK
-[08:11:08] [Stage 3b] Test Runner — running 8 test cases ...
-[08:11:08] [Stage 3b] Tests: 0/8 passed (0%)  failure_class=formulation_error
-[08:11:08] [Stage 3b] Instance 0 error: [n3_triangle] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 6 correct optimal bitstring(s). Check pe
-[08:11:08] [Stage 3b] Instance 1 error: [n4_complete] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 6 correct optimal bitstring(s). Check pe
-[08:11:08] [Stage 3b] Instance 2 error: [n4_cycle] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check penal
-[08:11:08] [Stage 3b] Instance 3 error: [n5_weighted] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check pe
-[08:11:08] [Stage 3b] Instance 4 error: [n6_star_internal] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Che
-[08:11:08] [Stage 3b] Instance 5 error: [n6_weighted_multi] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Ch
-[08:11:08] [Stage 3b] Instance 6 error: [n7_irregular] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check p
-[08:11:08] [Stage 3b] Instance 7 error: [n8_larger] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check pena
-[08:11:08] === No-Judge Pipeline FAILED — code exhausted all retries ===
-[08:11:08] Finalizing | status=failed | tokens=21317 | cost=$0.0155 | wall=171.0s
+[15:44:44] === No-Judge Pipeline START | run_id=max_cut_42_fdba8984 ===
+[15:44:44] Benchmark : max_cut  |  seed=42
+[15:44:44] Models    : planner_agent=qwen3.6-35b-a3b
+[15:44:44]             formulizer_agent=qwen3.6-35b-a3b
+[15:44:44]             coder_agent=qwen3.6-35b-a3b
+[15:44:44] Cache     : disabled
+[15:44:45] [Stage 1] Planner — attempt 1/1
+[15:45:06] [Stage 1] Planner OK — 1 vars, 0 constraints
+[15:45:06] [Stage 2] Formulizer — attempt 1/1
+[15:45:38] [Stage 2] Formulation OK — n_vars=3, 6 obj terms, 0 penalty groups
+[15:45:38] [Stage 2.5] Building test cases from user input ...
+[15:46:03] [Stage 2.5] Wrote 8 case(s), loaded 8 total
+[15:46:03] [Stage 3] Coder — attempt 1/1
+[15:46:38] [Stage 3] Code generated and compiled OK
+[15:46:38] [Stage 3b] Test Runner — running 8 test cases ...
+[15:46:38] [Stage 3b] Tests: 8/8 passed (100%)  failure_class=success
+[15:46:38] === No-Judge Pipeline SUCCESS ===
+[15:46:38] Finalizing | status=success | tokens=23243 | cost=$0.0000 | wall=113.3s

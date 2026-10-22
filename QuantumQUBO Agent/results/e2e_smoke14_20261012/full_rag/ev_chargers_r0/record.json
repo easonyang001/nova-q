@@ -1,0 +1,337 @@
+{
+ "case": "ev_chargers",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 118.9
+  },
+  "model": {
+   "ok": true,
+   "seconds": 148.7
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 26.9
+  },
+  "data": {
+   "ok": true,
+   "seconds": 257.2
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1077.8
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "修正未通過檢查，保留先前版本：修正改變使用者設定 'radius_km'，需要重新確認規格"
+  },
+  {
+   "workflow": "模型修復未通過驗證：the model is solvable by sorting: the objective is purely linear and the only constraints are 'choose K'. Choices do not interact, so no annealer is needed and interactions in the specification (overlap, distance, nearest facility ...) are lost. Re-model so the objective keeps those interactions; if the specification truly has none, start MODEL_CHOICE with 'separable:' and give the reason"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact binary formulation with N selection variables and N coverage indicators. Total 2N variables (~136 for N=68). Fits easily within the 3,600 variable limit of the CGA backend. Uses linear constraints for cardinality and coverage implications, avoiding quadratic penalties for hard constraints.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "neighborhood center ID",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "latitude of site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "longitude of site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "population of neighborhood",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "k": {
+    "meaning": "number of stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "radius_km": {
+    "meaning": "coverage radius",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 1000,
+    "unit": "m"
+   },
+   "coverage": {
+    "meaning": "whether site i covers site j",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat",
+      "lon",
+      "radius_km"
+     ],
+     "how": "haversine distance <= radius_km"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "prep": {
+  "tools_used": [
+   "attach_parent",
+   "haversine_matrix",
+   "keep_category",
+   "keep_level",
+   "latest_period",
+   "match",
+   "to_wgs84"
+  ],
+  "notes": "Extracted latest monthly total population per neighborhood. Matched with neighborhood boundaries to get WGS84 coordinates. Aggregated duplicates to ensure unique site IDs. Computed pairwise haversine distances to build coverage matrix for 1km radius.",
+  "prep_log": "**資料來源**\n\n- 臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分（政府資料開放平台） <https://data.gov.tw/dataset/136896>，授權：待確認，取得 2026-10-12T03:11:00.943684+00:00\n- 臺北市里界圖（政府資料開放平台） <https://data.gov.tw/dataset/121163>，授權：待確認，取得 2026-10-12T03:11:01.280759+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只取最新一期 {'年份': 115, '月份': 9} | 63315 | 1407 |  |\n| 只保留 性別=計 | 1407 | 469 |  |\n| 補上上層行政區（區） | 469 | 469 | 1 列找不到上層 |\n| 只保留行政層級「里」 | 469 | 456 | 移除 13 列上層彙總 |\n| Extracted population data | 456 | 456 | Filtered to latest period, total gender, neighborhood level |\n| 座標轉換 EPSG:3826 → WGS84 | 456 | 456 | 無 .prj，依數值範圍判斷為 TWD97 |\n| Extracted geographic coordinates | 456 | 456 | Converted projected coords to WGS84 |\n| 合併（district+neighborhood ↔ district+neighborhood） | 456 | 456 | 完全對上 455、模糊對上 1、對不上 0 |\n| Joined and aggregated data | 912 | 454 | Matched and aggregated to unique neighborhoods |\n| Computed coverage matrix | 206116 | 5268 | Threshold: 1000.0m |",
+  "flags": [],
+  "review_required": [
+   "k: ['Confirmed by spec']",
+   "radius_km: ['Confirmed by spec']",
+   "coverage: ['Derived from haversine distance']",
+   "獨立資料核對不一致：set 'sites' has 454 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 456. Check which rows you keep and whether duplicates of the same place are merged"
+  ],
+  "sources": [
+   {
+    "title": "臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分",
+    "url": "https://data.gov.tw/dataset/136896",
+    "resource_url": "https://data.taipei/api/dataset/a6394e3f-3514-4542-87bd-de4310a40db3/resource/c8f5b53d-ef3d-4321-ae8e-58cd2a5ee73c/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T03:11:00.943684+00:00",
+    "sha256": "a478cb4d3cdf509eec3453285bf0c1c542b7f53268608348ced4bafa7150bed3",
+    "bytes": 20821765
+   },
+   {
+    "title": "臺北市里界圖",
+    "url": "https://data.gov.tw/dataset/121163",
+    "resource_url": "https://data.taipei/api/dataset/6b17b31d-4e16-495e-95b1-9fd1f47c80d8/resource/145e30da-58f3-45db-a125-8adc3fde2620/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T03:11:01.280759+00:00",
+    "sha256": "acff9aebcaa04c26d1fd8beceff1e7a3b95a2d35177ec0bafef08499e1e276ac",
+    "bytes": 521114
+   }
+  ],
+  "n_variables": 908,
+  "n_constraints": 455,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 456
+    },
+    "totals": {
+     "pop": 2418872.0
+    }
+   },
+   "issues": [
+    "set 'sites' has 454 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 456. Check which rows you keep and whether duplicates of the same place are merged"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "issues",
+   "version": "63a2c7ef55d422f38847a769",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.20 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.205
+   }
+  },
+  {
+   "status": "issues",
+   "version": "63a2c7ef55d422f38847a769",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.20 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.205
+   }
+  },
+  {
+   "status": "issues",
+   "version": "63a2c7ef55d422f38847a769",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation -0.20 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": -0.205
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "63a2c7ef55d422f38847a769",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "已有可行方案，達到簡單基準的品質；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 0.0,
+  "baseline_objective": 0.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 454,
+    "mapped": 454,
+    "duplicates": [],
+    "missing_real_entities": 2,
+    "missing_examples": [
+     "新安里",
+     "中央里"
+    ],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [
+     "中央里",
+     "新安里"
+    ],
+    "identical_coordinates": 0,
+    "population_param": "pop",
+    "population_exact_matches": 452,
+    "population_total": 2418872.0,
+    "population_truth_total": 2418872
+   }
+  },
+  "model": {
+   "ok": false,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": -0.063,
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "helper variables optimised"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 5,
+    "meets_original_requirements": true,
+    "true_quality": 222564.0,
+    "reference_quality": 565910,
+    "gap_vs_reference": 0.6067
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 313194,
+  "solver_calls": 1
+ },
+ "seconds": 1630.0
+}

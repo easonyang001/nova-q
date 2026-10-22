@@ -1,0 +1,94 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Balanced Distance-Based Clustering Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Balanced Distance-Based Clustering Problem}
+
+\paragraph{Problem Statement.}
+Given $N$ data points and a target number of clusters $K$, assign each point to exactly one cluster while satisfying the cluster-size requirements. Pairwise distances $d_{i,j}$ are provided as input parameters. The objective is to minimize the sum of distances between pairs of points assigned to the same cluster.
+
+\paragraph{Decision Variables.}
+Let $x_{i,c} \in \{0,1\}$ for $i \in \{0,\dots,N-1\}$ and $c \in \{0,\dots,K-1\}$, where $x_{i,c} = 1$ if point $i$ is assigned to cluster $c$, and $x_{i,c} = 0$ otherwise.
+
+\paragraph{QUBO Derivation.}
+Step 1 --- The original objective function to minimize is
+\begin{align}
+  f(\mathbf{x}) = \sum_{c=0}^{K-1} \sum_{i=0}^{N-1} \sum_{j=i+1}^{N-1} d_{i,j} x_{i,c} x_{j,c}.
+\end{align}
+
+Step 2 --- The constraints are
+\begin{align}
+  \sum_{c=0}^{K-1} x_{i,c} = 1, \quad \forall i \in \{0,\dots,N-1\},
+\end{align}
+\begin{align}
+  \sum_{i=0}^{N-1} x_{i,c} = \frac{N}{K}, \quad \forall c \in \{0,\dots,K-1\}.
+\end{align}
+
+Step 3 --- We convert each constraint into a quadratic penalty term using a positive weight $\lambda$. For the assignment constraint:
+\begin{align}
+  P_1 &= \lambda \sum_{i=0}^{N-1} \left( \sum_{c=0}^{K-1} x_{i,c} - 1 \right)^2 \\
+      &= \lambda \sum_{i=0}^{N-1} \left( \sum_{c=0}^{K-1} x_{i,c}^2 - 2\sum_{c=0}^{K-1} x_{i,c} + 1 \right).
+\end{align}
+Using the idempotent property $x_{i,c}^2 = x_{i,c}$ for binary variables, this simplifies to
+\begin{align}
+  P_1 = \lambda \sum_{i=0}^{N-1} \left( 1 - \sum_{c=0}^{K-1} x_{i,c} \right).
+\end{align}
+For the balanced cluster size constraint:
+\begin{align}
+  P_2 &= \lambda \sum_{c=0}^{K-1} \left( \sum_{i=0}^{N-1} x_{i,c} - \frac{N}{K} \right)^2 \\
+      &= \lambda \sum_{c=0}^{K-1} \left( \sum_{i=0}^{N-1} x_{i,c}^2 - 2\frac{N}{K}\sum_{i=0}^{N-1} x_{i,c} + \left(\frac{N}{K}\right)^2 \right).
+\end{align}
+Applying $x_{i,c}^2 = x_{i,c}$ yields
+\begin{align}
+  P_2 = \lambda \sum_{c=0}^{K-1} \left( \left(\frac{N}{K}\right)^2 - \frac{N}{K}\sum_{i=0}^{N-1} x_{i,c} \right).
+\end{align}
+
+Step 4 --- The total QUBO Hamiltonian $H(\mathbf{x})$ is the sum of the objective and penalty terms:
+\begin{align}
+  H(\mathbf{x}) = f(\mathbf{x}) + P_1 + P_2.
+\end{align}
+
+Step 5 --- We flatten the two-dimensional index $(i,c)$ to a single index $k = iK + c$ for $k \in \{0,\dots,NK-1\}$. Reading off the coefficients from the expanded form of $H(\mathbf{x})$, the QUBO matrix entries $Q_{k,k'}$ and constant offset $c_0$ are given by:
+\begin{align}
+  Q_{k,k} &= -\lambda - \lambda \frac{N}{K}, \quad \forall k \in \{0,\dots,NK-1\}, \\
+  Q_{(i,c),(i,c')} &= 2\lambda, \quad \forall i \in \{0,\dots,N-1\}, \ c \neq c', \\
+  Q_{(i,c),(j,c)} &= d_{i,j}, \quad \forall c \in \{0,\dots,K-1\}, \ i < j, \\
+  Q_{k,k'} &= 0, \quad \text{otherwise},
+\end{align}
+with constant offset
+\begin{align}
+  c_0 = \lambda N + \lambda K \left(\frac{N}{K}\right)^2 = \lambda N \left(1 + \frac{N}{K}\right).
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight is chosen as $\lambda > \max_{i,j} d_{i,j}$. This condition ensures that the energy increase incurred by violating any constraint strictly dominates the maximum possible reduction in the objective function that could be achieved by an infeasible assignment. Consequently, any infeasible configuration will have a strictly higher energy than the best feasible configuration, forcing the global minimum of $H(\mathbf{x})$ to reside in the feasible region.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{NK}$ recovers the optimal clustering because (i) all feasible solutions incur zero penalty, so $H(\mathbf{x}) = f(\mathbf{x}) + c_0$ for feasible $\mathbf{x}$, and (ii) any infeasible solution incurs a penalty of at least $\lambda$, which by construction exceeds the maximum possible gain in the objective function from violating constraints. Therefore, the unconstrained global minimum of $H(\mathbf{x})$ must correspond to a feasible assignment that minimizes $f(\mathbf{x})$, yielding both the optimal cluster assignment and the minimum total within-cluster distance.
+
+\paragraph{Illustrative Example.}
+Consider the instance with $N=2$ points and $K=2$ clusters. The points are indexed $i \in \{0,1\}$ and clusters $c \in \{0,1\}$. The only pairwise distance is $d_{0,1}$. The decision variables are $x_{0,0}, x_{0,1}, x_{1,0}, x_{1,1}$. Flattening via $k = 2i + c$ gives $x_0 \equiv x_{0,0}$, $x_1 \equiv x_{0,1}$, $x_2 \equiv x_{1,0}$, $x_3 \equiv x_{1,1}$.
+
+The objective becomes $d_{0,1}(x_0 x_2 + x_1 x_3)$.
+The assignment constraint penalties are $\lambda(1 - x_0 - x_1) + \lambda(1 - x_2 - x_3)$.
+The balanced cluster size constraint penalties are $\lambda(1 - x_0 - x_2) + \lambda(1 - x_1 - x_3)$.
+The constant offset evaluates to $c_0 = 4\lambda$.
+
+The resulting QUBO Hamiltonian is
+\begin{align}
+  H(\mathbf{x}) &= d_{0,1}(x_0 x_2 + x_1 x_3) - 2\lambda(x_0 + x_1 + x_2 + x_3) + 2\lambda(x_0 x_1 + x_2 x_3) + 4\lambda.
+\end{align}
+The non-zero QUBO matrix entries are
+\begin{align}
+  Q_{0,0} = Q_{1,1} = Q_{2,2} = Q_{3,3} &= -2\lambda, \\
+  Q_{0,1} = Q_{2,3} &= 2\lambda, \\
+  Q_{0,2} = Q_{1,3} &= d_{0,1}.
+\end{align}
+The feasible assignments are $x_{0,0}=x_{1,0}=1$ (all points in cluster 0) or $x_{0,1}=x_{1,1}=1$ (all points in cluster 1). Both yield an objective value of $d_{0,1}$ and a Hamiltonian energy of $d_{0,1} + 4\lambda$. The minimum total within-cluster distance is $d_{0,1}$.
+
+\end{document}

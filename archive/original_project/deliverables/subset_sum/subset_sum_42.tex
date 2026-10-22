@@ -1,0 +1,71 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Subset Sum Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Subset Sum Problem}
+
+\paragraph{Problem Statement.}
+Given a set of $N$ positive integers $\{a_1, a_2, \dots, a_N\}$ and a target value $T$, the Subset Sum Problem seeks a subset of these integers whose sum is as close as possible to $T$. Formally, the task is to select a subset that minimizes the absolute deviation between the sum of the selected elements and the target value.
+
+\paragraph{Decision Variables.}
+For each integer $a_i$ with index $i \in \{1, \dots, N\}$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ takes the value $1$ if the $i$-th integer is included in the chosen subset, and $0$ otherwise. The total number of binary variables is $n = N$.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1.} The original objective is to minimize the absolute deviation:
+\begin{align}
+\min_{x \in \{0,1\}^N} \left| \sum_{i=1}^{N} a_i x_i - T \right|.
+\end{align}
+Since the absolute value is non-negative, minimizing the absolute deviation is equivalent to minimizing its square. We therefore define the unconstrained objective function:
+\begin{align}
+\min_{x \in \{0,1\}^N} \left( \sum_{i=1}^{N} a_i x_i - T \right)^2.
+\end{align}
+
+\textbf{Step 2.} The problem specification contains no constraints. The feasible region comprises all $2^N$ binary assignments, so no constraint equations need to be written.
+
+\textbf{Step 3.} With no constraints, no penalty terms are constructed. The Hamiltonian consists solely of the expanded objective function.
+
+\textbf{Step 4.} We expand the squared objective to obtain the QUBO Hamiltonian $H(x)$:
+\begin{align}
+H(x) &= \left( \sum_{i=1}^{N} a_i x_i - T \right)^2 \\
+&= \sum_{i=1}^{N} a_i^2 x_i^2 - 2T \sum_{i=1}^{N} a_i x_i + T^2 + \sum_{i \neq j} a_i a_j x_i x_j.
+\end{align}
+Applying the idempotent property of binary variables, $x_i^2 = x_i$, the linear terms simplify. The quadratic cross-terms can be grouped over unique pairs $i < j$:
+\begin{align}
+H(x) &= \sum_{i=1}^{N} (a_i^2 - 2T a_i) x_i + 2 \sum_{1 \leq i < j \leq N} a_i a_j x_i x_j + T^2.
+\end{align}
+
+\textbf{Step 5.} Comparing $H(x)$ to the standard QUBO form $H(x) = \sum_{i} Q_{ii} x_i + \sum_{i < j} Q_{ij} x_i x_j + c$, we read off the general closed-form expressions for the Q matrix entries and the constant offset:
+\begin{align}
+Q_{ii} &= a_i^2 - 2T a_i, & i \in \{1, \dots, N\}, \\
+Q_{ij} &= 2 a_i a_j, & 1 \leq i < j \leq N, \\
+c &= T^2. &
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The problem formulation contains no constraints; therefore, the feasible region is the entire hypercube $\{0,1\}^N$. Consequently, no penalty terms or penalty weights are required. The Hamiltonian is composed entirely of the expanded objective function and the constant offset $c$. If constraints were introduced in a generalized variant, a penalty weight $\lambda$ would be chosen such that $\lambda > \Delta_{\text{max}}$, where $\Delta_{\text{max}}$ is the maximum possible reduction in the objective value achievable by violating a single constraint, ensuring that infeasible states always carry higher energy than any feasible state.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(x)$ over $\{0,1\}^N$ is mathematically equivalent to minimizing the squared deviation $(\sum_{i=1}^{N} a_i x_i - T)^2$. Because the square function is strictly monotonic for non-negative arguments, the binary assignment that minimizes the squared deviation also minimizes the absolute deviation. The constant offset $c = T^2$ shifts all energy levels uniformly and does not affect the location of the minimum. Since the problem has no constraints, every binary assignment is feasible, and the global minimum of $H(x)$ corresponds exactly to the subset whose sum is closest to $T$.
+
+\paragraph{Illustrative Example.}
+Consider a concrete instance with $N = 3$ input integers $\{a_1, a_2, a_3\} = \{2, 3, 5\}$ and target value $T = 6$. Substituting these values into the general formulas yields the following concrete QUBO coefficients:
+\begin{align}
+Q_{11} &= 2^2 - 2(6)(2) = -20, &
+Q_{22} &= 3^2 - 2(6)(3) = -27, &
+Q_{33} &= 5^2 - 2(6)(5) = -35, \\
+Q_{12} &= 2(2)(3) = 12, &
+Q_{13} &= 2(2)(5) = 20, &
+Q_{23} &= 2(3)(5) = 30, \\
+c &= 6^2 = 36. & & &
+\end{align}
+The resulting Hamiltonian is:
+\begin{align}
+H(x) = -20x_1 - 27x_2 - 35x_3 + 12x_1x_2 + 20x_1x_3 + 30x_2x_3 + 36.
+\end{align}
+Evaluating $H(x)$ over all $2^3 = 8$ binary assignments reveals that the minimum energy is $H_{\min} = 1$. This optimal energy is achieved by the subsets corresponding to $x = (0,0,1)$, $x = (1,1,0)$, and $x = (1,0,1)$, which represent the subsets $\{5\}$, $\{2,3\}$, and $\{2,5\}$, respectively. All three subsets yield a sum of $5$ or $7$, deviating from the target $T=6$ by exactly $1$, which is the minimum possible deviation for this instance.
+\end{document}

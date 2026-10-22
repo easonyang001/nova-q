@@ -1,0 +1,283 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 90.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 177.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 34.8
+  },
+  "data": {
+   "ok": true,
+   "seconds": 241.0
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 319.9
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "workflow": "model 修復完成"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "position_encoding; N^2 variables; for N=25 vars=625; fits CGA backend (<1500 vars); direct TSP formulation",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike station within 500m of Daan Station",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Position index in the tour (0 to N-1)",
+    "source": "user"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "center_lat": {
+    "meaning": "Latitude of Daan Station (filter center)",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 25.033,
+    "unit": "deg_lat"
+   },
+   "center_lon": {
+    "meaning": "Longitude of Daan Station (filter center)",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 121.5436,
+    "unit": "deg_lon"
+   },
+   "radius": {
+    "meaning": "Filter radius in meters",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 500.0,
+    "unit": "m"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between sites in meters",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Scale lat/lon differences to meters and compute pairwise Euclidean distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "YouBike2_0臺北市公共自行車即時資訊.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "within_radius"
+  ],
+  "notes": "Filtered YouBike stations within 500m of Daan Station (25.033, 121.5436) using prep.within_radius. Computed pairwise Euclidean distance in meters by scaling lat/lon differences as specified. Positions are sequential indices 0..N-1.",
+  "prep_log": "**資料來源**\n\n- YouBike2.0臺北市公共自行車即時資訊（政府資料開放平台） <https://data.gov.tw/dataset/137993>，授權：待確認，取得 2026-10-12T18:26:18.972298+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| drop_missing_coords | 1819 | 1819 | Removed rows with invalid/missing lat/lon |\n| 只保留距離 (25.033, 121.5436) 500 公尺內的資料 | 1819 | 18 |  |\n| filter_radius | 1819 | 18 | Kept stations within 500.0m of (25.033, 121.5436) |",
+  "flags": [],
+  "review_required": [
+   "center_lat: ['Confirmed user setting']",
+   "center_lon: ['Confirmed user setting']",
+   "radius: ['Confirmed user setting']",
+   "dist: ['Computed as scaled Euclidean distance from lat/lon']"
+  ],
+  "sources": [
+   {
+    "title": "YouBike2.0臺北市公共自行車即時資訊",
+    "url": "https://data.gov.tw/dataset/137993",
+    "resource_url": "https://tcgbusfs.blob.core.windows.net/dotapp/youbike/v2/youbike_immediate.json",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T18:26:18.972298+00:00",
+    "sha256": "95afb016569c3097dbd975876616af846a239ceeb1c33dda39d8715863d1ccae",
+    "bytes": 952694
+   }
+  ],
+  "n_variables": 324,
+  "n_constraints": 36,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 18
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "issues",
+   "version": "daf45ff6d977394b4bfdbd95",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation 0.78 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 59,
+    "invalid": 59,
+    "not_comparable": 0,
+    "rank_agreement": 0.782
+   }
+  },
+  {
+   "status": "ok",
+   "version": "29a5a35d7c587b25d034a3b3",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 59,
+    "invalid": 59,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "29a5a35d7c587b25d034a3b3",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:repaired",
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.5785856387456778,
+  "objective": 3417.0711754159815,
+  "baseline_objective": 8108.577897642626
+ },
+ "truth_used": "truth recomputed from the run's own download of the official feed (YouBike2_0臺北市公共自行車即時資訊.json)",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 18,
+    "mapped": 18,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 18,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 3417.071175415981,
+    "reference_quality": 3504.645699100399,
+    "gap_vs_reference": -0.025
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 185672,
+  "solver_calls": 3
+ },
+ "seconds": 863.4
+}

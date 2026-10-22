@@ -1,0 +1,282 @@
+{
+ "case": "aed_groups_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 93.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 225.7
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 24.8
+  },
+  "data": {
+   "ok": true,
+   "seconds": 827.0
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.8
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 278.5
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 43.4
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "from": "data",
+   "to": "model",
+   "evidence": "- RuntimeError: ValueError: N=207 not divisible by k=4\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 68, in _generated\n    return ns[function](*args, **(kwargs or {}))\n           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<model>\", line 97, in build_ir\nValueError: N=207 not divisible by k=4\n\n    in build_ir(), line 97: raise ValueError(f\"N={N} not divisible by k={k}\")\n    (raised by the MODEL's build_ir on your output: make the output match the example's format)",
+   "ok": true
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size",
+  "mp-graph-cut"
+ ],
+ "model_choice": "Exact one-hot assignment with symmetry breaking constraints. 4N variables. Fits backend for N<=900.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "AED location after filtering",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "Inspection team identifier",
+    "source": "user"
+   }
+  },
+  "params": {
+   "id": {
+    "meaning": "Location ID",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of teams",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 4
+   },
+   "dist": {
+    "meaning": "Euclidean distance between sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "derived": {
+     "tool": "code",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "sqrt((lat_i-lat_j)^2 + (lon_i-lon_j)^2)"
+    },
+    "sparse": false
+   }
+  }
+ },
+ "data_found": [
+  "臺北市AED自動體外心臟去顫器設置地點.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "in_area"
+  ],
+  "notes": "Filtered AED locations to 松山, 信義, 大安, 中山 districts using prep.in_area. Excluded rows where '場所分類' contains '學校', '大型集會場所', or '其他'. Generated sequential IDs for sites. Computed Euclidean distance matrix directly from lat/lon in degrees as specified. Dropped rows with missing coordinates.",
+  "prep_log": "**資料來源**\n\n- 臺北市AED自動體外心臟去顫器設置地點（政府資料開放平台） <https://data.gov.tw/dataset/121662>，授權：待確認，取得 2026-10-12T12:50:46.397489+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Drop missing coordinates | 2729 | 2729 | Removed rows with NaN lat/lon |\n| 依實際邊界保留區域 ['松山區, 臺北市', '信義區, 臺北市', '大安區, 臺北市', '中山區, 臺北市'] | 2729 | 1155 | 各區點數 {'松山區, 臺北市': 231, '信義區, 臺北市': 280, '大安區, 臺北市': 327, '中山區, 臺北市': 317} |\n| Filter by area | 1155 | 1155 | Kept rows in 松山, 信義, 大安, 中山 |\n| Filter by category | 1155 | 409 | Excluded 學校, 大型集會場所, 其他 |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "id: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, id, k, lat, lon, sites, teams"
+  ],
+  "sources": [
+   {
+    "title": "臺北市AED自動體外心臟去顫器設置地點",
+    "url": "https://data.gov.tw/dataset/121662",
+    "resource_url": "https://data.taipei/api/dataset/cd050577-115f-4299-b37a-012ff490a632/resource/438c61ad-24f6-4e54-a1cc-e2cfe0e7051e/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T12:50:46.397489+00:00",
+    "sha256": "31ca6b9a0d3d09eb1a9fb69dc7d66df90dc241c0aa417a891ee30f1b3bc8fa0f",
+    "bytes": 474234
+   }
+  ],
+  "n_variables": 1632,
+  "n_constraints": 415,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: TypeError: Boolean array expected for the condition, not object\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/datacheck.py\", line 34, in _expected\n    out = ns[\"expected\"]({k: v.copy() for k, v in tables.items()})\n  File \"<data_checker>\", line 13, in expected\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/frame.py\", line 4365, in __getitem__\n    return self.where(key)\n           ~~~~~~~~~~^^^^^\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/generic.py\", line 10321, in where\n    return self._where(cond, other, inplace=inplace, axis=axis, level=level)\n           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Boolean array expected for the condition, not object\n"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "1f65db41097978f81bf74cb3",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 0,
+    "valid": 0,
+    "invalid_rejected": 0,
+    "invalid": 0,
+    "not_comparable": 0
+   }
+  },
+  {
+   "status": "solution_issues",
+   "version": "1f65db41097978f81bf74cb3",
+   "issues": [
+    "the delivered solution breaks the confirmed requirements: Assigned 408 sites, required exactly 409; Team T1 has 102 sites, required exactly 102.25; Team T2 has 102 sites, required exactly 102.25; Team T3 has 102 sites, required exactly 102.25; Team T4 has 102 sites, required exactly 102.25"
+   ],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_issues",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "已有可行方案，達到簡單基準的品質；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "annealer",
+  "quality_gap": -0.017222505551057494,
+  "objective": 509.7312480522172,
+  "baseline_objective": 518.6639406491811
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "coordinates within 60 m",
+    "entity_set_declared": true,
+    "instance_entities": 409,
+    "mapped": 406,
+    "duplicates": [
+     "DREAM PLAZA",
+     "Hotel Indigo Taipei North 台北大直英迪格酒店",
+     "JR東日本大飯店 台北",
+     "Marriott Taipei 台北萬豪酒店",
+     "中山國中星耀樓",
+     "交通部民用航空局臺北國際航空站(松山機場)",
+     "台北中山雅樂軒酒店",
+     "台北文華東方酒店",
+     "台北遠東香格里拉/Shangri-La Far Eastern Taipei (鼎鼎大飯店股份有限公司)",
+     "台北金融大樓股份有限公司(觀景台)",
+     "台北金融大樓股份有限公司(購物中心)",
+     "台灣虎航股份有限公司",
+     "吸引力生活事業股份有限公司 ATT 4 FUN",
+     "和苑三井花園飯店 台北忠孝",
+     "國營臺灣鐵路股份有限公司北區營運處臺北運務段松山站",
+     "國立國父紀念館",
+     "外貿協會台北國際會議中心",
+     "宜家家居股份有限公司台北城市店小巨蛋分公司",
+     "寒居酒店",
+     "微風置地股份有限公司信義分公司"
+    ],
+    "missing_real_entities": 2,
+    "missing_examples": [
+     "欣欣秀泰影城",
+     "華信航空股份有限公司"
+    ],
+    "unmapped_ids": [
+     "AED_0232",
+     "AED_0242",
+     "AED_0250"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 205,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "structure": "408 decision entities but only 406 map to real ones: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 408,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 7206657.906369695
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 244160,
+  "solver_calls": 3
+ },
+ "seconds": 1493.8
+}

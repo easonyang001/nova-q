@@ -1,0 +1,21 @@
+\section{Discussion and Limitations}
+The current evidence supports distinct claims. Repeated small benchmarks evaluate formulation checking;
+the synthetic suite tests workflow connections; frozen models test solver behaviour; specified-source pilots
+test particular data and modelling paths. None substitutes for repeated autonomous real-data acceptance.
+The offline suite passes 146 tests, including schema, checker, recovery and checkpoint fixtures, but test counts
+do not measure semantic correctness or live acquisition reliability.
+
+Runtime checkers can share LLM and schema errors. Matching counts and totals can hide per-entity mistakes,
+and sampled requirement checks cannot verify every state. Exhaustive ground-state checking is limited to 26
+variables. A generated objective can still replace the requested objective with a weaker surrogate.
+Model repair and data substitution may require user judgment, even when structural checks pass.
+
+Hardware comparisons contain three repetitions per condition and allocate different service budgets.
+They establish working submissions and instance-specific outcomes, not quantum advantage, lower total cost or
+a generally preferable backend. Conventional baselines can be the delivered result, as in the network pilot.
+
+\section{Conclusion}
+We presented a local-LLM workflow connecting requirements, typed data preparation, modelling, annealing and
+checked delivery. Separate validation of data, model meaning and solver feasibility supports bounded repair.
+Ground-state verification exposes reference-bitstring failures. The next step is a frozen autonomous real-data
+comparison measuring the incremental effects of checking, repair and retrieval.

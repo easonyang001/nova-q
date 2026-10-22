@@ -2,79 +2,93 @@
 \usepackage{amsmath, amssymb}
 \usepackage[margin=1in]{geometry}
 \setlength{\parskip}{6pt}
-\title{QUBO Formulation: Minimum Missing Edges Hamiltonian Path}
+\title{QUBO Formulation: Hamiltonian Path Problem}
 \date{}
 \begin{document}
 \maketitle
 
-\subsection*{Minimum Missing Edges Hamiltonian Path}
+\subsection*{Hamiltonian Path Problem}
 
 \paragraph{Problem Statement.}
-Given an undirected graph $G=(V,E)$ with $|V|=N$ vertices and adjacency matrix $A \in \{0,1\}^{N \times N}$, find a permutation of the vertices that forms a path visiting each vertex exactly once, while minimizing the number of consecutive pairs in the path that are not connected by an edge in $G$.
+Given an undirected graph $G=(V,E)$ with $|V|=N$ vertices, the Hamiltonian Path Problem seeks a path that visits every vertex exactly once. We formulate this as an optimization problem where the goal is to find a vertex ordering that minimizes the number of consecutive pairs in the ordering that do not correspond to an edge in $G$. If a Hamiltonian path exists, the minimum value is zero; otherwise, the formulation identifies the ordering with the fewest missing edges.
 
 \paragraph{Decision Variables.}
-Introduce binary variables $x_{i,v} \in \{0,1\}$ for each position index $i \in \{0, 1, \dots, N-1\}$ and each vertex $v \in V$. The variable $x_{i,v}$ equals $1$ if and only if vertex $v$ is assigned to position $i$ in the path; otherwise, it equals $0$.
+We introduce binary variables $x_{i,v} \in \{0,1\}$ for each position $i \in \{0, 1, \dots, N-1\}$ and each vertex $v \in V$. The variable $x_{i,v}$ equals $1$ if vertex $v$ is assigned to position $i$ in the path, and $0$ otherwise. A valid path corresponds to a permutation matrix, where each position is assigned exactly one vertex and each vertex is assigned to exactly one position.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 --- Objective Function.} The number of missing edges between consecutive positions $i$ and $i+1$ in the path is given by $\sum_{u \in V} \sum_{v \in V} (1 - A_{uv}) x_{i,u} x_{i+1,v}$. Summing over all consecutive position pairs yields the objective to be minimized:
+We construct a Quadratic Unconstrained Binary Optimization (QUBO) Hamiltonian $H(\mathbf{x})$ by combining an objective function with penalty terms that enforce the permutation constraints.
+
+\textbf{Step 1: Objective Function.}
+The objective is to minimize the number of missing consecutive edges. For a path defined by the variables, a consecutive edge exists between position $i$ and $i+1$ if the vertex at $i$ and the vertex at $i+1$ are connected by an edge in $E$. The term $(1 - x_{i,u} x_{i+1,v})$ equals $0$ if $x_{i,u}=x_{i+1,v}=1$ and $(u,v) \in E$, and $1$ otherwise. Summing over all positions and edges, the objective is:
 \begin{align}
-H_{\text{obj}}(x) = \sum_{i=0}^{N-2} \sum_{u \in V} \sum_{v \in V} (1 - A_{uv}) x_{i,u} x_{i+1,v}.
+H_{\text{obj}} = \sum_{i=0}^{N-2} \sum_{(u,v) \in E} \left( 1 - x_{i,u} x_{i+1,v} \right).
+\end{align}
+Minimizing $H_{\text{obj}}$ minimizes the count of missing edges.
+
+\textbf{Step 2: Constraints.}
+We enforce two sets of equality constraints to ensure a valid permutation:
+\begin{align}
+\sum_{v \in V} x_{i,v} = 1, \quad \forall i \in \{0, \dots, N-1\} \quad \text{(Position uniqueness)}, \label{eq:pos_constraint} \\
+\sum_{i=0}^{N-1} x_{i,v} = 1, \quad \forall v \in V \quad \text{(Vertex uniqueness)}. \label{eq:vert_constraint}
 \end{align}
 
-\textbf{Step 2 --- Constraints.} The assignment must satisfy two hard constraints. First, each position must contain exactly one vertex:
+\textbf{Step 3: Penalty Terms.}
+We convert the constraints to quadratic penalty terms using a weight $\lambda > 0$. For a constraint $\sum_k x_k = 1$, the squared penalty is $\lambda (\sum_k x_k - 1)^2$. Using the idempotent property $x_k^2 = x_k$ for binary variables, we expand:
 \begin{align}
-\sum_{v \in V} x_{i,v} = 1, \quad \forall i \in \{0, \dots, N-1\}.
+\lambda \left( \sum_k x_k - 1 \right)^2 &= \lambda \left( \sum_k x_k^2 + \sum_{k \neq l} x_k x_l - 2 \sum_k x_k + 1 \right) \nonumber \\
+&= \lambda \left( \sum_k x_k + \sum_{k \neq l} x_k x_l - 2 \sum_k x_k + 1 \right) \nonumber \\
+&= \lambda \left( \sum_{k \neq l} x_k x_l - \sum_k x_k + 1 \right).
 \end{align}
-Second, each vertex must be used exactly once in the path:
+Applying this to both constraints, the total penalty Hamiltonian is:
 \begin{align}
-\sum_{i=0}^{N-1} x_{i,v} = 1, \quad \forall v \in V.
-\end{align}
-
-\textbf{Step 3 --- Penalty Term Conversion.} We convert each constraint into a quadratic penalty term with weight $\lambda > 0$. For the position assignment constraint, we write:
-\begin{align}
-P_1(x) = \lambda \sum_{i=0}^{N-1} \left( \sum_{v \in V} x_{i,v} - 1 \right)^2.
-\end{align}
-Expanding the square and applying the idempotent property $x_{i,v}^2 = x_{i,v}$ for binary variables:
-\begin{align}
-\left( \sum_{v \in V} x_{i,v} - 1 \right)^2 &= \sum_{v \in V} x_{i,v}^2 + 2 \sum_{v < v' \in V} x_{i,v} x_{i,v'} - 2 \sum_{v \in V} x_{i,v} + 1 \\
-&= \sum_{v \in V} x_{i,v} + 2 \sum_{v < v' \in V} x_{i,v} x_{i,v'} - 2 \sum_{v \in V} x_{i,v} + 1 \\
-&= 1 - \sum_{v \in V} x_{i,v} + 2 \sum_{v < v' \in V} x_{i,v} x_{i,v'}.
-\end{align}
-Substituting this back into $P_1(x)$ gives:
-\begin{align}
-P_1(x) = \lambda \sum_{i=0}^{N-1} \left( 1 - \sum_{v \in V} x_{i,v} + 2 \sum_{v < v' \in V} x_{i,v} x_{i,v'} \right).
-\end{align}
-Similarly, for the vertex usage constraint:
-\begin{align}
-P_2(x) = \lambda \sum_{v \in V} \left( 1 - \sum_{i=0}^{N-1} x_{i,v} + 2 \sum_{i < i'} x_{i,v} x_{i',v} \right).
+H_{\text{pen}} &= \lambda \sum_{i=0}^{N-1} \left( \sum_{v \neq w} x_{i,v} x_{i,w} - \sum_{v \in V} x_{i,v} + 1 \right) \nonumber \\
+&\quad + \lambda \sum_{v \in V} \left( \sum_{i \neq j} x_{i,v} x_{j,v} - \sum_{i=0}^{N-1} x_{i,v} + 1 \right).
 \end{align}
 
-\textbf{Step 4 --- Combined Hamiltonian.} The total QUBO Hamiltonian is the sum of the objective and penalty terms:
+\textbf{Step 4: Combined Hamiltonian.}
+The total QUBO Hamiltonian $H(\mathbf{x}) = H_{\text{obj}} + H_{\text{pen}}$ is:
 \begin{align}
-H(x) = H_{\text{obj}}(x) + P_1(x) + P_2(x).
+H(\mathbf{x}) &= \sum_{i=0}^{N-2} \sum_{(u,v) \in E} \left( 1 - x_{i,u} x_{i+1,v} \right) \nonumber \\
+&\quad + \lambda \sum_{i=0}^{N-1} \left( \sum_{v \neq w} x_{i,v} x_{i,w} - \sum_{v \in V} x_{i,v} + 1 \right) \nonumber \\
+&\quad + \lambda \sum_{v \in V} \left( \sum_{i \neq j} x_{i,v} x_{j,v} - \sum_{i=0}^{N-1} x_{i,v} + 1 \right).
 \end{align}
 
-\textbf{Step 5 --- Q Matrix and Offset.} Mapping the variables to a single index $k = iN + v$, the Hamiltonian takes the standard QUBO form $H(x) = \sum_{k} Q_{k,k} x_k + \sum_{k < l} Q_{k,l} x_k x_l + c$. Reading off the coefficients from the expanded expressions yields the following closed-form entries for the symmetric upper-triangular Q matrix and the constant offset $c$:
+\textbf{Step 5: Q Matrix and Offset.}
+Collecting terms, we identify the quadratic coefficients $Q$, linear coefficients, and constant offset $c$. The Hamiltonian takes the form $H(\mathbf{x}) = \mathbf{x}^T Q \mathbf{x} + c$. The non-zero entries of $Q$ are:
 \begin{align}
-Q_{(i,u),(j,v)} &= 
-\begin{cases} 
--2\lambda & \text{if } i=j \text{ and } u=v, \\
-2\lambda & \text{if } i=j \text{ and } u \neq v, \\
-2\lambda & \text{if } u=v \text{ and } i \neq j, \\
-1 - A_{uv} & \text{if } j = i+1 \text{ and } u \neq v, \\
-1 - A_{uv} + 2\lambda & \text{if } j = i+1 \text{ and } u = v, \\
-0 & \text{otherwise},
-\end{cases} \\
-c &= 2N\lambda.
+Q_{(i,u),(i+1,v)} &= -1, \quad \forall i \in \{0, \dots, N-2\}, \, (u,v) \in E, \\
+Q_{(i,v),(i,w)} &= \lambda, \quad \forall i \in \{0, \dots, N-1\}, \, v, w \in V, \, v \neq w, \\
+Q_{(i,v),(j,v)} &= \lambda, \quad \forall v \in V, \, i, j \in \{0, \dots, N-1\}, \, i \neq j, \\
+Q_{(i,v),(i,v)} &= -2\lambda, \quad \forall i \in \{0, \dots, N-1\}, \, v \in V.
+\end{align}
+All other entries are zero. The constant offset $c$ is the sum of constant terms from the objective and penalties:
+\begin{align}
+c = (N-1)|E| + 2\lambda N.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen large enough to ensure that any violation of the constraints increases the total energy more than the maximum possible reduction in the objective function. The objective coefficients are bounded by $\max_{u,v} |1 - A_{uv}| = 1$. A single constraint violation can alter at most $N$ variable assignments, affecting at most $N-1$ consecutive position pairs in the path. Thus, the maximum objective gain from infeasibility is bounded by $N-1$. Choosing $\lambda > N-1$ guarantees that the penalty energy strictly dominates any feasible objective improvement, forcing the optimizer toward valid permutations.
+The penalty weight $\lambda$ must be chosen such that any violation of the constraints incurs an energy cost strictly greater than the maximum possible gain from the objective function. The maximum magnitude of any coefficient in the objective function is $1$. A standard sufficient condition is $\lambda > \max |Q_{\text{obj}}|$. Setting $\lambda = 2$ satisfies $\lambda > 1$, ensuring that the penalty for violating a constraint dominates any potential reduction in the objective value. Thus, the global minimum of $H(\mathbf{x})$ over $\{0,1\}^{N^2}$ corresponds to a feasible solution that minimizes the original objective.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $\{0,1\}^{N^2}$ recovers the optimal Hamiltonian path because (i) any assignment satisfying both constraints corresponds to a valid permutation and incurs zero penalty energy, reducing $H(x)$ exactly to $H_{\text{obj}}(x)$; (ii) any infeasible assignment incurs a penalty energy of at least $\lambda$, which exceeds the maximum possible reduction in the objective term achievable by violating constraints. Consequently, the global minimum of $H(x)$ must occur at a feasible point, and among feasible points, the minimizer corresponds to the permutation with the minimum number of missing consecutive edges.
+Minimizing $H(\mathbf{x})$ recovers the optimal Hamiltonian path (or best approximation) because: (i) for any feasible assignment satisfying the permutation constraints, the penalty terms vanish, and $H(\mathbf{x})$ reduces to the objective function; (ii) for any infeasible assignment, at least one constraint is violated, incurring a penalty of at least $\lambda$. Since $\lambda$ exceeds the maximum possible objective coefficient magnitude, the energy of any infeasible solution is strictly higher than that of the best feasible solution. Consequently, the global minimum must be feasible and optimal with respect to the original problem.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=3$ vertices $V=\{0,1,2\}$ and edges $E=\{(0,1), (1,2)\}$, forming a path graph. The adjacency matrix entries are $A_{01}=A_{10}=A_{12}=A_{21}=1$, and all other entries are $0$. Setting $\lambda=10$, the offset becomes $c = 2(3)(10) = 60$. The concrete objective is $H_{\text{obj}}(x) = \sum_{i=0}^{1} \sum_{u,v \in \{0,1,2\}} (1 - A_{uv}) x_{i,u} x_{i+1,v}$. The concrete penalty terms are $P_1(x) = 10 \sum_{i=0}^{2} (\sum_{v=0}^{2} x_{i,v} - 1)^2$ and $P_2(x) = 10 \sum_{v=0}^{2} (\sum_{i=0}^{2} x_{i,v} - 1)^2$. The resulting Hamiltonian is $H(x) = H_{\text{obj}}(x) + P_1(x) + P_2(x)$ with offset $c=60$. Instantiating the Q matrix entries: all linear terms are $Q_{(i,v),(i,v)} = -20$; the pair at positions $0$ and $1$ with vertices $0$ and $1$ (indices $k=0$ and $k=4$) has coefficient $Q_{(0,0),(1,1)} = 1 - A_{01} = 0$; the pair at positions $0$ and $1$ with vertices $0$ and $0$ (indices $k=0$ and $k=3$) has coefficient $Q_{(0,0),(1,0)} = 1 - A_{00} + 20 = 20$; the pair at positions $0$ and $0$ with vertices $0$ and $1$ (indices $k=0$ and $k=1$) has coefficient $Q_{(0,0),(0,1)} = 20$. Evaluating $H(x)$ on the valid permutation $0 \to 1 \to 2$ yields an objective value of $0$, zero penalty energy, and a total energy of $60$. Any permutation violating the constraints incurs an energy of at least $60 + 10 = 70$, confirming that the global minimum correctly identifies the optimal path.
+Consider an instance with $N=3$ vertices $V=\{0,1,2\}$ and a complete graph with self-loops, i.e., $E = V \times V$, so $|E|=9$. The variables are $x_{i,v}$ for $i,v \in \{0,1,2\}$, totaling $9$ variables. We set $\lambda = 2$.
+
+The objective function becomes:
+\begin{align}
+H_{\text{obj}} = \sum_{i=0}^{1} \sum_{u=0}^{2} \sum_{v=0}^{2} \left( 1 - x_{i,u} x_{i+1,v} \right).
+\end{align}
+The penalty terms use $\lambda=2$. The constant offset is:
+\begin{align}
+c = (3-1) \times 9 + 2 \times 2 \times 3 = 18 + 12 = 30.
+\end{align}
+The QUBO Hamiltonian $H(\mathbf{x})$ includes quadratic terms $-x_{i,u} x_{i+1,v}$ for all $u,v$, penalty terms $2 x_{i,v} x_{i,w}$ for $v \neq w$, $2 x_{i,v} x_{j,v}$ for $i \neq j$, linear terms $-4 x_{i,v}$, and offset $30$.
+
+For any feasible permutation, e.g., $x_{0,0}=x_{1,1}=x_{2,2}=1$ and all others $0$, the objective terms sum to $-\sum_{i=0}^{1} \sum_{u,v} 1 = -2$ (since $\sum_{u,v} x_{i,u} x_{i+1,v} = 1$ for each step). The penalties are zero. The total energy is:
+\begin{align}
+H(\mathbf{x}) = -2 + 30 = 28.
+\end{align}
+Any feasible solution yields energy $28$. Infeasible solutions have strictly higher energy due to the penalty weight $\lambda=2$. Thus, the minimum energy is $28$, achieved by any valid vertex ordering.
 
 \end{document}

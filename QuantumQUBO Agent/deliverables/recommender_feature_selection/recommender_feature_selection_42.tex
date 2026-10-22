@@ -10,75 +10,77 @@
 \subsection*{Recommender-System Feature Selection Problem}
 
 \paragraph{Problem Statement.}
-Given a set of $N$ candidate features for a recommender model, each feature $i \in \{0, 1, \dots, N-1\}$ is associated with a utility score $u_i \geq 0$. Furthermore, each unordered pair of distinct features $(i,j)$ has an associated redundancy or complexity penalty $r_{ij} \geq 0$. The task is to select exactly $K$ features such that the total utility is maximized while the total redundancy penalty is minimized.
+Given a set of $N$ candidate features for a recommender model, each feature $i$ is associated with a utility score $u_i$, and each pair of features $(i,j)$ is associated with a redundancy or complexity penalty $r_{ij}$. The task is to select exactly $K$ features such that the total utility is maximized while the pairwise redundancy penalties are minimized.
 
 \paragraph{Decision Variables.}
-For each candidate feature $i \in \{0, 1, \dots, N-1\}$, define a binary decision variable $x_i \in \{0, 1\}$, where $x_i = 1$ indicates that feature $i$ is selected, and $x_i = 0$ indicates it is not selected.
+For each candidate feature $i \in \{0, 1, \dots, N-1\}$, introduce a binary decision variable $x_i \in \{0, 1\}$, where $x_i = 1$ indicates that feature $i$ is selected, and $x_i = 0$ indicates that it is not selected.
 
 \paragraph{QUBO Derivation.}
-Step 1 --- The original maximization objective is converted to a minimization problem by negating it:
-\[
-\min_{\mathbf{x} \in \{0,1\}^N} \left( -\sum_{i=0}^{N-1} u_i x_i + \sum_{0 \leq i < j \leq N-1} r_{ij} x_i x_j \right).
-\]
-
-Step 2 --- The cardinality constraint requiring exactly $K$ features to be selected is expressed algebraically as:
-\[
-\sum_{i=0}^{N-1} x_i = K.
-\]
-
-Step 3 --- To incorporate this equality constraint into the objective, we construct a quadratic penalty term with weight $P > 0$:
-\[
-\mathcal{P}(\mathbf{x}) = P \left( \sum_{i=0}^{N-1} x_i - K \right)^2.
-\]
-Expanding the square and applying the idempotent property $x_i^2 = x_i$ for binary variables yields:
+\textbf{Step 1.} The original objective is to maximize $\sum_{i=0}^{N-1} u_i x_i - \sum_{0 \le i < j \le N-1} r_{ij} x_i x_j$. Converting to a minimization problem for the QUBO framework requires negating the objective:
 \begin{align}
-\left( \sum_{i=0}^{N-1} x_i - K \right)^2 &= \sum_{i=0}^{N-1} x_i^2 + \sum_{i \neq j} x_i x_j - 2K \sum_{i=0}^{N-1} x_i + K^2 \\
-&= \sum_{i=0}^{N-1} x_i + 2\sum_{0 \leq i < j \leq N-1} x_i x_j - 2K \sum_{i=0}^{N-1} x_i + K^2 \\
-&= (1 - 2K) \sum_{i=0}^{N-1} x_i + 2 \sum_{0 \leq i < j \leq N-1} x_i x_j + K^2.
+\min \left( -\sum_{i=0}^{N-1} u_i x_i + \sum_{0 \le i < j \le N-1} r_{ij} x_i x_j \right).
 \end{align}
-Multiplying by $P$ gives the general penalty contribution:
-\[
-\mathcal{P}(\mathbf{x}) = P(1 - 2K) \sum_{i=0}^{N-1} x_i + 2P \sum_{0 \leq i < j \leq N-1} x_i x_j + P K^2.
-\]
 
-Step 4 --- Combining the negated objective and the penalty term yields the single QUBO Hamiltonian $H(\mathbf{x})$:
-\[
-H(\mathbf{x}) = \sum_{i=0}^{N-1} \left[ P(1 - 2K) - u_i \right] x_i + \sum_{0 \leq i < j \leq N-1} \left[ 2P + r_{ij} \right] x_i x_j + P K^2.
-\]
-
-Step 5 --- Reading off the coefficients from the standard QUBO form $H(\mathbf{x}) = \sum_{i} Q_{ii} x_i + \sum_{i < j} Q_{ij} x_i x_j + c$, the Q-matrix entries and offset are given in closed form as:
+\textbf{Step 2.} The cardinality constraint requires that exactly $K$ features are selected:
 \begin{align}
-Q_{ii} &= P(1 - 2K) - u_i, \quad \forall i \in \{0, \dots, N-1\}, \\
-Q_{ij} &= 2P + r_{ij}, \quad \forall 0 \leq i < j \leq N-1, \\
-Q_{ji} &= Q_{ij}, \quad \forall 0 \leq i < j \leq N-1, \\
-c &= P K^2.
+\sum_{i=0}^{N-1} x_i = K.
+\end{align}
+
+\textbf{Step 3.} To enforce the constraint, we introduce a quadratic penalty term with weight $\lambda > 0$:
+\begin{align}
+P(\mathbf{x}) &= \lambda \left( \sum_{i=0}^{N-1} x_i - K \right)^2 \\
+&= \lambda \left( \sum_{i=0}^{N-1} x_i^2 - 2K \sum_{i=0}^{N-1} x_i + K^2 \right).
+\end{align}
+Using the idempotent property of binary variables, $x_i^2 = x_i$, the expression simplifies to:
+\begin{align}
+P(\mathbf{x}) &= \lambda \left( \sum_{i=0}^{N-1} x_i - 2K \sum_{i=0}^{N-1} x_i + K^2 \right) \\
+&= \sum_{i=0}^{N-1} \lambda(1-2K)x_i + \sum_{i \neq j} \lambda x_i x_j + \lambda K^2.
+\end{align}
+Since $x_i x_j = x_j x_i$, the double sum over distinct indices can be rewritten as twice the sum over ordered pairs $i < j$:
+\begin{align}
+P(\mathbf{x}) = \sum_{i=0}^{N-1} \lambda(1-2K)x_i + 2 \sum_{0 \le i < j \le N-1} \lambda x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 4.} Combining the negated objective and the penalty term yields the total QUBO Hamiltonian $H(\mathbf{x})$:
+\begin{align}
+H(\mathbf{x}) &= \sum_{i=0}^{N-1} \left( \lambda(1-2K) - u_i \right) x_i + \sum_{0 \le i < j \le N-1} \left( r_{ij} + 2\lambda \right) x_i x_j + \lambda K^2.
+\end{align}
+
+\textbf{Step 5.} Reading off the coefficients from $H(\mathbf{x})$ gives the symmetric QUBO matrix entries and constant offset:
+\begin{align}
+Q_{i,i} &= \lambda(1-2K) - u_i, \quad \forall i \in \{0, \dots, N-1\}, \\
+Q_{i,j} &= r_{ij} + 2\lambda, \quad \forall 0 \le i < j \le N-1, \\
+Q_{j,i} &= Q_{i,j}, \quad \forall 0 \le i < j \le N-1, \\
+c &= \lambda K^2.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $P$ must be chosen sufficiently large to ensure that any violation of the cardinality constraint incurs a higher energy cost than the maximum possible improvement in the objective function. The maximum utility gain achievable by adding or removing a single feature is bounded by $\max_i u_i$. Therefore, selecting $P > \max_i u_i$ guarantees that any deviation from the constraint $\sum_i x_i = K$ increases the total energy by at least $P$, which strictly dominates any potential reduction in the objective term. This ensures that the optimizer will never prefer an infeasible solution over a feasible one.
+The penalty weight must be chosen sufficiently large to ensure that any violation of the cardinality constraint is strictly more costly than the maximum possible improvement in the original objective. Specifically, we require:
+\begin{align}
+\lambda > \max_{i} |u_i| + \sum_{0 \le i < j \le N-1} |r_{ij}|.
+\end{align}
+This bound guarantees that the penalty incurred by deviating from exactly $K$ selected features dominates any potential gain from the utility or redundancy terms.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ recovers the optimal feature set because (i) for any assignment satisfying $\sum_i x_i = K$, the penalty term vanishes and $H(\mathbf{x})$ reduces exactly to the negated original objective; thus, minimizing $H$ over feasible points is equivalent to maximizing the original utility-minus-redundancy score. (ii) For any infeasible assignment, the penalty term is strictly positive and, by the choice of $P$, exceeds the maximum possible objective value achievable by any feasible assignment. Consequently, the global minimum of $H$ must occur at a feasible point that optimizes the original objective, guaranteeing that the QUBO formulation correctly encodes the combinatorial problem.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ recovers the optimal feature selection because (i) all feasible solutions satisfying $\sum_i x_i = K$ incur zero penalty and thus evaluate exactly to the negated original objective, and (ii) any infeasible solution incurs a penalty strictly greater than the maximum possible objective value. Consequently, the global minimum of $H(\mathbf{x})$ must be feasible, and among feasible solutions, it must minimize the negated objective, which is equivalent to maximizing the original utility-minus-redundancy score.
 
 \paragraph{Illustrative Example.}
-Consider a small instance with $N=3$ candidate features and a requirement to select exactly $K=2$ features. Let the utility scores be $u_0 = 5$, $u_1 = 3$, and $u_2 = 4$. Let the redundancy penalties be $r_{01} = 1$, $r_{02} = 2$, and $r_{12} = 1$. Following the justification, we choose $P = 6$ (since $\max_i u_i = 5$). 
-
-The concrete objective to minimize is $\min -5x_0 - 3x_1 - 4x_2 + 1x_0x_1 + 2x_0x_2 + 1x_1x_2$. The concrete penalty term is $6(x_0 + x_1 + x_2 - 2)^2$, which expands to $-18x_0 - 18x_1 - 18x_2 + 12x_0x_1 + 12x_0x_2 + 12x_1x_2 + 24$. Substituting these values into the general Q-matrix formulas yields:
+Consider a concrete instance with $N=3$ candidate features and $K=2$ required selections. Let the utility scores be $u_0=10$, $u_1=8$, $u_2=5$, and the pairwise redundancy penalties be $r_{01}=2$, $r_{02}=3$, $r_{12}=1$. We choose $\lambda=20$, which satisfies the justification bound. Substituting these values into the general formulas yields the following concrete terms:
 \begin{align}
-Q_{00} &= 6(1 - 4) - 5 = -23, & Q_{11} &= 6(1 - 4) - 3 = -21, & Q_{22} &= 6(1 - 4) - 4 = -22, \\
-Q_{01} &= 2(6) + 1 = 13, & Q_{02} &= 2(6) + 2 = 14, & Q_{12} &= 2(6) + 1 = 13, \\
-c &= 6 \cdot 2^2 = 24.
+\text{Linear terms: } & (20(1-4)-10)x_0 + (20(1-4)-8)x_1 + (20(1-4)-5)x_2 = -70x_0 - 68x_1 - 65x_2, \\
+\text{Quadratic terms: } & (2+40)x_0x_1 + (3+40)x_0x_2 + (1+40)x_1x_2 = 42x_0x_1 + 43x_0x_2 + 41x_1x_2, \\
+\text{Offset: } & 20 \cdot 2^2 = 80.
 \end{align}
-The resulting concrete Hamiltonian is:
-\[
-H(x_0, x_1, x_2) = -23x_0 - 21x_1 - 22x_2 + 13x_0x_1 + 14x_0x_2 + 13x_1x_2 + 24.
-\]
-Enumerating the three feasible assignments (exactly two variables equal to 1):
-\begin{itemize}
-\item $\mathbf{x} = (1, 1, 0)$: $H = -23 - 21 + 13 + 24 = -7$ (Objective value: $5 + 3 - 1 = 7$).
-\item $\mathbf{x} = (1, 0, 1)$: $H = -23 - 22 + 14 + 24 = -7$ (Objective value: $5 + 4 - 2 = 7$).
-\item $\mathbf{x} = (0, 1, 1)$: $H = -21 - 22 + 13 + 24 = -6$ (Objective value: $3 + 4 - 1 = 6$).
-\end{itemize}
-The global minimum energy is $-7$, achieved by selecting features $\{0, 1\}$ or $\{0, 2\}$, which correspond to the maximum total score of $7$.
+The resulting Hamiltonian is:
+\begin{align}
+H(\mathbf{x}) = -70x_0 - 68x_1 - 65x_2 + 42x_0x_1 + 43x_0x_2 + 41x_1x_2 + 80.
+\end{align}
+Evaluating $H(\mathbf{x})$ over the three feasible binary vectors (where $x_0+x_1+x_2=2$):
+\begin{align}
+H(1,1,0) &= -70 - 68 + 42 + 80 = -16, \\
+H(1,0,1) &= -70 - 65 + 43 + 80 = -12, \\
+H(0,1,1) &= -68 - 65 + 41 + 80 = -12.
+\end{align}
+The global minimum is $-16$ at $\mathbf{x}^* = (1,1,0)$, corresponding to selecting features $0$ and $1$. The maximum original score is $10 + 8 - 2 = 16$, confirming the formulation.
 
 \end{document}

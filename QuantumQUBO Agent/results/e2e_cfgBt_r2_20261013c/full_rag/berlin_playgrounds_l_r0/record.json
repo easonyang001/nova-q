@@ -1,0 +1,146 @@
+{
+ "case": "berlin_playgrounds_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 453.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1625.1
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 246.3
+  },
+  "data": {
+   "ok": false,
+   "seconds": 7661.7,
+   "error": "ValueError: data preparation failed: RuntimeError: TypeError: int() argument must be a string, a bytes-like object or a real number, not 'Series'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 171, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 65, in load_data\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 106, in wrapped\n    return obj(*a, **kw)\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/prep/text.py\", line 52, in to_number\n    bad = int(out.isna().sum() - sum(is_missing(v) for v in series))\nTypeError: int() argument must be a string, a bytes-like object or a real number, not 'Series'\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "model_choice": "Maximum Covering Location Problem (MCLP) formulation. Variables: x_i (candidate sites) and y_j (covered demand blocks). For a realistic instance (300 sites, 3000 blocks), total variables ~3300, which fits the CGA GPU annealer limit of 3600.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "LOR planning area center (candidate site)",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "blocks": {
+    "meaning": "Umweltatlas block center (demand point) that is currently NOT covered by existing playgrounds",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "pop"
+    }
+   }
+  },
+  "params": {
+   "pop": {
+    "meaning": "Population of the block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "people"
+   },
+   "site_lat": {
+    "meaning": "Latitude of LOR center",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "site_lon": {
+    "meaning": "Longitude of LOR center",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_lat": {
+    "meaning": "Latitude of block center",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "block_lon": {
+    "meaning": "Longitude of block center",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "coverage_matrix": {
+    "meaning": "1 if site i is within 250m of block j, else 0",
+    "index": [
+     "sites",
+     "blocks"
+    ],
+    "type": "binary",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "site_lat",
+      "site_lon",
+      "block_lat",
+      "block_lon"
+     ],
+     "how": "dist <= 250"
+    }
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to build",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 8
+   }
+  }
+ },
+ "data_found": [
+  "Daten_zum_Bericht_2021_die_neuen_LOR_.xlsx",
+  "Einwohnerdichte_2019_Umweltatlas_Einwohnerdichte_2019_WFS_la.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson",
+  "Spielplätze_Berlin.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 388905,
+  "solver_calls": null
+ },
+ "seconds": 9986.6
+}

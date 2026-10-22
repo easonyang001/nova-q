@@ -1,0 +1,249 @@
+{
+ "case": "ev_chargers_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 120.9
+  },
+  "model": {
+   "ok": true,
+   "seconds": 121.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 37.0
+  },
+  "data": {
+   "ok": true,
+   "seconds": 642.1
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 241.2
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact MCLP formulation with binary variables x_i and y_j. N~24 sites => 48 variables. Fits easily within CGA backend limit of 3,600 variables. Hard constraints encoded as linear constraints in the IR.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "District center points in Da'an District, used as both candidate sites and demand points",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of each district center point",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of each district center point",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Population of each district",
+    "index": [
+     "sites"
+    ],
+    "type": "int",
+    "source": "public",
+    "unit": "persons"
+   },
+   "k": {
+    "meaning": "Number of charging stations to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3,
+    "unit": "stations"
+   }
+  }
+ },
+ "data_found": [
+  "臺北市各里人口數按年齡分_112年迄今-每月各里人口數按年齡分.csv",
+  "臺北市里界圖.zip"
+ ],
+ "prep": {
+  "tools_used": [
+   "attach_parent",
+   "keep_category",
+   "keep_level",
+   "latest_period",
+   "match",
+   "to_wgs84"
+  ],
+  "notes": "Filtered population data to latest period, total gender, village level, and Da'an District using attach_parent and keep_level. Converted boundary coordinates from TWD97 TM2 to WGS84. Joined by village name after ensuring string types. Sites are Da'an District villages.",
+  "prep_log": "**資料來源**\n\n- 臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分（政府資料開放平台） <https://data.gov.tw/dataset/136896>，授權：待確認，取得 2026-10-13T06:21:06.402098+00:00\n- 臺北市里界圖（政府資料開放平台） <https://data.gov.tw/dataset/121163>，授權：待確認，取得 2026-10-13T06:21:21.053940+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只取最新一期 {'年份': 115, '月份': 9} | 63315 | 1407 |  |\n| 只保留 性別=計 | 1407 | 469 |  |\n| 補上上層行政區（區） | 469 | 469 | 1 列找不到上層 |\n| Filter population to Da'an District via parent | 54 | 54 | Kept rows where parent district is '大安區' |\n| 只保留行政層級「里」 | 54 | 53 | 移除 1 列上層彙總 |\n| Keep village level | 53 | 53 | Kept rows where name matches '里' level |\n| Extract village names and population | 53 | 53 | Renamed columns, cast to string/numeric, dropped NaNs |\n| Filter boundary to Da'an District | 53 | 53 | Kept rows where SECT_NAME == '大安區' |\n| 座標轉換 EPSG:3826 → WGS84 | 53 | 53 | 無 .prj，依數值範圍判斷為 TWD97 |\n| Convert coordinates to WGS84 | 53 | 53 | Converted x,y to lat,lon |\n| Extract village names and coordinates | 53 | 53 | Selected VNAME, lat, lon and dropped NaNs |\n| 合併（VNAME ↔ VNAME） | 53 | 53 | 完全對上 53、模糊對上 0、對不上 0 |\n| Join population and geometry | 53 | 53 | Joined on VNAME |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "pop: 尚未聲明 unit，需求為 persons",
+   "pop: 缺少實際來源對應，不能確認為公開真實資料",
+   "k: 尚未聲明 unit，需求為 stations",
+   "adapter 沒有聲明這些欄位的來源與單位：k, lat, lon, pop, sites"
+  ],
+  "sources": [
+   {
+    "title": "臺北市各里人口數按年齡分 — 112年迄今-每月各里人口數按年齡分",
+    "url": "https://data.gov.tw/dataset/136896",
+    "resource_url": "https://data.taipei/api/dataset/a6394e3f-3514-4542-87bd-de4310a40db3/resource/c8f5b53d-ef3d-4321-ae8e-58cd2a5ee73c/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T06:21:06.402098+00:00",
+    "sha256": "a478cb4d3cdf509eec3453285bf0c1c542b7f53268608348ced4bafa7150bed3",
+    "bytes": 20821765
+   },
+   {
+    "title": "臺北市里界圖",
+    "url": "https://data.gov.tw/dataset/121163",
+    "resource_url": "https://data.taipei/api/dataset/6b17b31d-4e16-495e-95b1-9fd1f47c80d8/resource/145e30da-58f3-45db-a125-8adc3fde2620/download",
+    "publisher": "政府資料開放平台",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T06:21:21.053940+00:00",
+    "sha256": "acff9aebcaa04c26d1fd8beceff1e7a3b95a2d35177ec0bafef08499e1e276ac",
+    "bytes": 521114
+   }
+  ],
+  "n_variables": 106,
+  "n_constraints": 54,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 53
+    },
+    "totals": {
+     "pop": 279617.0
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "104488caf160571d3861a55b",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 40,
+    "invalid": 40,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:solve",
+  "delivery:no_solution",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": -239968.0,
+  "baseline_objective": -239968.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 53,
+    "mapped": 53,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "pop",
+    "population_exact_matches": 53,
+    "population_total": 279617.0,
+    "population_truth_total": 279617
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.976,
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "helper variables optimised"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 3,
+    "meets_original_requirements": true,
+    "true_quality": 255941.0,
+    "reference_quality": 241701,
+    "gap_vs_reference": -0.0589
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 130347,
+  "solver_calls": 3
+ },
+ "seconds": 1163.2
+}

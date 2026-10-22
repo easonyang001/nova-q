@@ -2,90 +2,80 @@
 \usepackage{amsmath, amssymb}
 \usepackage[margin=1in]{geometry}
 \setlength{\parskip}{6pt}
-\title{QUBO Formulation: Network Community Detection Selection}
+\title{QUBO Formulation: Network Community Detection}
 \date{}
 \begin{document}
 \maketitle
 
-\subsection*{Network Community Detection Selection}
+\subsection*{Network Community Detection}
 
 \paragraph{Problem Statement.}
-Given a set of $M$ candidate community partitions for a network, each associated with a pre-computed quality score $s_c$, select exactly one partition that maximizes the total quality score. The optimization problem is a discrete selection task over a finite candidate set.
+Given a graph and a set of $K$ candidate community partitions, each associated with a precomputed modularity-like quality score $S_k$, the task is to select exactly one partition that maximizes the overall community quality. The selection must satisfy the requirement that precisely one candidate is chosen, and the objective is to return the optimal partition along with its maximum score.
 
 \paragraph{Decision Variables.}
-For each candidate partition $c \in \{0, 1, \dots, M-1\}$, introduce a binary decision variable $x_c \in \{0, 1\}$, where $x_c = 1$ indicates that partition $c$ is selected, and $x_c = 0$ otherwise. The vector of decision variables is denoted $\mathbf{x} = (x_0, x_1, \dots, x_{M-1})^\top$.
+For each candidate partition $k \in \{0, 1, \dots, K-1\}$, introduce a binary decision variable $y_k \in \{0,1\}$. The variable $y_k$ equals $1$ if candidate partition $k$ is selected, and $0$ otherwise. The vector of decision variables is denoted $\mathbf{y} = (y_0, y_1, \dots, y_{K-1})^\top$.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 --- Original Objective.} The goal is to maximize the total quality score $\sum_{c=0}^{M-1} s_c x_c$. Quadratic unconstrained binary optimization (QUBO) solvers minimize energy, so we negate the objective:
+\textbf{Step 1 -- Objective Function.} The original goal is to maximize the total modularity-like score:
 \begin{align}
-\min_{\mathbf{x} \in \{0,1\}^M} \; -\sum_{c=0}^{M-1} s_c x_c.
+    \max_{\mathbf{y} \in \{0,1\}^K} \sum_{k=0}^{K-1} S_k y_k.
+\end{align}
+Since QUBO solvers minimize energy, we negate the objective:
+\begin{align}
+    \min_{\mathbf{y} \in \{0,1\}^K} -\sum_{k=0}^{K-1} S_k y_k.
 \end{align}
 
-\textbf{Step 2 --- Constraint Formulation.} Exactly one partition must be selected, which imposes the equality constraint:
+\textbf{Step 2 -- Constraints.} The requirement that exactly one partition is selected is expressed as:
 \begin{align}
-\sum_{c=0}^{M-1} x_c = 1.
+    \sum_{k=0}^{K-1} y_k = 1.
 \end{align}
 
-\textbf{Step 3 --- Penalty Term Expansion.} We enforce the constraint by adding a squared penalty term with weight $\lambda > 0$:
+\textbf{Step 3 -- Penalty Term Expansion.} We enforce the constraint using a quadratic penalty with weight $\lambda > 0$:
 \begin{align}
-P(\mathbf{x}) = \lambda \left( \sum_{c=0}^{M-1} x_c - 1 \right)^2.
+    P(\mathbf{y}) = \lambda \left( \sum_{k=0}^{K-1} y_k - 1 \right)^2.
 \end{align}
 Expanding the square yields:
 \begin{align}
-P(\mathbf{x}) = \lambda \left( \sum_{c=0}^{M-1} x_c^2 + \sum_{c=0}^{M-1} \sum_{d=0, d \neq c}^{M-1} x_c x_d - 2 \sum_{c=0}^{M-1} x_c + 1 \right).
+    P(\mathbf{y}) = \lambda \left( \sum_{k=0}^{K-1} y_k^2 + \sum_{k \neq j} y_k y_j + 1 - 2\sum_{k=0}^{K-1} y_k \right).
 \end{align}
-Applying the idempotent property $x_c^2 = x_c$ for binary variables simplifies the expression to:
+Using the idempotent property of binary variables, $y_k^2 = y_k$, the expression simplifies to:
 \begin{align}
-P(\mathbf{x}) = \lambda \left( 1 - \sum_{c=0}^{M-1} x_c + \sum_{c=0}^{M-1} \sum_{d=0, d \neq c}^{M-1} x_c x_d \right).
+    P(\mathbf{y}) = \lambda \left( 1 - \sum_{k=0}^{K-1} y_k + \sum_{k \neq j} y_k y_j \right).
 \end{align}
-Distributing $\lambda$ gives the general penalty contribution:
+Noting that $\sum_{k \neq j} y_k y_j = 2 \sum_{0 \le k < j \le K-1} y_k y_j$, the penalty contribution becomes:
 \begin{align}
-P(\mathbf{x}) = \lambda - \lambda \sum_{c=0}^{M-1} x_c + \lambda \sum_{c=0}^{M-1} \sum_{d=0, d \neq c}^{M-1} x_c x_d.
-\end{align}
-
-\textbf{Step 4 --- Combined Hamiltonian.} Adding the negated objective and the penalty term produces the total QUBO Hamiltonian $H(\mathbf{x})$:
-\begin{align}
-H(\mathbf{x}) = -\sum_{c=0}^{M-1} s_c x_c + \lambda - \lambda \sum_{c=0}^{M-1} x_c + \lambda \sum_{c=0}^{M-1} \sum_{d=0, d \neq c}^{M-1} x_c x_d.
-\end{align}
-Grouping linear and quadratic terms:
-\begin{align}
-H(\mathbf{x}) = \lambda + \sum_{c=0}^{M-1} (-s_c - \lambda) x_c + \lambda \sum_{c=0}^{M-1} \sum_{d=0, d \neq c}^{M-1} x_c x_d.
-\end{align}
-To match the standard symmetric QUBO form $H(\mathbf{x}) = c + \sum_{i} Q_{ii} x_i + \sum_{i < j} 2 Q_{ij} x_i x_j$, we note that $\sum_{c \neq d} x_c x_d = 2 \sum_{c < d} x_c x_d$. Substituting this identity yields:
-\begin{align}
-H(\mathbf{x}) = \lambda + \sum_{c=0}^{M-1} (-s_c - \lambda) x_c + \sum_{0 \leq c < d \leq M-1} 2\lambda x_c x_d.
+    P(\mathbf{y}) = \lambda - \lambda \sum_{k=0}^{K-1} y_k + 2\lambda \sum_{0 \le k < j \le K-1} y_k y_j.
 \end{align}
 
-\textbf{Step 5 --- Q Matrix and Offset.} Reading off the coefficients from the standard form gives the closed-form expressions for the QUBO parameters:
+\textbf{Step 4 -- Combined Hamiltonian.} Adding the negated objective and the penalty term gives the QUBO Hamiltonian $H(\mathbf{y})$:
 \begin{align}
-Q_{cc} &= -s_c - \lambda, & \forall c \in \{0, \dots, M-1\}, \\
-Q_{cd} &= \lambda, & \forall 0 \leq c < d \leq M-1, \\
-c &= \lambda.
+    H(\mathbf{y}) = -\sum_{k=0}^{K-1} S_k y_k - \lambda \sum_{k=0}^{K-1} y_k + 2\lambda \sum_{0 \le k < j \le K-1} y_k y_j + \lambda.
+\end{align}
+
+\textbf{Step 5 -- Q Matrix and Offset.} Reading off the coefficients from the general form $H(\mathbf{y}) = \mathbf{y}^\top Q \mathbf{y} + c$, the upper-triangular Q matrix entries and constant offset are:
+\begin{align}
+    Q_{k,k} &= -S_k - \lambda, & \forall k \in \{0, \dots, K-1\}, \\
+    Q_{k,j} &= 2\lambda, & \forall 0 \le k < j \le K-1, \\
+    c &= \lambda.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the equality constraint incurs a higher energy cost than the maximum possible gain from the objective function. The maximum possible objective value achievable by any feasible solution is $\max_{c} s_c$. If the constraint is violated, the term $\left( \sum_{c} x_c - 1 \right)^2$ evaluates to at least $1$ for integer variables, contributing at least $\lambda$ to the energy. Therefore, selecting $\lambda > \max_{c} s_c$ guarantees that the energy of any infeasible solution strictly exceeds the energy of any feasible solution.
+The penalty weight must be chosen as $\lambda > \max_{k} |S_k|$. This condition ensures that the energy penalty incurred by any infeasible assignment strictly exceeds the maximum possible gain achievable by the objective function. Specifically, if zero variables are selected, the penalty contributes $+\lambda$ to the energy. If two or more variables are selected, the quadratic term $2\lambda \sum_{k<j} y_k y_j$ contributes at least $2\lambda$, which dominates any linear objective term bounded by $\max_k |S_k|$. Thus, $\lambda > \max_k |S_k|$ guarantees that feasible solutions always have lower energy than infeasible ones.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^M$ recovers the optimal partition because feasible solutions (where exactly one $x_c = 1$) incur zero penalty, so their energy equals the negative of the objective value. Infeasible solutions violate the constraint, incurring a penalty of at least $\lambda$. By the choice of $\lambda$, the energy of any infeasible solution is strictly greater than the energy of any feasible solution. Consequently, the global minimum must be feasible, and among feasible solutions, the minimum energy corresponds to the maximum objective value, i.e., the partition with the highest quality score.
+Minimizing $H(\mathbf{y})$ over $\{0,1\}^K$ recovers the optimal partition because the penalty term is zero if and only if $\sum_k y_k = 1$, meaning all feasible solutions have unpenalized energy equal to $-\sum_k S_k y_k$. Infeasible solutions incur a penalty of at least $\lambda$, which by construction exceeds the maximum possible reduction in the objective term. Consequently, the global minimum of $H(\mathbf{y})$ must occur at a feasible point, and among feasible points, the minimum corresponds to the partition with the highest modularity-like score.
 
 \paragraph{Illustrative Example.}
-Consider an instance with $M = 3$ candidate partitions and pre-computed scores $s_0 = 0.8$, $s_1 = 0.5$, and $s_2 = 0.9$. We choose $\lambda = 1.0$, which satisfies $\lambda > \max\{0.8, 0.5, 0.9\}$. Substituting these values into the general formulas yields the concrete QUBO parameters:
+Consider an instance with $K=3$ candidate partitions and scores $S_0 = 0.4$, $S_1 = 0.7$, and $S_2 = 0.5$. We choose $\lambda = 1.0$, which satisfies $\lambda > \max_k |S_k|$. Substituting these values into the general formulas yields the concrete Hamiltonian:
 \begin{align}
-Q_{00} &= -0.8 - 1.0 = -1.8, & Q_{11} &= -0.5 - 1.0 = -1.5, & Q_{22} &= -0.9 - 1.0 = -1.9, \\
-Q_{01} &= 1.0, & Q_{02} &= 1.0, & Q_{12} &= 1.0, \\
-c &= 1.0.
+    H(\mathbf{y}) &= -0.4 y_0 - 0.7 y_1 - 0.5 y_2 - 1.0 y_0 - 1.0 y_1 - 1.0 y_2 \nonumber \\
+    &\quad + 2.0 y_0 y_1 + 2.0 y_0 y_2 + 2.0 y_1 y_2 + 1.0.
 \end{align}
-The resulting Hamiltonian is:
+The resulting Q matrix entries and offset are:
 \begin{align}
-H(x_0, x_1, x_2) = 1.0 - 1.8 x_0 - 1.5 x_1 - 1.9 x_2 + 2.0 x_0 x_1 + 2.0 x_0 x_2 + 2.0 x_1 x_2.
+    Q_{0,0} &= -1.4, \quad Q_{1,1} = -1.7, \quad Q_{2,2} = -1.5, \\
+    Q_{0,1} &= 2.0, \quad Q_{0,2} = 2.0, \quad Q_{1,2} = 2.0, \\
+    c &= 1.0.
 \end{align}
-Evaluating $H$ over the three feasible assignments:
-\begin{align}
-H(1, 0, 0) &= 1.0 - 1.8 = -0.8, \\
-H(0, 1, 0) &= 1.0 - 1.5 = -0.5, \\
-H(0, 0, 1) &= 1.0 - 1.9 = -0.9.
-\end{align}
-The global minimum is $-0.9$ at $\mathbf{x} = (0, 0, 1)^\top$, which correctly selects candidate partition $2$ with the highest score $s_2 = 0.9$.
-
+Evaluating $H(\mathbf{y})$ over the feasible subspace $\{ \mathbf{y} \mid \sum_k y_k = 1 \}$ gives energies $H(1,0,0) = -0.4$, $H(0,1,0) = -0.7$, and $H(0,0,1) = -0.5$. The global minimum is $-0.7$ at $\mathbf{y}^* = (0,1,0)^\top$, correctly selecting candidate partition $1$ as the optimal community assignment.
 \end{document}

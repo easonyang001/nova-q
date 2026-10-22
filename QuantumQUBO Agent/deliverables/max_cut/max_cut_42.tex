@@ -10,73 +10,59 @@
 \subsection*{Max-Cut}
 
 \paragraph{Problem Statement.}
-Let $G=(V,E)$ be an undirected graph with vertex set $V$ and edge set $E$. Each edge $(i,j) \in E$ is associated with a non-negative weight $w_{ij}$. The Max-Cut problem seeks to partition the vertices $V$ into two disjoint subsets $V_0$ and $V_1$ such that the total weight of edges connecting a vertex in $V_0$ to a vertex in $V_1$ is maximized. Formally, we wish to find a partition that maximizes $\sum_{(i,j) \in E} w_{ij} \cdot \mathbb{I}(i \in V_0, j \in V_1 \lor i \in V_1, j \in V_0)$, where $\mathbb{I}(\cdot)$ is the indicator function.
+Given an undirected graph $G = (V, E)$ with $|V| = N$ nodes and a set of weighted edges $E$, where each edge $(i, j) \in E$ carries a non-negative weight $w_{ij}$, the Max-Cut problem seeks to partition the vertex set $V$ into two disjoint subsets $S_0$ and $S_1$ such that the total weight of edges connecting a node in $S_0$ to a node in $S_1$ is maximized.
 
 \paragraph{Decision Variables.}
-For each vertex $i \in V$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The value $x_i = 0$ indicates that vertex $i$ is assigned to subset $V_0$, and $x_i = 1$ indicates assignment to subset $V_1$. The vector $x = (x_i)_{i \in V}$ fully specifies a partition of the graph.
+For each node $i \in V$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ encodes the group assignment of node $i$, where $x_i = 0$ indicates membership in subset $S_0$ and $x_i = 1$ indicates membership in subset $S_1$. The complete assignment is represented by the vector $\mathbf{x} = (x_0, x_1, \dots, x_{N-1})^\top \in \{0, 1\}^N$.
 
 \paragraph{QUBO Derivation.}
-We derive the Quadratic Unconstrained Binary Optimization (QUBO) formulation by encoding the objective function into a Hamiltonian $H(x)$ to be minimized.
-
-\textbf{Step 1: Objective formulation.}
-For binary variables, the condition $x_i \neq x_j$ is equivalent to the algebraic expression $x_i + x_j - 2x_ix_j$. Thus, the weight of the cut contributed by edge $(i,j)$ is $w_{ij}(x_i + x_j - 2x_ix_j)$. The total cut weight is $\sum_{(i,j) \in E} w_{ij}(x_i + x_j - 2x_ix_j)$. Since QUBO solvers minimize energy, we define the Hamiltonian as the negative of the objective:
+\textbf{Step 1 --- Objective Formulation.} The weight of the cut induced by an assignment $\mathbf{x}$ is the sum of weights of edges crossing between the two partitions. An edge $(i, j) \in E$ crosses the cut if and only if $x_i \neq x_j$. This condition is captured by the indicator function $x_i + x_j - 2x_i x_j$, which evaluates to $1$ when $x_i \neq x_j$ and $0$ otherwise. The original maximization objective is therefore
 \begin{align}
-H(x) = -\sum_{(i,j) \in E} w_{ij}(x_i + x_j - 2x_ix_j).
+    \max_{\mathbf{x} \in \{0,1\}^N} \sum_{(i,j) \in E} w_{ij} (x_i + x_j - 2x_i x_j).
 \end{align}
-Expanding the terms yields:
+Since QUBO solvers minimize energy, we negate the objective to obtain the minimization problem:
 \begin{align}
-H(x) = \sum_{(i,j) \in E} \left( -w_{ij}x_i - w_{ij}x_j + 2w_{ij}x_ix_j \right).
+    \min_{\mathbf{x} \in \{0,1\}^N} H(\mathbf{x}) = \min_{\mathbf{x} \in \{0,1\}^N} \left( -\sum_{(i,j) \in E} w_{ij} (x_i + x_j - 2x_i x_j) \right).
 \end{align}
 
-\textbf{Step 2: Constraints.}
-The problem specification contains no constraints; the objective is a pure maximization over the binary hypercube $\{0,1\}^{|V|}$. Consequently, there are no constraint terms to convert.
+\textbf{Step 2 --- Constraints.} The Max-Cut problem imposes no additional constraints on the binary variables; any assignment $\mathbf{x} \in \{0,1\}^N$ corresponds to a valid partition. Thus, the feasible region is the entire Boolean hypercube.
 
-\textbf{Step 3: Penalty terms.}
-As there are no constraints, no penalty terms are required. The Hamiltonian consists solely of the negated objective.
+\textbf{Step 3 --- Penalty Terms.} As there are no constraints, no penalty terms are required. The Hamiltonian consists solely of the negated objective.
 
-\textbf{Step 4: Combined Hamiltonian.}
-The QUBO Hamiltonian is given directly by the expanded objective:
+\textbf{Step 4 --- Combined Hamiltonian.} Expanding the negated objective and grouping terms by variable powers yields:
 \begin{align}
-H(x) = \sum_{(i,j) \in E} \left( 2w_{ij}x_ix_j - w_{ij}x_i - w_{ij}x_j \right).
+    H(\mathbf{x}) &= -\sum_{(i,j) \in E} w_{ij} x_i - \sum_{(i,j) \in E} w_{ij} x_j + 2\sum_{(i,j) \in E} w_{ij} x_i x_j.
+\end{align}
+We collect the linear coefficients for each node $i \in V$. Each node $i$ appears in the first sum for every edge incident to $i$, and in the second sum for every edge incident to $i$. Let $d_i = \sum_{j: (i,j) \in E} w_{ij}$ denote the weighted degree of node $i$. The linear part simplifies to $-\sum_{i \in V} d_i x_i$. The quadratic part remains $2\sum_{(i,j) \in E} w_{ij} x_i x_j$. Thus, the full QUBO Hamiltonian is
+\begin{align}
+    H(\mathbf{x}) = \sum_{i \in V} \left( -\sum_{j: (i,j) \in E} w_{ij} \right) x_i + \sum_{(i,j) \in E} 2w_{ij} x_i x_j.
 \end{align}
 
-\textbf{Step 5: Q matrix entries and offset.}
-We collect coefficients for each variable $x_i$ and pair $x_ix_j$ to read off the QUBO parameters. The Hamiltonian takes the standard form $H(x) = \sum_{i \in V} Q_{i,i}x_i + \sum_{i,j \in V, i < j} Q_{i,j}x_ix_j + c$. The general closed-form expressions for the parameters are:
+\textbf{Step 5 --- Q Matrix and Offset.} The QUBO Hamiltonian is generally expressed as $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$. Comparing with the expanded form above, we identify the diagonal and off-diagonal entries of the symmetric matrix $Q$ and the constant offset $c$:
 \begin{align}
-Q_{i,i} &= -\sum_{j : (i,j) \in E} w_{ij}, \quad \forall i \in V, \\
-Q_{i,j} &= 2w_{ij}, \quad \forall (i,j) \in E, \ i < j, \\
-Q_{i,j} &= 0, \quad \forall (i,j) \notin E, \ i \neq j, \\
-c &= 0.
+    Q_{i,i} &= -\sum_{j: (i,j) \in E} w_{ij}, & \forall i \in V, \\
+    Q_{i,j} &= 2w_{ij}, & \forall (i,j) \in E, \, i \neq j, \\
+    Q_{i,j} &= 0, & \forall (i,j) \notin E, \, i \neq j, \\
+    c &= 0.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-The problem formulation imposes no constraints; therefore, the QUBO requires no penalty terms and no penalty weights. The Hamiltonian directly encodes the optimization objective over the feasible domain $\{0,1\}^{|V|}$.
+In constrained QUBO reductions, a penalty weight $\lambda$ is typically chosen to exceed the maximum possible objective gain from violating a constraint, ensuring that any energy reduction from violating a constraint is outweighed by the penalty term. For the Max-Cut problem, there are no constraints; every binary vector $\mathbf{x} \in \{0,1\}^N$ corresponds to a valid graph partition. Consequently, the feasible region is unconstrained, no penalty terms are required, and the Hamiltonian directly encodes the optimization landscape over the full hypercube without the need for a penalty weight.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(x)$ over $x \in \{0,1\}^{|V|}$ recovers the optimal Max-Cut solution. For any assignment $x$, the term $x_i + x_j - 2x_ix_j$ evaluates to $1$ if $x_i \neq x_j$ and $0$ otherwise. Thus, the original objective sums the weights of all edges crossing the cut defined by $x$. Since $H(x)$ is the negative of this sum, the global minimum of $H(x)$ corresponds to the partition that maximizes the total crossing weight. The absence of constraints ensures that all binary assignments are feasible, and the energy landscape is strictly determined by the cut quality, guaranteeing that the ground state of $H$ yields the optimal cut.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^N$ recovers the optimal Max-Cut partition because the mapping between binary assignments and graph cuts is bijective and unconstrained. Every $\mathbf{x}$ yields a valid cut, and the Hamiltonian is constructed such that $H(\mathbf{x}) = -\text{CutWeight}(\mathbf{x})$. Therefore, the global minimum of $H$ corresponds exactly to the assignment that maximizes the cut weight. Since the feasible set is the entire Boolean hypercube, no infeasible solutions exist to penalize, and the ground state of $H$ is guaranteed to be an optimal solution to the original Max-Cut problem.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=3$ vertices $V=\{0,1,2\}$ forming a triangle graph where every pair of vertices is connected. The edge set is $E=\{(0,1), (1,2), (0,2)\}$ with weights $w_{01}, w_{12}, w_{02}$.
-
-Instantiating the general formulas, the Hamiltonian becomes:
+Consider a concrete instance with $N=3$ nodes and a complete graph $K_3$ where $E = \{(0,1), (0,2), (1,2)\}$. Assign concrete edge weights $w_{01} = 1$, $w_{02} = 2$, and $w_{12} = 3$. Substituting these values into the general formulas yields the following concrete objective and Hamiltonian:
 \begin{align}
-H(x) &= \left( -w_{01}x_0 - w_{01}x_1 + 2w_{01}x_0x_1 \right) \nonumber \\
-&\quad + \left( -w_{12}x_1 - w_{12}x_2 + 2w_{12}x_1x_2 \right) \nonumber \\
-&\quad + \left( -w_{02}x_0 - w_{02}x_2 + 2w_{02}x_0x_2 \right).
+    H(\mathbf{x}) &= (-1-2)x_0 + (-1-3)x_1 + (-2-3)x_2 + 2(1)x_0 x_1 + 2(2)x_0 x_2 + 2(3)x_1 x_2 \\
+    &= -3x_0 - 4x_1 - 5x_2 + 2x_0 x_1 + 4x_0 x_2 + 6x_1 x_2.
 \end{align}
-Collecting terms for each variable and pair, the QUBO parameters are:
+The corresponding symmetric $Q$ matrix entries and offset are:
 \begin{align}
-Q_{0,0} &= -w_{01} - w_{02}, \\
-Q_{1,1} &= -w_{01} - w_{12}, \\
-Q_{2,2} &= -w_{12} - w_{02}, \\
-Q_{0,1} &= 2w_{01}, \quad Q_{1,2} = 2w_{12}, \quad Q_{0,2} = 2w_{02}, \\
-c &= 0.
+    Q_{0,0} &= -3, & Q_{1,1} &= -4, & Q_{2,2} &= -5, \\
+    Q_{0,1} &= 2, & Q_{0,2} &= 4, & Q_{1,2} &= 3, \\
+    c &= 0.
 \end{align}
-The resulting Hamiltonian is:
-\begin{align}
-H(x) &= (-w_{01}-w_{02})x_0 + (-w_{01}-w_{12})x_1 + (-w_{12}-w_{02})x_2 \nonumber \\
-&\quad + 2w_{01}x_0x_1 + 2w_{12}x_1x_2 + 2w_{02}x_0x_2.
-\end{align}
-For unit weights $w_{ij}=1$, the optimal cut includes two edges (energy $-2$). Configurations such as $x=(0,0,1)$, $x=(0,1,0)$, $x=(1,0,0)$, and their complements achieve this minimum energy, corresponding to partitions that separate one vertex from the other two.
-
+Enumerating all $2^3 = 8$ binary assignments reveals the ground state at $\mathbf{x}^* = (0, 0, 1)^\top$ with energy $H(\mathbf{x}^*) = -5$. This corresponds to partitioning node $2$ into group $1$ and nodes $0, 1$ into group $0$, yielding a maximum cut weight of $5$ (edges $(0,2)$ and $(1,2)$).
 \end{document}

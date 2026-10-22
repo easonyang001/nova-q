@@ -1,0 +1,93 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb}
+\usepackage[margin=1in]{geometry}
+\setlength{\parskip}{6pt}
+\title{QUBO Formulation: Traveling Salesperson Problem}
+\date{}
+\begin{document}
+\maketitle
+
+\subsection*{Traveling Salesperson Problem}
+
+\paragraph{Problem Statement.}
+Given $N$ cities indexed by $i \in \{0, \dots, N-1\}$ and a symmetric distance matrix $D = [d_{i,j}]_{i,j=0}^{N-1}$, the Traveling Salesperson Problem seeks a cyclic permutation of the cities that minimizes the total travel distance. Formally, the goal is to find an assignment of cities to tour positions such that every city is visited exactly once, every position is occupied by exactly one city, and the sum of distances between consecutively visited cities is minimized.
+
+\paragraph{Decision Variables.}
+We introduce binary decision variables $x_{i,c} \in \{0,1\}$ for each city $i \in \{0, \dots, N-1\}$ and each tour position $c \in \{0, \dots, N-1\}$. The variable $x_{i,c}$ equals $1$ if and only if city $i$ is visited at position $c$ in the tour; otherwise, $x_{i,c} = 0$. The full variable set contains $N^2$ binary variables.
+
+\paragraph{QUBO Derivation.}
+\textbf{Step 1 -- Objective Function.} The total travel distance can be expressed directly in terms of the decision variables by summing the distances between cities assigned to consecutive positions:
+\begin{align}
+E_{\text{obj}} = \sum_{i=0}^{N-1} \sum_{j=0}^{N-1} d_{i,j} \sum_{c=0}^{N-1} x_{i,c} x_{j, (c+1) \bmod N}.
+\end{align}
+
+\textbf{Step 2 -- Constraint Equations.} A valid tour must satisfy two sets of equality constraints. First, each city must appear exactly once:
+\begin{align}
+\sum_{c=0}^{N-1} x_{i,c} = 1 \quad \forall i \in \{0, \dots, N-1\}.
+\end{align}
+Second, each position must be filled by exactly one city:
+\begin{align}
+\sum_{i=0}^{N-1} x_{i,c} = 1 \quad \forall c \in \{0, \dots, N-1\}.
+\end{align}
+
+\textbf{Step 3 -- Penalty Term Expansion.} We enforce the constraints by adding quadratic penalty terms to the objective. Let $\lambda > 0$ be a penalty weight. The city-visit constraint penalty is:
+\begin{align}
+P_{\text{city}} = \lambda \sum_{i=0}^{N-1} \left( \sum_{c=0}^{N-1} x_{i,c} - 1 \right)^2.
+\end{align}
+Expanding the square and applying the idempotent property $x_{i,c}^2 = x_{i,c}$ for binary variables yields:
+\begin{align}
+\left( \sum_{c=0}^{N-1} x_{i,c} - 1 \right)^2 &= \sum_{c=0}^{N-1} x_{i,c}^2 + 2 \sum_{0 \le c < c' \le N-1} x_{i,c} x_{i,c'} - 2 \sum_{c=0}^{N-1} x_{i,c} + 1 \nonumber \\
+&= 1 - \sum_{c=0}^{N-1} x_{i,c} + 2 \sum_{0 \le c < c' \le N-1} x_{i,c} x_{i,c'}.
+\end{align}
+Thus, the expanded city-visit penalty contribution is:
+\begin{align}
+P_{\text{city}} = \lambda \sum_{i=0}^{N-1} \left( 1 - \sum_{c=0}^{N-1} x_{i,c} + 2 \sum_{0 \le c < c' \le N-1} x_{i,c} x_{i,c'} \right).
+\end{align}
+Similarly, expanding the position-fill constraint penalty gives:
+\begin{align}
+P_{\text{pos}} = \lambda \sum_{c=0}^{N-1} \left( 1 - \sum_{i=0}^{N-1} x_{i,c} + 2 \sum_{0 \le i < i' \le N-1} x_{i,c} x_{i',c} \right).
+\end{align}
+
+\textbf{Step 4 -- Combined Hamiltonian.} The full QUBO Hamiltonian $H(\mathbf{x})$ is the sum of the objective and both penalty terms:
+\begin{align}
+H(\mathbf{x}) = E_{\text{obj}} + P_{\text{city}} + P_{\text{pos}}.
+\end{align}
+
+\textbf{Step 5 -- Q Matrix Entries and Offset.} Collecting linear and quadratic terms, $H(\mathbf{x})$ takes the standard QUBO form $\mathbf{x}^\top Q \mathbf{x} + c_0$, where $\mathbf{x}$ is the vector of all $N^2$ variables. The diagonal entries (linear coefficients) are:
+\begin{align}
+Q_{(i,c),(i,c)} = -2\lambda \quad \forall i,c \in \{0, \dots, N-1\}.
+\end{align}
+The off-diagonal entries (quadratic coefficients) are:
+\begin{align}
+Q_{(i,c),(j,c')} = 
+\begin{cases} 
+d_{i,j} & \text{if } c' \equiv c+1 \pmod N, \\
+2\lambda & \text{if } i=j \text{ and } c \neq c', \\
+2\lambda & \text{if } c=c' \text{ and } i \neq j, \\
+0 & \text{otherwise}.
+\end{cases}
+\end{align}
+The constant offset is:
+\begin{align}
+c_0 = 2N\lambda.
+\end{align}
+
+\paragraph{Penalty Weight Justification.}
+The penalty weight must satisfy $\lambda > N \cdot \max_{i,j} d_{i,j}$. This condition guarantees that any violation of the constraints increases the Hamiltonian energy by more than the maximum possible reduction in the objective function. Specifically, the objective term is bounded above by $N \cdot \max_{i,j} d_{i,j}$ for any assignment, while each unit of constraint violation contributes at least $\lambda$ to the penalty. Therefore, infeasible configurations always yield strictly higher energy than the optimal feasible tour.
+
+\paragraph{Correctness Argument.}
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^{N^2}$ recovers the optimal TSP solution because feasible assignments satisfy all constraints, causing the penalty terms to vanish and reducing $H(\mathbf{x})$ exactly to the total travel distance. Conversely, any infeasible assignment violates at least one constraint, incurring a penalty strictly greater than the maximum possible objective value. Consequently, the global minimum of $H(\mathbf{x})$ must occur at a feasible point, which corresponds to a valid tour with minimal total distance.
+
+\paragraph{Illustrative Example.}
+Consider $N=3$ cities with distance matrix $D = [d_{i,j}]$ where $d_{0,1}=d_{1,0}=2$, $d_{1,2}=d_{2,1}=3$, $d_{0,2}=d_{2,0}=4$, and $d_{i,i}=0$. The variable mapping to linear indices $k \in \{0,\dots,8\}$ follows $k = 3i + c$. The concrete objective terms are:
+\begin{align}
+E_{\text{obj}} = 2x_{0,0}x_{1,1} + 2x_{0,1}x_{1,2} + 2x_{0,2}x_{1,0} + 3x_{1,0}x_{2,1} + 3x_{1,1}x_{2,2} + 3x_{1,2}x_{2,0} + 4x_{0,0}x_{2,2} + 4x_{0,1}x_{2,0} + 4x_{0,2}x_{2,1}.
+\end{align}
+The concrete penalty terms for $\lambda$ are:
+\begin{align}
+P_{\text{city}} = \lambda \sum_{i=0}^{2} \left( 1 - \sum_{c=0}^{2} x_{i,c} + 2 \sum_{0 \le c < c' \le 2} x_{i,c} x_{i,c'} \right), \quad
+P_{\text{pos}} = \lambda \sum_{c=0}^{2} \left( 1 - \sum_{i=0}^{2} x_{i,c} + 2 \sum_{0 \le i < i' \le 2} x_{i,c} x_{i',c} \right).
+\end{align}
+The resulting Hamiltonian $H(\mathbf{x})$ combines these with $c_0 = 6\lambda$. For this instance, the optimal tour is $0 \to 1 \to 2 \to 0$ (or its reverse), corresponding to the assignment $x_{0,0}=1, x_{1,1}=1, x_{2,2}=1$ (all other variables zero). The energy of this configuration is $H(\mathbf{x}^*) = 2 + 3 + 4 = 9$, which matches the minimal travel distance. Any assignment violating the constraints yields $H(\mathbf{x}) > 9$ due to the penalty terms dominating the objective gain.
+
+\end{document}

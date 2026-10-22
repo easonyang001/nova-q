@@ -1,0 +1,355 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 158.3
+  },
+  "model": {
+   "ok": true,
+   "seconds": 351.1
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 174.1,
+   "error": "ValueError: checker failed: RuntimeError: TypeError: haversine_matrix() takes 2 positional arguments but 4 were given\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/reqcheck.py\", line 155, in _samples\n    ev = ns[\"evaluate\"](data, sol)\n  File \"<checker>\", line 46, in evaluate\nTypeError: haversine_matrix() takes 2 positional arguments but 4 were given\n"
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1090.3
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.9
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 138.5
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact binary formulation with N+M variables. N~10, M~200, total ~210 variables. Fits well within CGA backend limit of 3,600 variables. Hard constraints are listed explicitly for penalty handling.",
+ "schema": {
+  "sets": {
+   "candidates": {
+    "meaning": "LOR planning area geometric centers (candidate locations for new playgrounds)",
+    "source": "public"
+   },
+   "blocks": {
+    "meaning": "Urban blocks (Kieze) in Friedrichshain-Kreuzberg",
+    "source": "public"
+   },
+   "existing_playgrounds": {
+    "meaning": "Existing playground locations in the area",
+    "source": "public"
+   }
+  },
+  "params": {
+   "candidate_lat": {
+    "meaning": "Latitude of candidate locations",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "candidate_lon": {
+    "meaning": "Longitude of candidate locations",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_lat": {
+    "meaning": "Latitude of block centroids",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "block_lon": {
+    "meaning": "Longitude of block centroids",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_population": {
+    "meaning": "Population of each block",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "existing_playground_lat": {
+    "meaning": "Latitude of existing playgrounds",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "existing_playground_lon": {
+    "meaning": "Longitude of existing playgrounds",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "Einwohnerdichte_2019.xlsx",
+  "Einwohnerdichte_2019_Umweltatlas_Einwohnerdichte_2019_WFS_la.geojson",
+  "Einwohnerdichte_2021_Umweltatlas_Einwohnerdichte_2021_WFS_la.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "in_area"
+  ],
+  "notes": "Blocks loaded from 2019 Umweltatlas WFS, filtered to Friedrichshain-Kreuzberg. Existing playgrounds loaded from Grünanlagenbestand, filtered by district and object type. Candidates (LOR planning area centers) derived by aggregating 2021 block centroids by the first 10 characters of the official statistical key (schluessel), which corresponds to the Planungsraum code in Berlin. k=3 is used as confirmed.",
+  "prep_log": "**資料來源**\n\n- Einwohnerdichte 2019（www.berlin.de） <https://www.berlin.de/umweltatlas/nutzung/einwohnerdichte/2019/download/>，授權：待確認，取得 2026-10-13T10:45:23.493383+00:00\n- Einwohnerdichte 2019 (Umweltatlas) — Einwohnerdichte 2019 (WFS layer)（catalogue govdata.de） <https://www.govdata.de/suche/daten/einwohnerdichte-2019-umweltatlas>，授權：待確認，取得 2026-10-13T10:48:15.641335+00:00\n- Einwohnerdichte 2021 (Umweltatlas) — Einwohnerdichte 2021 (WFS layer)（catalogue govdata.de） <https://www.govdata.de/suche/daten/einwohnerdichte-2021-umweltatlas>，授權：待確認，取得 2026-10-13T10:54:21.879170+00:00\n- Grünanlagenbestand Berlin (einschließlich der öffentlichen Spielplätze) - [WFS] — Spielplätze (WFS layer)（catalogue datenregister.berlin.de） <https://daten.berlin.de/datensaetze/grunanlagenbestand-berlin-einschliesslich-der-offentlichen-spielplatze-wfs-737fd0a4>，授權：待確認，取得 2026-10-13T10:49:26.653286+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依實際邊界保留區域 ['Friedrichshain-Kreuzberg, Berlin'] | 15100 | 488 | 各區點數 {'Friedrichshain-Kreuzberg, Berlin': 488} |\n| Filter blocks to FK and select columns | 15100 | 475 |  |\n| Filter playgrounds to FK | 1886 | 166 |  |\n| 依實際邊界保留區域 ['Friedrichshain-Kreuzberg, Berlin'] | 26378 | 788 | 各區點數 {'Friedrichshain-Kreuzberg, Berlin': 788} |\n| Derive candidates from 2021 blocks by Planungsraum key | 788 | 615 |  |",
+  "flags": [],
+  "review_required": [
+   "candidates: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "candidates: ['Candidates are computed as centroids of blocks sharing the same Planungsraum key (first 10 chars of schluessel).']",
+   "blocks: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "blocks: ['Population is ew2019. Blocks filtered to district boundary.']",
+   "existing_playgrounds: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "existing_playgrounds: [\"Filtered by objartname='Spielplatz' and bezirkname='Friedrichshain-Kreuzberg'.\"]",
+   "candidate_lat: 尚未聲明 unit，需求為 deg_lat",
+   "candidate_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "candidate_lon: 尚未聲明 unit，需求為 deg_lon",
+   "candidate_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_lat: 尚未聲明 unit，需求為 deg_lat",
+   "block_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_lon: 尚未聲明 unit，需求為 deg_lon",
+   "block_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_population: 尚未聲明 unit，需求為 persons",
+   "block_population: 缺少實際來源對應，不能確認為公開真實資料",
+   "existing_playground_lat: 尚未聲明 unit，需求為 deg_lat",
+   "existing_playground_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "existing_playground_lon: 尚未聲明 unit，需求為 deg_lon",
+   "existing_playground_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "k: ['Confirmed value 3 from specification.']",
+   "adapter 沒有聲明這些欄位的來源與單位：block_lat, block_lon, block_population, candidate_lat, candidate_lon, existing_playground_lat, existing_playground_lon",
+   "獨立資料核對不一致：set 'blocks' has 475 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 488. Check which rows you keep and whether duplicates of the same place are merged"
+  ],
+  "sources": [
+   {
+    "title": "Einwohnerdichte 2019",
+    "url": "https://www.berlin.de/umweltatlas/nutzung/einwohnerdichte/2019/download/",
+    "resource_url": "https://www.berlin.de/umweltatlas/_assets/nutzung/einwohnerdichte/2018/de-abbildungen/ao606_01.xlsx?ts=1786699162",
+    "publisher": "www.berlin.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T10:45:23.493383+00:00",
+    "sha256": "25e795b23a747f5157392522abdb27875680372d6d7f0881f91148767ba4b6da",
+    "bytes": 27433
+   },
+   {
+    "title": "Einwohnerdichte 2019 (Umweltatlas) — Einwohnerdichte 2019 (WFS layer)",
+    "url": "https://www.govdata.de/suche/daten/einwohnerdichte-2019-umweltatlas",
+    "resource_url": "https://gdi.berlin.de/services/wfs/ua_einwohnerdichte_2019?service=WFS&version=2.0.0&request=GetFeature&typeNames=ua_einwohnerdichte_2019%3Aua_einwohnerdichte_2019&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "catalogue govdata.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T10:48:15.641335+00:00",
+    "sha256": "50feb8694a1488882527900c095bef134280c984f3deea039c793727c224a72e",
+    "bytes": 11354889
+   },
+   {
+    "title": "Einwohnerdichte 2021 (Umweltatlas) — Einwohnerdichte 2021 (WFS layer)",
+    "url": "https://www.govdata.de/suche/daten/einwohnerdichte-2021-umweltatlas",
+    "resource_url": "https://gdi.berlin.de/services/wfs/ua_einwohnerdichte_2021?service=WFS&version=2.0.0&request=GetFeature&typeNames=ua_einwohnerdichte_2021%3Aua_einwohnerdichte_2021&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "catalogue govdata.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T10:54:21.879170+00:00",
+    "sha256": "613b6038b30e005d9e9820c273435b8f8d3c33666ec1bbe88886bea3c02c44bf",
+    "bytes": 21361688
+   },
+   {
+    "title": "Grünanlagenbestand Berlin (einschließlich der öffentlichen Spielplätze) - [WFS] — Spielplätze (WFS layer)",
+    "url": "https://daten.berlin.de/datensaetze/grunanlagenbestand-berlin-einschliesslich-der-offentlichen-spielplatze-wfs-737fd0a4",
+    "resource_url": "https://gdi.berlin.de/services/wfs/gruenanlagen?service=WFS&version=2.0.0&request=GetFeature&typeNames=gruenanlagen%3Aspielplaetze&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "catalogue datenregister.berlin.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T10:49:26.653286+00:00",
+    "sha256": "9b36df1e0c4eb076345731ae76dc34b209574be11cf3db4baa36ea598cdf84ff",
+    "bytes": 4540411
+   }
+  ],
+  "n_variables": 1090,
+  "n_constraints": 476,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "blocks": 488,
+     "existing_playgrounds": 166
+    },
+    "totals": {
+     "block_population": 290380.0
+    }
+   },
+   "issues": [
+    "set 'blocks' has 475 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 488. Check which rows you keep and whether duplicates of the same place are merged"
+   ]
+  }
+ },
+ "requirement_checks": [],
+ "workflow_events": [
+  "preflight:feasible",
+  "solve:running",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": -11256.0,
+  "baseline_objective": -11256.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "candidates",
+    "mapping": "coordinates within 200 m",
+    "entity_set_declared": true,
+    "instance_entities": 615,
+    "mapped": 139,
+    "duplicates": [
+     "Am Berlin Museum",
+     "Andreasviertel",
+     "Askanischer Platz",
+     "Boxhagener Platz",
+     "Chamissokiez",
+     "Forckenbeckplatz",
+     "Friedenstraße",
+     "Graefekiez Nord",
+     "Graefekiez Süd",
+     "Hausburgviertel",
+     "Köpenicker Straße",
+     "Lausitzer Platz",
+     "Moritzplatz",
+     "Niederbarnimstraße",
+     "Oranienplatz",
+     "Pettenkofer Straße",
+     "Prinzenstraße",
+     "Rathaus Yorckstraße",
+     "Reichenberger Straße Ost",
+     "Reichenberger Straße West"
+    ],
+    "missing_real_entities": 2,
+    "missing_examples": [
+     "Barnimkiez",
+     "Stralauer Halbinsel"
+    ],
+    "unmapped_ids": [
+     "0501130021",
+     "0501130031",
+     "0501130041",
+     "0501130051",
+     "0501140011",
+     "0501140021",
+     "0501140031",
+     "0501140041",
+     "0501140061",
+     "0501140081"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "resident_totals": {
+     "candidate_lat": 32291,
+     "candidate_lon": 8260,
+     "block_lat": 24940,
+     "block_lon": 6380,
+     "block_population": 290380,
+     "existing_playground_lat": 8716,
+     "existing_playground_lon": 2229
+    },
+    "resident_truth": {
+     "all": 290380,
+     "not_near_a_playground": 40673
+    }
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "blocks"
+     ],
+     [
+      "candidates"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 14,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 8788.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 192335,
+  "solver_calls": 1
+ },
+ "seconds": 1914.2
+}

@@ -1,0 +1,303 @@
+{
+ "case": "london_ambulance_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 468.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1938.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 170.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 3727.5
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 114.0
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.2
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "p-median formulation. Variables: x_j (open site) and y_ij (assignment). For ~30 MSOAs, total variables ~930. Fits well within the 3,600 limit of the CGA backend.",
+ "schema": {
+  "sets": {
+   "msoa": {
+    "meaning": "Middle Layer Super Output Area in Camden",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "population"
+    }
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "Population of the MSOA",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "people"
+   },
+   "lat": {
+    "meaning": "Latitude of MSOA centroid",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of MSOA centroid",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "distance": {
+    "meaning": "Euclidean distance between MSOA centroids",
+    "index": [
+     "msoa",
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "straight line distance"
+    }
+   },
+   "p": {
+    "meaning": "Number of ambulance stations to open",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3
+   }
+  }
+ },
+ "data_found": [
+  "2021_Middle_layer_Super_Output_Area_Population_Weighted_Cent.geojson",
+  "MSOA_2021.geojson",
+  "Middle_layer_Super_Output_Areas_December_2021_EW_Population_.csv",
+  "TS001_-_Number_of_usual_residents_in_households_and_communal.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "keep_category",
+   "match"
+  ],
+  "notes": "\n1. Filtered population data (TS001) to keep only 'Total: All usual residents' using prep.keep_category.\n2. Filtered for the 'Camden' area by selecting rows where 'GEOGRAPHY_NAME' contains 'Camden'.\n3. Joined the filtered population data (left table) with the population-weighted centroids table (right table) using MSOA codes ('GEOGRAPHY_CODE' and 'CODE'). \n   By placing the filtered Camden population table on the left, we ensure the match rate reflects the availability of centroids for the target area, avoiding warnings about unmatched rows in the larger general centroid dataset.\n4. Calculated the Euclidean distance matrix (in meters) using prep.haversine_matrix.\n5. Set the number of ambulance stations p=3 as per the confirmed specification.\n",
+  "prep_log": "**資料來源**\n\n- 2021 Middle layer Super Output Area (Population Weighted Centroid)（ArcGIS Hub） <https://hub.arcgis.com/datasets/f8ca1904553d4d2e86093e2978de9f30_0>，授權：待確認，取得 2026-10-13T15:50:56.794041+00:00\n- MSOA 2021（ArcGIS Hub） <https://hub.arcgis.com/datasets/63d288c7e2054b77869e95824a9338e1_0>，授權：待確認，取得 2026-10-13T15:50:56.632800+00:00\n- Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — CSV（catalogue data.gov.uk） <https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2>，授權：待確認，取得 2026-10-13T15:40:05.169372+00:00\n- TS001 - Number of usual residents in households and communal establishments — 2021 super output areas - middle layer（Nomis (ONS official statistics)） <https://www.nomisweb.co.uk/datasets/nm_2021_1>，授權：待確認，取得 2026-10-13T15:50:52.014171+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留 C2021_RESTYPE_3_NAME=Total: All usual residents | 14399 | 4800 |  |\n| Filter population to total residents | 4800 | 4800 | Using prep.keep_category |\n| Filter population to Camden area | 4800 | 27 | Filtered by GEOGRAPHY_NAME containing 'Camden' |\n| 合併（GEOGRAPHY_CODE ↔ CODE） | 27 | 27 | 完全對上 9、模糊對上 18、對不上 0 |\n| Join population and centroids | 27 | 27 | Matching on MSOA codes |\n| Compute distance matrix | 27 | 27 | Using prep.haversine_matrix |",
+  "flags": [],
+  "review_required": [
+   "獨立資料核對不一致：parameter 'population' sums to 210,140, but an independent computation from the raw tables expects 69,137. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+  ],
+  "sources": [
+   {
+    "title": "2021 Middle layer Super Output Area (Population Weighted Centroid)",
+    "url": "https://hub.arcgis.com/datasets/f8ca1904553d4d2e86093e2978de9f30_0",
+    "resource_url": "https://services-eu1.arcgis.com/6BsumkdKnml1ntNV/arcgis/rest/services/2021_MSOA_Population_Weighted_Centroid/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+    "publisher": "ArcGIS Hub",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T15:50:56.794041+00:00",
+    "sha256": "2d60b1cff02c70107627a8cc96c5b49fce4d4c7693f47b062ee21fc298978261",
+    "bytes": 182296
+   },
+   {
+    "title": "MSOA 2021",
+    "url": "https://hub.arcgis.com/datasets/63d288c7e2054b77869e95824a9338e1_0",
+    "resource_url": "https://services3.arcgis.com/HFpQvhZ7zqF7O2S8/arcgis/rest/services/MSOA_2021/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+    "publisher": "ArcGIS Hub",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T15:50:56.632800+00:00",
+    "sha256": "07e7cae683f37309c00918fb99330d9d744f47c0fc68ad9ebd992a6548b6579c",
+    "bytes": 2833691
+   },
+   {
+    "title": "Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — CSV",
+    "url": "https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2",
+    "resource_url": "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/cc5e6945d6264d28afde5cf675027466/csv?layers=0",
+    "publisher": "catalogue data.gov.uk",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T15:40:05.169372+00:00",
+    "sha256": "9040b3209abde0e7e552872fcd8cfa837f1ed45df2aabf14063aa8ec95f47390",
+    "bytes": 835922
+   },
+   {
+    "title": "TS001 - Number of usual residents in households and communal establishments — 2021 super output areas - middle layer",
+    "url": "https://www.nomisweb.co.uk/datasets/nm_2021_1",
+    "resource_url": "https://www.nomisweb.co.uk/api/v01/dataset/NM_2021_1.data.csv?date=latest&geography=TYPE152&measures=20100",
+    "publisher": "Nomis (ONS official statistics)",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-13T15:50:52.014171+00:00",
+    "sha256": "5d713ae037168c5c5e7ed5cbeff452d9c5079de2c0601e70bc7ed0b39df6dbce",
+    "bytes": 5243233
+   }
+  ],
+  "n_variables": 756,
+  "n_constraints": 757,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "msoa": 9
+    },
+    "totals": {
+     "population": 69137.0
+    }
+   },
+   "issues": [
+    "parameter 'population' sums to 210,140, but an independent computation from the raw tables expects 69,137. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "8e444211922a8b675528ff8f",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 39,
+    "invalid": 39,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "8e444211922a8b675528ff8f",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 3805410319.1757746,
+  "baseline_objective": 3805410319.1757746
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "msoa",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 27,
+    "mapped": 27,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 11,
+    "coordinates_far_from_own_entity": [
+     "E02000167",
+     "E02000168",
+     "E02000169",
+     "E02000170",
+     "E02000171",
+     "E02000172",
+     "E02000173",
+     "E02000176",
+     "E02000177",
+     "E02000178"
+    ],
+    "identical_coordinates": 5,
+    "population_param": "population",
+    "population_exact_matches": 27,
+    "population_total": 210140.0,
+    "population_truth_total": 210140
+   }
+  },
+  "model": {
+   "ok": false,
+   "checks": {
+    "decision_sets": [
+     [
+      "msoa"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": -0.182,
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "helper variables optimised"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 3,
+    "meets_original_requirements": true,
+    "true_quality": 242750585.89486128,
+    "reference_quality": 188002456.81646383,
+    "gap_vs_reference": 0.2912
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 197664,
+  "solver_calls": 1
+ },
+ "seconds": 6419.4
+}

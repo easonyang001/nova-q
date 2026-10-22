@@ -1,0 +1,242 @@
+{
+ "case": "london_ambulance_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 78.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 161.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 15.4
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1024.6
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 35.6
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.2
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "model_choice": "Standard p-median with explicit assignment variables (N + N^2 variables). For N=25, this yields 650 variables, well within the CGA backend's ~1500 variable quality threshold. Direct mapping preserves exact specification without auxiliary variables. Assignment variables are treated as helpers with empty keys as they are indexed by the same set twice.",
+ "schema": {
+  "sets": {
+   "msoa": {
+    "meaning": "MSOA identifier in Camden",
+    "source": "public"
+   }
+  },
+  "params": {
+   "population": {
+    "meaning": "2021 Census usual resident population",
+    "index": [
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "distance_matrix": {
+    "meaning": "Euclidean distance between MSOA centroids",
+    "index": [
+     "msoa",
+     "msoa"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m"
+   }
+  }
+ },
+ "data_found": [
+  "Middle_layer_Super_Output_Areas_December_2021_EW_Population_.csv",
+  "Middle_layer_Super_Output_Areas_December_2021_EW_Population_.zip",
+  "TS001_-_Number_of_usual_residents_in_households_and_communal.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "in_area",
+   "match",
+   "to_wgs84"
+  ],
+  "notes": "Filtered MSOAs to Camden using prep.in_area with area name 'Camden, London' (format '<area>, <city>' per toolkit requirement). Joined population from TS001 (total usual residents) with MSOA centroids. Computed Euclidean distance matrix from British National Grid coordinates (meters). All Camden MSOAs retained.",
+  "prep_log": "**資料來源**\n\n- Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — CSV（CKAN data.gov.uk） <https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2>，授權：待確認，取得 2026-10-12T19:36:10.194025+00:00\n- Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — Shapefile（CKAN data.gov.uk） <https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2>，授權：待確認，取得 2026-10-12T19:42:54.408172+00:00\n- TS001 - Number of usual residents in households and communal establishments — 2021 super output areas - middle layer（Nomis (ONS official statistics)） <https://www.nomisweb.co.uk/datasets/nm_2021_1>，授權：待確認，取得 2026-10-12T19:36:07.415803+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter population for total usual residents | 7264 | 7264 |  |\n| 座標轉換 EPSG:27700 → WGS84 | 7264 | 7264 |  |\n| 依實際邊界保留區域 ['Camden, London'] | 7264 | 27 | 各區點數 {'Camden, London': 27} |\n| Filter geometry for Camden | 27 | 27 |  |\n| 合併（MSOA21CD ↔ MSOA21CD） | 27 | 27 | 完全對上 27、模糊對上 0、對不上 0 |\n| Join geometry and population | 7291 | 27 |  |",
+  "flags": [],
+  "review_required": [
+   "msoa: 缺少實際來源對應，不能確認為公開真實資料",
+   "population: 尚未聲明 unit，需求為 persons",
+   "population: 缺少實際來源對應，不能確認為公開真實資料",
+   "distance_matrix: 尚未聲明 unit，需求為 m",
+   "distance_matrix: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：distance_matrix, msoa, population"
+  ],
+  "sources": [
+   {
+    "title": "Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — CSV",
+    "url": "https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2",
+    "resource_url": "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/cc5e6945d6264d28afde5cf675027466/csv?layers=0",
+    "publisher": "CKAN data.gov.uk",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T19:36:10.194025+00:00",
+    "sha256": "9040b3209abde0e7e552872fcd8cfa837f1ed45df2aabf14063aa8ec95f47390",
+    "bytes": 835922
+   },
+   {
+    "title": "Middle layer Super Output Areas (December 2021) EW Population Weighted Centroids (V2) — Shapefile",
+    "url": "https://data.gov.uk/dataset/middle-layer-super-output-areas-december-2021-ew-population-weighted-centroids-v2",
+    "resource_url": "https://open-geography-portalx-ons.hub.arcgis.com/api/download/v1/items/cc5e6945d6264d28afde5cf675027466/shapefile?layers=0",
+    "publisher": "CKAN data.gov.uk",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T19:42:54.408172+00:00",
+    "sha256": "f9588664ca654f5da7eccdf51da1e14247175cd5388f7bbe3672800c0d86d7f9",
+    "bytes": 483467
+   },
+   {
+    "title": "TS001 - Number of usual residents in households and communal establishments — 2021 super output areas - middle layer",
+    "url": "https://www.nomisweb.co.uk/datasets/nm_2021_1",
+    "resource_url": "https://www.nomisweb.co.uk/api/v01/dataset/NM_2021_1.data.csv?date=latest&geography=TYPE152&measures=20100",
+    "publisher": "Nomis (ONS official statistics)",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-12T19:36:07.415803+00:00",
+    "sha256": "0419568b2944ff33483b07c3724707d1f9703fc012928515e03164f3380ea54f",
+    "bytes": 7946651
+   }
+  ],
+  "n_variables": 756,
+  "n_constraints": 29,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: TypeError: Boolean array expected for the condition, not object\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/datacheck.py\", line 34, in _expected\n    out = ns[\"expected\"]({k: v.copy() for k, v in tables.items()})\n  File \"<data_checker>\", line 7, in expected\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/frame.py\", line 4365, in __getitem__\n    return self.where(key)\n           ~~~~~~~~~~^^^^^\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/generic.py\", line 10321, in where\n    return self._where(cond, other, inplace=inplace, axis=axis, level=level)\n           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Boolean array expected for the condition, not object\n"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "f63885cd63656d0db7e014a7",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 39,
+    "invalid": 39,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "f63885cd63656d0db7e014a7",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 188302661.609847,
+  "baseline_objective": 188302661.609847
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "msoa",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 27,
+    "mapped": 27,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "population_param": "population",
+    "population_exact_matches": 27,
+    "population_total": 210140.0,
+    "population_truth_total": 210140
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "msoa"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "2/2",
+    "notes": [
+     "helper variables optimised"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 3,
+    "meets_original_requirements": true,
+    "true_quality": 188002456.81646383,
+    "reference_quality": 188002456.81646383,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 287841,
+  "solver_calls": 1
+ },
+ "seconds": 1315.9
+}

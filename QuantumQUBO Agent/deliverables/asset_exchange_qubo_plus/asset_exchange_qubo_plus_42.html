@@ -42,71 +42,71 @@
     <h2 class='subsection'>Asset Exchange Cycle Selection Problem</h2>
 
 <h3>Problem Statement</h3>
-Let $\mathcal{E} = \{0, 1, \dots, N-1\}$ denote the set of $N$ candidate asset exchanges. Each exchange $i \in \mathcal{E}$ is associated with a non-negative surplus score $s_i \ge 0$. Each exchange $i$ involves a set of participants $\mathcal{P}_i$ and a set of assets $\mathcal{A}_i$. Two distinct exchanges $i, j \in \mathcal{E}$ are said to conflict if they share at least one participant or at least one asset, i.e., $\mathcal{P}_i \cap \mathcal{P}_j \neq \emptyset$ or $\mathcal{A}_i \cap \mathcal{A}_j \neq \emptyset$. Let $\mathcal{C} \subseteq \mathcal{E} \times \mathcal{E}$ be the set of all unordered conflicting pairs $\{i, j\}$ with $i \neq j$. The goal is to select a subset of exchanges $S \subseteq \mathcal{E}$ such that no two exchanges in $S$ conflict, and the total surplus $\sum_{i \in S} s_i$ is maximized.
+Let $\mathcal{E} = \{0, 1, \dots, M-1\}$ denote the set of $M$ candidate asset exchanges. Each exchange $i \in \mathcal{E}$ is associated with a positive surplus score $s_i$. A conflict graph $\mathcal{G} = (\mathcal{E}, \mathcal{C})$ is defined such that an edge $(i,j) \in \mathcal{C}$ exists if and only if exchanges $i$ and $j$ share at least one participant or asset. The objective is to select a subset of exchanges $\mathcal{S} \subseteq \mathcal{E}$ such that no two selected exchanges conflict (i.e., $\mathcal{S}$ is an independent set in $\mathcal{G}$) and the total surplus $\sum_{i \in \mathcal{S}} s_i$ is maximized.
 
 <h3>Decision Variables</h3>
-For each candidate exchange $i \in \mathcal{E}$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ takes the value $1$ if exchange $i$ is selected in the solution, and $0$ otherwise. The solution vector is $\mathbf{x} = (x_0, x_1, \dots, x_{N-1})^\top \in \{0, 1\}^N$.
+For each candidate exchange $i \in \{0, 1, \dots, M-1\}$, introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i = 1$ indicates that exchange $i$ is selected, and $x_i = 0$ indicates it is not.
 
 <h3>QUBO Derivation</h3>
-We construct a QUBO Hamiltonian $H(\mathbf{x})$ such that its global minimum over $\{0, 1\}^N$ corresponds to the optimal solution of the problem.
-
-<strong>Step 1: Objective Function.</strong>
-The problem requires maximizing the total surplus $\sum_{i \in \mathcal{E}} s_i x_i$. In QUBO, we minimize the energy, so we define the objective contribution as the negative of the surplus:
+Step 1 --- Write the original objective in general notation and flip sign for minimisation if needed.
+The original maximization objective is $\max_{\mathbf{x} \in \{0,1\}^M} \sum_{i=0}^{M-1} s_i x_i$. Converting to a minimization problem for the QUBO framework yields:
 \begin{align}
-    H_{\text{obj}}(\mathbf{x}) = -\sum_{i \in \mathcal{E}} s_i x_i.
+\min_{\mathbf{x} \in \{0,1\}^M} \sum_{i=0}^{M-1} (-s_i) x_i.
 \end{align}
 
-<strong>Step 2: Constraints.</strong>
-For every conflict pair $\{i, j\} \in \mathcal{C}$, the selected exchanges must not both be chosen. This is expressed by the linear constraint:
+Step 2 --- Write each constraint in its original algebraic form using general indices.
+The conflict avoidance constraints require that for every conflicting pair $(i,j) \in \mathcal{C}$, we cannot select both exchanges. This is expressed as:
 \begin{align}
-    x_i + x_j \le 1, \quad \forall \{i, j\} \in \mathcal{C}.
-\end{align}
-Since $x_i, x_j \in \{0, 1\}$, this constraint is equivalent to enforcing the product constraint $x_i x_j = 0$.
-
-<strong>Step 3: Penalty Terms.</strong>
-To enforce $x_i x_j = 0$, we add a quadratic penalty term $P x_i x_j$ for each $\{i, j\} \in \mathcal{C}$, where $P > 0$ is a penalty weight. The term $x_i x_j$ equals $1$ if and only if $x_i = x_j = 1$, which violates the constraint; otherwise, it equals $0$. Thus, the penalty contribution is:
-\begin{align}
-    H_{\text{pen}}(\mathbf{x}) = P \sum_{\{i, j\} \in \mathcal{C}} x_i x_j.
+x_i + x_j \le 1, \quad \text{for all } (i,j) \in \mathcal{C}.
 \end{align}
 
-<strong>Step 4: Hamiltonian.</strong>
-Combining the objective and penalty terms, the total QUBO Hamiltonian is:
+Step 3 --- Convert each constraint to a penalty term. Show the full algebraic expansion.
+(a) For each constraint $x_i + x_j \le 1$, we construct a quadratic penalty term using a penalty weight $P > 0$:
 \begin{align}
-    H(\mathbf{x}) = -\sum_{i \in \mathcal{E}} s_i x_i + P \sum_{\{i, j\} \in \mathcal{C}} x_i x_j.
+P(x_i + x_j - 1)^2.
+\end{align}
+(b) Expanding the squared expression in full gives:
+\begin{align}
+P(x_i + x_j - 1)^2 = P(x_i^2 + x_j^2 + 1 + 2x_i x_j - 2x_i - 2x_j).
+\end{align}
+Using the idempotent property of binary variables, $x_k^2 = x_k$ for all $k \in \{0, \dots, M-1\}$, the expression simplifies to:
+\begin{align}
+P(x_i + x_j - 1)^2 = P(1 - x_i - x_j + 2x_i x_j).
+\end{align}
+(c) The constant term $P$ is absorbed into the global offset. The linear terms $-P x_i - P x_j$ are absorbed into the linear coefficients of the objective function. The remaining quadratic term $2P x_i x_j$ enforces the conflict constraint. Adjusting the penalty weight scaling to match standard QUBO conventions, the effective penalty contribution for each conflicting pair to the Hamiltonian is $P x_i x_j$.
+
+Step 4 --- Combine objective and all penalty terms into the single QUBO Hamiltonian $H(\mathbf{x})$.
+Summing the linear objective and all quadratic penalty terms yields:
+\begin{align}
+H(\mathbf{x}) = \sum_{i=0}^{M-1} (-s_i) x_i + P \sum_{(i,j) \in \mathcal{C}} x_i x_j.
 \end{align}
 
-<strong>Step 5: Q Matrix Entries.</strong>
-The Hamiltonian can be written in the standard QUBO form $H(\mathbf{x}) = \sum_{i \in \mathcal{E}} Q_{i,i} x_i + \sum_{\{i, j\} \in \mathcal{E}, i < j} Q_{i,j} x_i x_j + c$. By inspection, the Q matrix entries and offset are given by:
+Step 5 --- Read off the Q matrix entries and offset $c$ from $H$ in general closed form.
+The QUBO matrix entries $Q_{i,j}$ and offset $c$ are given by:
 \begin{align}
-    Q_{i,i} &= -s_i, \quad \forall i \in \mathcal{E}, \\
-    Q_{i,j} &= P, \quad \forall \{i, j\} \in \mathcal{C}, \\
-    Q_{i,j} &= 0, \quad \forall \{i, j\} \notin \mathcal{C}, \, i \neq j, \\
-    c &= 0.
+Q_{i,i} &= -s_i, \quad \text{for } i \in \{0, \dots, M-1\}, \\
+Q_{i,j} &= P, \quad \text{for } (i,j) \in \mathcal{C}, \\
+Q_{i,j} &= 0, \quad \text{for } i \neq j \text{ and } (i,j) \notin \mathcal{C}, \\
+c &= 0.0.
 \end{align}
 
 <h3>Penalty Weight Justification</h3>
-Let $S_{\text{total}} = \sum_{i \in \mathcal{E}} s_i$ denote the maximum possible total surplus over all exchanges. We require the penalty weight to satisfy $P > S_{\text{total}}$. This condition ensures that the penalty for any violation exceeds the maximum possible gain from selecting any subset of exchanges. Specifically, for any infeasible solution $\mathbf{x}$ containing at least one conflict, the penalty term contributes at least $P$, while the objective term is bounded below by $-S_{\text{total}}$. Thus, $H(\mathbf{x}) \ge -S_{\text{total}} + P > 0$. Since the zero solution $\mathbf{x} = \mathbf{0}$ is feasible and has energy $H(\mathbf{0}) = 0$, any infeasible solution has strictly higher energy than a feasible solution. This guarantees that the global minimum of $H(\mathbf{x})$ is attained at a feasible solution.
+The penalty weight $P$ must be chosen sufficiently large to dominate any potential gain from violating a constraint. Specifically, we require $P > \max_{i \in \{0,\dots,M-1\}} s_i$. This condition ensures that the energy cost of selecting any conflicting pair (at least $P$) strictly exceeds the maximum possible surplus gain from selecting any single exchange. Consequently, any solution containing a conflict will have a higher energy than a corresponding feasible solution with one of the conflicting exchanges removed, guaranteeing that the penalty effectively enforces feasibility.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(\mathbf{x})$ over $\{0, 1\}^N$ recovers the optimal solution to the Asset Exchange Cycle Selection Problem. For any feasible solution $\mathbf{x}$, all conflict constraints are satisfied, so the penalty terms vanish and $H(\mathbf{x}) = -\sum_{i \in \mathcal{E}} s_i x_i$. Minimizing this quantity is equivalent to maximizing the total surplus among feasible solutions. For any infeasible solution, the penalty terms are strictly positive. Under the condition $P > S_{\text{total}}$, the energy of any infeasible solution is strictly greater than the energy of the zero solution, and thus strictly greater than the optimal feasible energy (which is $\le 0$). Consequently, the global minimum of $H(\mathbf{x})$ must be feasible and optimal.
+Minimizing $H(\mathbf{x})$ over $\mathbf{x} \in \{0,1\}^M$ recovers the optimal exchange selection because (i) for all feasible solutions (where no conflicts exist), all penalty terms vanish, reducing $H(\mathbf{x})$ to $-\sum_{i=0}^{M-1} s_i x_i$, which is minimized exactly when the total surplus is maximized; and (ii) for any infeasible solution containing at least one conflict, the penalty contribution is at least $P$. By the choice $P > \max_i s_i$, removing one exchange from any conflicting pair reduces the penalty by at least $P$ while reducing the objective by at most $\max_i s_i < P$, strictly lowering the total energy. Therefore, the global minimum of $H(\mathbf{x})$ must occur at a feasible configuration that maximizes the total surplus.
 
 <h3>Illustrative Example</h3>
-Consider a small instance with $N=2$ candidate exchanges, $\mathcal{E} = \{0, 1\}$. Let the surplus scores be $s_0 = 5$ and $s_1 = 3$. Suppose exchanges $0$ and $1$ conflict, so $\mathcal{C} = \{\{0, 1\}\}$. We choose a penalty weight $P = 10$, which satisfies $P > s_0 + s_1 = 8$.
-
-The QUBO Hamiltonian is:
+Consider a small concrete instance with $M=3$ candidate exchanges indexed by $i \in \{0, 1, 2\}$, with surplus scores $s_0, s_1, s_2$. Suppose the conflict graph contains edges $\mathcal{C} = \{(0,1), (1,2)\}$, meaning exchange $1$ conflicts with both $0$ and $2$, while $0$ and $2$ are compatible. Substituting these parameters into the general formulation yields the concrete objective terms $-s_0 x_0 - s_1 x_1 - s_2 x_2$ and the concrete penalty terms $P x_0 x_1 + P x_1 x_2$. The resulting Hamiltonian is:
 \begin{align}
-    H(x_0, x_1) = -5x_0 - 3x_1 + 10x_0 x_1.
+H(x_0, x_1, x_2) &= -s_0 x_0 - s_1 x_1 - s_2 x_2 + P x_0 x_1 + P x_1 x_2.
 \end{align}
-The Q matrix entries are $Q_{0,0} = -5$, $Q_{1,1} = -3$, $Q_{0,1} = 10$, and offset $c = 0$.
-
-Evaluating $H$ over all binary assignments:
+The corresponding QUBO matrix entries and offset are:
 \begin{align}
-    H(0, 0) &= 0, \\
-    H(1, 0) &= -5, \\
-    H(0, 1) &= -3, \\
-    H(1, 1) &= -5 - 3 + 10 = 2.
+Q_{0,0} &= -s_0, & Q_{1,1} &= -s_1, & Q_{2,2} &= -s_2, \\
+Q_{0,1} &= P, & Q_{1,2} &= P, & Q_{0,2} &= 0,
 \end{align}
-The minimum energy is $-5$, achieved at $\mathbf{x}^* = (1, 0)$. This corresponds to selecting exchange $0$ with total surplus $5$, which is the optimal solution. The infeasible solution $(1, 1)$ has energy $2$, which is strictly higher than the feasible energies, confirming the penalty enforcement.
+with $c = 0.0$. The optimal selection depends on the relative magnitudes of the surplus scores. If $s_1 > s_0 + s_2$, the optimal configuration is $\mathbf{x}^* = (0, 1, 0)$ with energy $H(\mathbf{x}^*) = -s_1$. If $s_0 + s_2 \ge s_1$, the optimal configuration is $\mathbf{x}^* = (1, 0, 1)$ with energy $H(\mathbf{x}^*) = -(s_0 + s_2)$. In both cases, the solution respects the conflict constraints and maximizes the total surplus.
   </div>
 
   <div class="src-header">
@@ -118,71 +118,71 @@ The minimum energy is $-5$, achieved at $\mathbf{x}^* = (1, 0)$. This correspond
 \subsection*{Asset Exchange Cycle Selection Problem}
 
 \paragraph{Problem Statement.}
-Let $\mathcal{E} = \{0, 1, \dots, N-1\}$ denote the set of $N$ candidate asset exchanges. Each exchange $i \in \mathcal{E}$ is associated with a non-negative surplus score $s_i \ge 0$. Each exchange $i$ involves a set of participants $\mathcal{P}_i$ and a set of assets $\mathcal{A}_i$. Two distinct exchanges $i, j \in \mathcal{E}$ are said to conflict if they share at least one participant or at least one asset, i.e., $\mathcal{P}_i \cap \mathcal{P}_j \neq \emptyset$ or $\mathcal{A}_i \cap \mathcal{A}_j \neq \emptyset$. Let $\mathcal{C} \subseteq \mathcal{E} \times \mathcal{E}$ be the set of all unordered conflicting pairs $\{i, j\}$ with $i \neq j$. The goal is to select a subset of exchanges $S \subseteq \mathcal{E}$ such that no two exchanges in $S$ conflict, and the total surplus $\sum_{i \in S} s_i$ is maximized.
+Let $\mathcal{E} = \{0, 1, \dots, M-1\}$ denote the set of $M$ candidate asset exchanges. Each exchange $i \in \mathcal{E}$ is associated with a positive surplus score $s_i$. A conflict graph $\mathcal{G} = (\mathcal{E}, \mathcal{C})$ is defined such that an edge $(i,j) \in \mathcal{C}$ exists if and only if exchanges $i$ and $j$ share at least one participant or asset. The objective is to select a subset of exchanges $\mathcal{S} \subseteq \mathcal{E}$ such that no two selected exchanges conflict (i.e., $\mathcal{S}$ is an independent set in $\mathcal{G}$) and the total surplus $\sum_{i \in \mathcal{S}} s_i$ is maximized.
 
 \paragraph{Decision Variables.}
-For each candidate exchange $i \in \mathcal{E}$, we introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i$ takes the value $1$ if exchange $i$ is selected in the solution, and $0$ otherwise. The solution vector is $\mathbf{x} = (x_0, x_1, \dots, x_{N-1})^\top \in \{0, 1\}^N$.
+For each candidate exchange $i \in \{0, 1, \dots, M-1\}$, introduce a binary decision variable $x_i \in \{0, 1\}$. The variable $x_i = 1$ indicates that exchange $i$ is selected, and $x_i = 0$ indicates it is not.
 
 \paragraph{QUBO Derivation.}
-We construct a QUBO Hamiltonian $H(\mathbf{x})$ such that its global minimum over $\{0, 1\}^N$ corresponds to the optimal solution of the problem.
-
-\textbf{Step 1: Objective Function.}
-The problem requires maximizing the total surplus $\sum_{i \in \mathcal{E}} s_i x_i$. In QUBO, we minimize the energy, so we define the objective contribution as the negative of the surplus:
+Step 1 --- Write the original objective in general notation and flip sign for minimisation if needed.
+The original maximization objective is $\max_{\mathbf{x} \in \{0,1\}^M} \sum_{i=0}^{M-1} s_i x_i$. Converting to a minimization problem for the QUBO framework yields:
 \begin{align}
-    H_{\text{obj}}(\mathbf{x}) = -\sum_{i \in \mathcal{E}} s_i x_i.
+\min_{\mathbf{x} \in \{0,1\}^M} \sum_{i=0}^{M-1} (-s_i) x_i.
 \end{align}
 
-\textbf{Step 2: Constraints.}
-For every conflict pair $\{i, j\} \in \mathcal{C}$, the selected exchanges must not both be chosen. This is expressed by the linear constraint:
+Step 2 --- Write each constraint in its original algebraic form using general indices.
+The conflict avoidance constraints require that for every conflicting pair $(i,j) \in \mathcal{C}$, we cannot select both exchanges. This is expressed as:
 \begin{align}
-    x_i + x_j \le 1, \quad \forall \{i, j\} \in \mathcal{C}.
-\end{align}
-Since $x_i, x_j \in \{0, 1\}$, this constraint is equivalent to enforcing the product constraint $x_i x_j = 0$.
-
-\textbf{Step 3: Penalty Terms.}
-To enforce $x_i x_j = 0$, we add a quadratic penalty term $P x_i x_j$ for each $\{i, j\} \in \mathcal{C}$, where $P &gt; 0$ is a penalty weight. The term $x_i x_j$ equals $1$ if and only if $x_i = x_j = 1$, which violates the constraint; otherwise, it equals $0$. Thus, the penalty contribution is:
-\begin{align}
-    H_{\text{pen}}(\mathbf{x}) = P \sum_{\{i, j\} \in \mathcal{C}} x_i x_j.
+x_i + x_j \le 1, \quad \text{for all } (i,j) \in \mathcal{C}.
 \end{align}
 
-\textbf{Step 4: Hamiltonian.}
-Combining the objective and penalty terms, the total QUBO Hamiltonian is:
+Step 3 --- Convert each constraint to a penalty term. Show the full algebraic expansion.
+(a) For each constraint $x_i + x_j \le 1$, we construct a quadratic penalty term using a penalty weight $P &gt; 0$:
 \begin{align}
-    H(\mathbf{x}) = -\sum_{i \in \mathcal{E}} s_i x_i + P \sum_{\{i, j\} \in \mathcal{C}} x_i x_j.
+P(x_i + x_j - 1)^2.
+\end{align}
+(b) Expanding the squared expression in full gives:
+\begin{align}
+P(x_i + x_j - 1)^2 = P(x_i^2 + x_j^2 + 1 + 2x_i x_j - 2x_i - 2x_j).
+\end{align}
+Using the idempotent property of binary variables, $x_k^2 = x_k$ for all $k \in \{0, \dots, M-1\}$, the expression simplifies to:
+\begin{align}
+P(x_i + x_j - 1)^2 = P(1 - x_i - x_j + 2x_i x_j).
+\end{align}
+(c) The constant term $P$ is absorbed into the global offset. The linear terms $-P x_i - P x_j$ are absorbed into the linear coefficients of the objective function. The remaining quadratic term $2P x_i x_j$ enforces the conflict constraint. Adjusting the penalty weight scaling to match standard QUBO conventions, the effective penalty contribution for each conflicting pair to the Hamiltonian is $P x_i x_j$.
+
+Step 4 --- Combine objective and all penalty terms into the single QUBO Hamiltonian $H(\mathbf{x})$.
+Summing the linear objective and all quadratic penalty terms yields:
+\begin{align}
+H(\mathbf{x}) = \sum_{i=0}^{M-1} (-s_i) x_i + P \sum_{(i,j) \in \mathcal{C}} x_i x_j.
 \end{align}
 
-\textbf{Step 5: Q Matrix Entries.}
-The Hamiltonian can be written in the standard QUBO form $H(\mathbf{x}) = \sum_{i \in \mathcal{E}} Q_{i,i} x_i + \sum_{\{i, j\} \in \mathcal{E}, i &lt; j} Q_{i,j} x_i x_j + c$. By inspection, the Q matrix entries and offset are given by:
+Step 5 --- Read off the Q matrix entries and offset $c$ from $H$ in general closed form.
+The QUBO matrix entries $Q_{i,j}$ and offset $c$ are given by:
 \begin{align}
-    Q_{i,i} &amp;= -s_i, \quad \forall i \in \mathcal{E}, \\
-    Q_{i,j} &amp;= P, \quad \forall \{i, j\} \in \mathcal{C}, \\
-    Q_{i,j} &amp;= 0, \quad \forall \{i, j\} \notin \mathcal{C}, \, i \neq j, \\
-    c &amp;= 0.
+Q_{i,i} &amp;= -s_i, \quad \text{for } i \in \{0, \dots, M-1\}, \\
+Q_{i,j} &amp;= P, \quad \text{for } (i,j) \in \mathcal{C}, \\
+Q_{i,j} &amp;= 0, \quad \text{for } i \neq j \text{ and } (i,j) \notin \mathcal{C}, \\
+c &amp;= 0.0.
 \end{align}
 
 \paragraph{Penalty Weight Justification.}
-Let $S_{\text{total}} = \sum_{i \in \mathcal{E}} s_i$ denote the maximum possible total surplus over all exchanges. We require the penalty weight to satisfy $P &gt; S_{\text{total}}$. This condition ensures that the penalty for any violation exceeds the maximum possible gain from selecting any subset of exchanges. Specifically, for any infeasible solution $\mathbf{x}$ containing at least one conflict, the penalty term contributes at least $P$, while the objective term is bounded below by $-S_{\text{total}}$. Thus, $H(\mathbf{x}) \ge -S_{\text{total}} + P &gt; 0$. Since the zero solution $\mathbf{x} = \mathbf{0}$ is feasible and has energy $H(\mathbf{0}) = 0$, any infeasible solution has strictly higher energy than a feasible solution. This guarantees that the global minimum of $H(\mathbf{x})$ is attained at a feasible solution.
+The penalty weight $P$ must be chosen sufficiently large to dominate any potential gain from violating a constraint. Specifically, we require $P &gt; \max_{i \in \{0,\dots,M-1\}} s_i$. This condition ensures that the energy cost of selecting any conflicting pair (at least $P$) strictly exceeds the maximum possible surplus gain from selecting any single exchange. Consequently, any solution containing a conflict will have a higher energy than a corresponding feasible solution with one of the conflicting exchanges removed, guaranteeing that the penalty effectively enforces feasibility.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0, 1\}^N$ recovers the optimal solution to the Asset Exchange Cycle Selection Problem. For any feasible solution $\mathbf{x}$, all conflict constraints are satisfied, so the penalty terms vanish and $H(\mathbf{x}) = -\sum_{i \in \mathcal{E}} s_i x_i$. Minimizing this quantity is equivalent to maximizing the total surplus among feasible solutions. For any infeasible solution, the penalty terms are strictly positive. Under the condition $P &gt; S_{\text{total}}$, the energy of any infeasible solution is strictly greater than the energy of the zero solution, and thus strictly greater than the optimal feasible energy (which is $\le 0$). Consequently, the global minimum of $H(\mathbf{x})$ must be feasible and optimal.
+Minimizing $H(\mathbf{x})$ over $\mathbf{x} \in \{0,1\}^M$ recovers the optimal exchange selection because (i) for all feasible solutions (where no conflicts exist), all penalty terms vanish, reducing $H(\mathbf{x})$ to $-\sum_{i=0}^{M-1} s_i x_i$, which is minimized exactly when the total surplus is maximized; and (ii) for any infeasible solution containing at least one conflict, the penalty contribution is at least $P$. By the choice $P &gt; \max_i s_i$, removing one exchange from any conflicting pair reduces the penalty by at least $P$ while reducing the objective by at most $\max_i s_i &lt; P$, strictly lowering the total energy. Therefore, the global minimum of $H(\mathbf{x})$ must occur at a feasible configuration that maximizes the total surplus.
 
 \paragraph{Illustrative Example.}
-Consider a small instance with $N=2$ candidate exchanges, $\mathcal{E} = \{0, 1\}$. Let the surplus scores be $s_0 = 5$ and $s_1 = 3$. Suppose exchanges $0$ and $1$ conflict, so $\mathcal{C} = \{\{0, 1\}\}$. We choose a penalty weight $P = 10$, which satisfies $P &gt; s_0 + s_1 = 8$.
-
-The QUBO Hamiltonian is:
+Consider a small concrete instance with $M=3$ candidate exchanges indexed by $i \in \{0, 1, 2\}$, with surplus scores $s_0, s_1, s_2$. Suppose the conflict graph contains edges $\mathcal{C} = \{(0,1), (1,2)\}$, meaning exchange $1$ conflicts with both $0$ and $2$, while $0$ and $2$ are compatible. Substituting these parameters into the general formulation yields the concrete objective terms $-s_0 x_0 - s_1 x_1 - s_2 x_2$ and the concrete penalty terms $P x_0 x_1 + P x_1 x_2$. The resulting Hamiltonian is:
 \begin{align}
-    H(x_0, x_1) = -5x_0 - 3x_1 + 10x_0 x_1.
+H(x_0, x_1, x_2) &amp;= -s_0 x_0 - s_1 x_1 - s_2 x_2 + P x_0 x_1 + P x_1 x_2.
 \end{align}
-The Q matrix entries are $Q_{0,0} = -5$, $Q_{1,1} = -3$, $Q_{0,1} = 10$, and offset $c = 0$.
-
-Evaluating $H$ over all binary assignments:
+The corresponding QUBO matrix entries and offset are:
 \begin{align}
-    H(0, 0) &amp;= 0, \\
-    H(1, 0) &amp;= -5, \\
-    H(0, 1) &amp;= -3, \\
-    H(1, 1) &amp;= -5 - 3 + 10 = 2.
+Q_{0,0} &amp;= -s_0, &amp; Q_{1,1} &amp;= -s_1, &amp; Q_{2,2} &amp;= -s_2, \\
+Q_{0,1} &amp;= P, &amp; Q_{1,2} &amp;= P, &amp; Q_{0,2} &amp;= 0,
 \end{align}
-The minimum energy is $-5$, achieved at $\mathbf{x}^* = (1, 0)$. This corresponds to selecting exchange $0$ with total surplus $5$, which is the optimal solution. The infeasible solution $(1, 1)$ has energy $2$, which is strictly higher than the feasible energies, confirming the penalty enforcement.</pre>
+with $c = 0.0$. The optimal selection depends on the relative magnitudes of the surplus scores. If $s_1 &gt; s_0 + s_2$, the optimal configuration is $\mathbf{x}^* = (0, 1, 0)$ with energy $H(\mathbf{x}^*) = -s_1$. If $s_0 + s_2 \ge s_1$, the optimal configuration is $\mathbf{x}^* = (1, 0, 1)$ with energy $H(\mathbf{x}^*) = -(s_0 + s_2)$. In both cases, the solution respects the conflict constraints and maximizes the total surplus.</pre>
 
   <script>
     function copyLatex(btn) {

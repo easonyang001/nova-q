@@ -1,0 +1,426 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 136.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 212.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 29.7
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1614.3
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 257.3
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [
+  {
+   "from": "data",
+   "to": "model",
+   "evidence": "- set 'lor_centers' must be a non-empty list of ids\n- REQUIRED TOOL NOT USED: table '*', column '*': several tables to combine (3 tables; join them with the toolkit so unmatched rows are reported) -> must call prep.match or prep.nearest",
+   "ok": true
+  },
+  {
+   "workflow": "資料修復失敗：預處理失敗：TokenBudgetExceeded: Token budget of 500000 exceeded (used 515047)"
+  },
+  {
+   "workflow": "修正失敗：Token budget of 500000 exceeded (used 515047)"
+  }
+ ],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Exact MCLP formulation with binary x (site selection) and y (coverage indicator) variables. Fits backend: ~100 x + ~500 y = 600 variables, linear constraints only. Dense QUBO backend handles this easily.",
+ "schema": {
+  "sets": {
+   "lor_centers": {
+    "meaning": "LOR planning area centers in Friedrichshain-Kreuzberg",
+    "source": "public"
+   },
+   "blocks": {
+    "meaning": "Blocks currently NOT covered by existing playgrounds (within 250m)",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lor_lat": {
+    "meaning": "Latitude of LOR centers",
+    "index": [
+     "lor_centers"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lor_lon": {
+    "meaning": "Longitude of LOR centers",
+    "index": [
+     "lor_centers"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_lat": {
+    "meaning": "Latitude of block centroids",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "block_lon": {
+    "meaning": "Longitude of block centroids",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "block_pop": {
+    "meaning": "Resident population of each block (2019)",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "d_ij": {
+    "meaning": "Coverage indicator: 1 if block i is within 250m of LOR center j",
+    "index": [
+     "blocks",
+     "lor_centers"
+    ],
+    "type": "number",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "code",
+     "from": [
+      "block_lat",
+      "block_lon",
+      "lor_lat",
+      "lor_lon"
+     ],
+     "how": "1 if dist <= radius else 0"
+    }
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 3
+   },
+   "radius": {
+    "meaning": "Coverage radius in meters",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "value": 250
+   }
+  }
+ },
+ "data_found": [
+  "Einwohnerdichte_2019_Umweltatlas_Einwohnerdichte_2019_WFS_la.geojson",
+  "Einwohnerdichte_2019_Umweltatlas_Einwohnerentwicklung_zwisch.geojson",
+  "Grünanlagenbestand_Berlin_einschließlich_der_öffentlichen_Sp.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "match"
+  ],
+  "notes": "Joined population tables via prep.match on schluessel. Filtered blocks and playgrounds to Friedrichshain-Kreuzberg (district code '02' or bezirkname). LOR centers derived by grouping blocks by schluessel prefix (first 6 chars = LOR ID) and computing centroids. is_uncovered computed via haversine distance to existing playgrounds. d_ij computed via haversine distance to LOR centers. k=3, radius=250m.",
+  "prep_log": "**資料來源**\n\n- Einwohnerdichte 2019 (Umweltatlas) — Einwohnerdichte 2019 (WFS layer)（CKAN govdata.de） <https://govdata.de/dataset/einwohnerdichte-2019-umweltatlas>，授權：待確認，取得 2026-10-11T19:21:56.627706+00:00\n- Einwohnerdichte 2019 (Umweltatlas) — Einwohnerentwicklung zwischen 2018 und 2019 (WFS layer)（CKAN govdata.de） <https://govdata.de/dataset/einwohnerdichte-2019-umweltatlas>，授權：待確認，取得 2026-10-11T19:22:03.268590+00:00\n- Grünanlagenbestand Berlin (einschließlich der öffentlichen Spielplätze) — Spielplätze (WFS layer)（CKAN govdata.de） <https://govdata.de/dataset/grunanlagenbestand-berlin-einschliesslich-der-offentlichen-spielplatze>，授權：待確認，取得 2026-10-11T19:22:06.754552+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 合併（schluessel ↔ schluessel） | 15100 | 15100 | 完全對上 15100、模糊對上 0、對不上 0 |\n| Filter blocks to Friedrichshain-Kreuzberg and clean | 15100 | 209 |  |\n| Derive LOR centers from block centroids | 209 | 5 |  |\n| Filter existing playgrounds to Friedrichshain-Kreuzberg | 1886 | 166 |  |\n| Compute is_uncovered based on 250m radius | 209 | 209 |  |\n| Compute d_ij sparse coverage matrix | 1045 | 24 |  |",
+  "flags": [],
+  "review_required": [
+   "lor_centers: 缺少實際來源對應，不能確認為公開真實資料",
+   "blocks: 缺少實際來源對應，不能確認為公開真實資料",
+   "existing_playgrounds: 缺少實際來源對應，不能確認為公開真實資料",
+   "lor_lat: 尚未聲明 unit，需求為 deg_lat",
+   "lor_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lor_lon: 尚未聲明 unit，需求為 deg_lon",
+   "lor_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_lat: 尚未聲明 unit，需求為 deg_lat",
+   "block_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_lon: 尚未聲明 unit，需求為 deg_lon",
+   "block_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "block_pop: 尚未聲明 unit，需求為 persons",
+   "block_pop: 缺少實際來源對應，不能確認為公開真實資料",
+   "ex_lat: 尚未聲明 unit，需求為 deg_lat",
+   "ex_lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "ex_lon: 尚未聲明 unit，需求為 deg_lon",
+   "ex_lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "is_uncovered: 缺少實際來源對應，不能確認為公開真實資料",
+   "d_ij: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：block_lat, block_lon, block_pop, blocks, d_ij, ex_lat, ex_lon, existing_playgrounds, is_uncovered, k, lor_centers, lor_lat, lor_lon, radius",
+   "獨立資料核對不一致：set 'blocks' has 209 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 15100. Check which rows you keep and whether duplicates of the same place are merged",
+   "獨立資料核對不一致：parameter 'block_pop' sums to 101,086, but an independent computation from the raw tables expects 3.76863e+06. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+  ],
+  "sources": [
+   {
+    "title": "Einwohnerdichte 2019 (Umweltatlas) — Einwohnerdichte 2019 (WFS layer)",
+    "url": "https://govdata.de/dataset/einwohnerdichte-2019-umweltatlas",
+    "resource_url": "https://gdi.berlin.de/services/wfs/ua_einwohnerdichte_2019?service=WFS&version=2.0.0&request=GetFeature&typeNames=ua_einwohnerdichte_2019%3Aua_einwohnerdichte_2019&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "CKAN govdata.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-11T19:21:56.627706+00:00",
+    "sha256": "ed8eff822ba00c9c2fa9133324438cab18f5af9410109157d41a9b0cbf0f67bb",
+    "bytes": 11354889
+   },
+   {
+    "title": "Einwohnerdichte 2019 (Umweltatlas) — Einwohnerentwicklung zwischen 2018 und 2019 (WFS layer)",
+    "url": "https://govdata.de/dataset/einwohnerdichte-2019-umweltatlas",
+    "resource_url": "https://gdi.berlin.de/services/wfs/ua_einwohnerdichte_2019?service=WFS&version=2.0.0&request=GetFeature&typeNames=ua_einwohnerdichte_2019%3Aua_einwohnerdichte_2019_entw&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "CKAN govdata.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-11T19:22:03.268590+00:00",
+    "sha256": "e5a0b659fc7120963aaec020d243cfefd3b8530a208be5470c631ffbf562ce74",
+    "bytes": 12421375
+   },
+   {
+    "title": "Grünanlagenbestand Berlin (einschließlich der öffentlichen Spielplätze) — Spielplätze (WFS layer)",
+    "url": "https://govdata.de/dataset/grunanlagenbestand-berlin-einschliesslich-der-offentlichen-spielplatze",
+    "resource_url": "https://gdi.berlin.de/services/wfs/gruenanlagen?service=WFS&version=2.0.0&request=GetFeature&typeNames=gruenanlagen%3Aspielplaetze&outputFormat=application/json&srsName=EPSG:4326",
+    "publisher": "CKAN govdata.de",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-11T19:22:06.754552+00:00",
+    "sha256": "7101577078686c5bc9c087ceb3618e02dcd75c46a1a39cc0d4f2e4fa675343c8",
+    "bytes": 4540411
+   }
+  ],
+  "n_variables": 211,
+  "n_constraints": 207,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "blocks": 15100
+    },
+    "totals": {
+     "block_pop": 3768633.0
+    }
+   },
+   "issues": [
+    "set 'blocks' has 209 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 15100. Check which rows you keep and whether duplicates of the same place are merged",
+    "parameter 'block_pop' sums to 101,086, but an independent computation from the raw tables expects 3.76863e+06. Rows may be missing, duplicated, from the wrong period or include totals of a higher level"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "issues",
+   "version": "4c0fdeb0324f86cc6b8bbc80",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation 0.46 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 33,
+    "invalid": 33,
+    "not_comparable": 0,
+    "rank_agreement": 0.46
+   }
+  },
+  {
+   "status": "issues",
+   "version": "4c0fdeb0324f86cc6b8bbc80",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation 0.46 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 33,
+    "invalid": 33,
+    "not_comparable": 0,
+    "rank_agreement": 0.46
+   }
+  },
+  {
+   "status": "issues",
+   "version": "4c0fdeb0324f86cc6b8bbc80",
+   "issues": [
+    "the model's objective ranks valid solutions differently from the confirmed objective (rank correlation 0.46 on 20 random valid solutions): check the objective terms, their signs and whether items are counted once"
+   ],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 33,
+    "invalid": 33,
+    "not_comparable": 0,
+    "rank_agreement": 0.46
+   }
+  },
+  {
+   "status": "solution_issues",
+   "version": "4c0fdeb0324f86cc6b8bbc80",
+   "issues": [
+    "the delivered solution breaks the confirmed requirements: Selected 19 sites, required exactly 3; Decision 3 missing 'lor_centers' key; Decision 4 missing 'lor_centers' key; Decision 5 missing 'lor_centers' key; Decision 6 missing 'lor_centers' key; Decision 7 missing 'lor_centers' key; Decision 8 missing 'lor_centers' key; Decision 9 missing 'lor_centers' key; Decision 10 missing 'lor_centers' key; Decision 11 missing 'lor_centers' key; Decision 12 missing 'lor_centers' key; Decision 13 missing 'lor_centers' key; Decision 14 missing 'lor_centers' key; Decision 15 missing 'lor_centers' key; Decision 16 missing 'lor_centers' key; Decision 17 missing 'l"
+   ],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "diagnosis:model",
+  "delivery:no_solution",
+  "recovery:started",
+  "recovery:needs_input",
+  "requirement_check:issues",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_issues",
+  "diagnosis:model",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "已有可行方案，達到簡單基準的品質；獨立需求檢查與模型不一致，需人工確認",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 11984.0,
+  "baseline_objective": 11984.0
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "existing_playgrounds",
+    "mapping": "coordinates within 200 m",
+    "entity_set_declared": true,
+    "instance_entities": 166,
+    "mapped": 38,
+    "duplicates": [
+     "Boxhagener Platz",
+     "Lausitzer Platz",
+     "Oranienplatz",
+     "Pettenkofer Straße",
+     "Reichenberger Straße Ost",
+     "Samariterviertel",
+     "Traveplatz",
+     "Urbanstraße",
+     "Wassertorplatz",
+     "Wismarplatz",
+     "Wrangelkiez"
+    ],
+    "missing_real_entities": 14,
+    "missing_examples": [
+     "Askanischer Platz",
+     "Moritzplatz",
+     "Prinzenstraße",
+     "Gleisdreieck",
+     "Rathaus Yorckstraße",
+     "Viktoriapark",
+     "Reichenberger Straße West",
+     "Barnimkiez",
+     "Friedenstraße",
+     "Richard-Sorge-Viertel"
+    ],
+    "unmapped_ids": [
+     "00008100:00146b68",
+     "00008100:00146b69",
+     "00008100:00146b6d",
+     "00008100:00146b70",
+     "00008100:00146b72",
+     "00008100:00146b75",
+     "00008100:00146b7e",
+     "00008100:00146b7f",
+     "00008100:00146b80",
+     "00008100:00146b81"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "resident_totals": {
+     "lor_lat": 263,
+     "lor_lon": 67,
+     "block_lat": 10977,
+     "block_lon": 2790,
+     "block_pop": 101086,
+     "ex_lat": 8716,
+     "ex_lon": 2229,
+     "is_uncovered": 206
+    },
+    "resident_truth": {
+     "all": 290380,
+     "not_near_a_playground": 40673
+    }
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "blocks"
+     ],
+     [
+      "lor_centers"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 19,
+    "error": "ValueError: decision variables do not name the real entities"
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 515047,
+  "solver_calls": 1
+ },
+ "seconds": 2251.0
+}

@@ -4,6 +4,7 @@ models:
   judge_agent: qwen/qwen3.6-35b-a3b
   coder_agent: qwen/qwen3-coder-next
   debugger_agent: qwen/qwen3.6-35b-a3b
+  checker_agent: qwen/qwen3.6-35b-a3b
 
 temperatures:
   planner_agent: 0.0
@@ -11,13 +12,18 @@ temperatures:
   judge_agent: 0.0
   coder_agent: 0.0
   debugger_agent: 0.0
+  checker_agent: 0.0
 
 retries:
   restructure: 2
   formulate: 2
   code: 3
+  checker: 3
 
 verification:
+  # problem_level = judge QUBO ground states by decoding + an independent checker (2026-10-05);
+  # bitstring = the original comparison with LLM-derived optimal bitstrings
+  mode: problem_level
   n_test_instances: 6
   max_n_vars: 12
   pass_threshold: 1.0

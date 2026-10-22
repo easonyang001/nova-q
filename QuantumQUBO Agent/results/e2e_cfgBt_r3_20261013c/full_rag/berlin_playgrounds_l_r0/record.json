@@ -1,0 +1,37 @@
+{
+ "case": "berlin_playgrounds_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 457.8
+  },
+  "model": {
+   "ok": false,
+   "seconds": 2009.8,
+   "error": "ValueError: model validation failed: the model is solvable by sorting: the objective is purely linear and the only constraints are 'choose K'. Choices do not interact, so no annealer is needed and interactions in the specification (overlap, distance, nearest facility ...) are lost. Re-model so the objective keeps those interactions; if the specification truly has none, start MODEL_CHOICE with 'separable:' and give the reason"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once"
+ ],
+ "cost": {
+  "llm_tokens": 83485,
+  "solver_calls": null
+ },
+ "seconds": 2467.6
+}

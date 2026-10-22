@@ -42,72 +42,80 @@
     <h2 class='subsection'>Single-Track Railway Dispatching Problem</h2>
 
 <h3>Problem Statement</h3>
-Given a set of $N$ trains $\mathcal{T} = \{0, \dots, N-1\}$ that must traverse a shared single-track segment, each train $t \in \mathcal{T}$ is associated with a set of $M_t$ feasible timing options $\mathcal{O}_t = \{0, \dots, M_t-1\}$. Each option $o \in \mathcal{O}_t$ incurs a non-negative delay cost $c_{t,o}$. Certain pairs of options from different trains are mutually exclusive due to track occupancy conflicts, denoted by the conflict set $\mathcal{C} \subseteq \mathcal{T} \times \mathcal{O} \times \mathcal{T} \times \mathcal{O}$. The task is to select exactly one timing option for every train such that no two selected options conflict, thereby minimizing the total dispatch cost.
+Given a set of $N$ trains that must traverse a shared single-track segment, each train $i \in \{0, \dots, N-1\}$ is offered a set of $K_i$ mutually exclusive timing options. Each option $(i,j)$, where $j \in \{0, \dots, K_i-1\}$, incurs a known delay cost $c_{i,j}$. Certain pairs of options $((i,j), (k,l))$ are incompatible due to track occupancy conflicts, denoted by the set $\mathcal{C}$. The task is to select exactly one timing option for every train such that no two selected options conflict, while minimizing the total dispatch delay cost.
 
 <h3>Decision Variables</h3>
-For each train $t \in \mathcal{T}$ and each feasible option $o \in \mathcal{O}_t$, introduce a binary decision variable $x_{t,o} \in \{0,1\}$. The variable $x_{t,o}$ equals $1$ if train $t$ is assigned timing option $o$, and $0$ otherwise. The full decision vector is $\mathbf{x} = (x_{t,o})_{t \in \mathcal{T}, o \in \mathcal{O}_t} \in \{0,1\}^n$, where $n = \sum_{t \in \mathcal{T}} M_t$.
+We introduce binary decision variables $x_{i,j} \in \{0,1\}$ for each train $i \in \{0, \dots, N-1\}$ and each option $j \in \{0, \dots, K_i-1\}$. The variable $x_{i,j}$ equals $1$ if train $i$ selects option $j$, and $0$ otherwise. The full decision vector is $\mathbf{x} = \{x_{i,j}\}_{i,j}$.
 
 <h3>QUBO Derivation</h3>
-<strong>Step 1 --- Original Objective.</strong>
-The problem requires minimizing the sum of selected delay costs plus a large penalty $P > 0$ for each selected conflicting pair:
+<strong>Step 1.</strong> The original optimization problem is a minimization of the total delay cost plus a penalty for selecting conflicting options:
 \begin{align}
-\min_{\mathbf{x}} \; f(\mathbf{x}) &= \sum_{t \in \mathcal{T}} \sum_{o \in \mathcal{O}_t} c_{t,o} x_{t,o} + P \sum_{((t_1,o_1),(t_2,o_2)) \in \mathcal{C}} x_{t_1,o_1} x_{t_2,o_2}.
+\min_{\mathbf{x}} \quad H_{\text{obj}}(\mathbf{x}) = \sum_{i=0}^{N-1} \sum_{j=0}^{K_i-1} c_{i,j} x_{i,j} + M \sum_{((i,j),(k,l)) \in \mathcal{C}} x_{i,j} x_{k,l},
+\end{align}
+where $M > 0$ is a sufficiently large penalty constant. Since QUBO solvers minimize a quadratic form, we directly construct the Hamiltonian $H(\mathbf{x})$ to match this objective.
+
+<strong>Step 2.</strong> The problem is subject to two types of constraints. First, each train must select exactly one option:
+\begin{align}
+\sum_{j=0}^{K_i-1} x_{i,j} = 1, \quad \forall i \in \{0, \dots, N-1\}.
+\end{align}
+Second, no two conflicting options may be selected simultaneously:
+\begin{align}
+x_{i,j} + x_{k,l} \le 1, \quad \forall ((i,j),(k,l)) \in \mathcal{C}.
 \end{align}
 
-<strong>Step 2 --- Constraints.</strong>
-Each train must be assigned exactly one timing option:
+<strong>Step 3.</strong> We convert the equality constraints into quadratic penalty terms using a weight $\lambda > 0$. The penalty for train $i$ is:
 \begin{align}
-\sum_{o \in \mathcal{O}_t} x_{t,o} = 1, \quad \forall t \in \mathcal{T}.
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{K_i-1} x_{i,j} - 1 \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{K_i-1} x_{i,j}^2 - 2\sum_{j=0}^{K_i-1} x_{i,j} + 1 + \sum_{j=0}^{K_i-1} \sum_{\substack{l=0 \\ l \neq j}}^{K_i-1} x_{i,j} x_{i,l} \right).
+\end{align}
+Using the idempotent property of binary variables, $x_{i,j}^2 = x_{i,j}$, and noting that the double sum counts each distinct pair twice, we obtain:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{K_i-1} x_{i,j} - 2\sum_{j=0}^{K_i-1} x_{i,j} + 1 + 2\sum_{0 \le j < l \le K_i-1} x_{i,j} x_{i,l} \right).
+\end{align}
+Collecting linear terms gives the general penalty contribution for train $i$:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( -\sum_{j=0}^{K_i-1} x_{i,j} + 2\sum_{0 \le j < l \le K_i-1} x_{i,j} x_{i,l} + 1 \right).
+\end{align}
+The conflict constraints are already enforced by the quadratic terms in $H_{\text{obj}}(\mathbf{x})$ with coefficient $M$, so no additional penalty expansion is required for them.
+
+<strong>Step 4.</strong> Combining the objective and all equality penalties, the total QUBO Hamiltonian is:
+\begin{align}
+H(\mathbf{x}) = H_{\text{obj}}(\mathbf{x}) + \sum_{i=0}^{N-1} P_i(\mathbf{x}).
 \end{align}
 
-<strong>Step 3 --- Penalty Term Expansion.</strong>
-We enforce the constraint by adding a quadratic penalty with weight $\lambda > 0$:
+<strong>Step 5.</strong> Reading off the coefficients from the expanded Hamiltonian, the QUBO matrix entries $Q_{(i,j),(k,l)}$ and constant offset $c$ are given in closed form by:
 \begin{align}
-\mathcal{P}(\mathbf{x}) &= \lambda \sum_{t \in \mathcal{T}} \left( \sum_{o \in \mathcal{O}_t} x_{t,o} - 1 \right)^2.
+Q_{(i,j),(i,j)} &= c_{i,j} - \lambda, \\
+Q_{(i,j),(k,l)} &= M \quad \text{if } ((i,j),(k,l)) \in \mathcal{C}, \\
+Q_{(i,j),(i,l)} &= 2\lambda \quad \text{for } 0 \le j < l \le K_i-1, \\
+Q_{(i,j),(k,l)} &= 0 \quad \text{otherwise},
 \end{align}
-Expanding the square and applying the idempotent property $x_{t,o}^2 = x_{t,o}$ for binary variables yields:
-\begin{align}
-\left( \sum_{o \in \mathcal{O}_t} x_{t,o} - 1 \right)^2 &= \sum_{o \in \mathcal{O}_t} x_{t,o}^2 + \sum_{o \in \mathcal{O}_t} \sum_{\substack{o' \in \mathcal{O}_t \\ o' \neq o}} x_{t,o} x_{t,o'} - 2 \sum_{o \in \mathcal{O}_t} x_{t,o} + 1 \nonumber \\
-&= \sum_{o \in \mathcal{O}_t} x_{t,o} + \sum_{o \neq o'} x_{t,o} x_{t,o'} - 2 \sum_{o \in \mathcal{O}_t} x_{t,o} + 1 \nonumber \\
-&= -\sum_{o \in \mathcal{O}_t} x_{t,o} + \sum_{o \neq o'} x_{t,o} x_{t,o'} + 1.
-\end{align}
-Summing over all trains, the total penalty contribution to the Hamiltonian is:
-\begin{align}
-\mathcal{P}(\mathbf{x}) = \lambda \sum_{t \in \mathcal{T}} \left( -\sum_{o \in \mathcal{O}_t} x_{t,o} + \sum_{o \neq o'} x_{t,o} x_{t,o'} + 1 \right).
-\end{align}
-
-<strong>Step 4 --- Combined QUBO Hamiltonian.</strong>
-Adding the original objective and the penalty term gives the unconstrained QUBO Hamiltonian $H(\mathbf{x})$:
-\begin{align}
-H(\mathbf{x}) &= \sum_{t \in \mathcal{T}} \sum_{o \in \mathcal{O}_t} c_{t,o} x_{t,o} + P \sum_{((t_1,o_1),(t_2,o_2)) \in \mathcal{C}} x_{t_1,o_1} x_{t_2,o_2} \nonumber \\
-&\quad + \lambda \sum_{t \in \mathcal{T}} \left( -\sum_{o \in \mathcal{O}_t} x_{t,o} + \sum_{o \neq o'} x_{t,o} x_{t,o'} + 1 \right).
-\end{align}
-
-<strong>Step 5 --- Q Matrix Entries and Offset.</strong>
-Collecting linear and quadratic terms, the Hamiltonian takes the standard form $H(\mathbf{x}) = \sum_{i \le j} Q_{i,j} x_i x_j + c$. Mapping each pair $(t,o)$ to a unique index $i \in \{0,\dots,n-1\}$, the matrix entries and constant offset are:
-\begin{align}
-Q_{(t,o),(t',o')} &= \begin{cases} 
-c_{t,o} - \lambda & \text{if } t=t' \text{ and } o=o', \\
-P/2 & \text{if } ((t,o),(t',o')) \in \mathcal{C} \text{ and } (t,o) \neq (t',o'), \\
-\lambda & \text{if } t=t' \text{ and } o \neq o', \\
-0 & \text{otherwise},
-\end{cases} \\
-c &= \lambda N.
-\end{align}
+with the constant offset $c = N\lambda$. The QUBO is then expressed as $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$.
 
 <h3>Penalty Weight Justification</h3>
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the exactly-one constraint is strictly more costly than the maximum possible reduction in the original objective. The maximum possible decrease in delay cost from selecting a suboptimal option is bounded by $\max_{t,o} c_{t,o}$. Therefore, selecting $\lambda > \max_{t,o} c_{t,o}$ guarantees that any infeasible assignment (where $\sum_{o} x_{t,o} \neq 1$ for some $t$) incurs a penalty of at least $\lambda$, which dominates any feasible objective value.
+The equality penalty weight $\lambda$ must be chosen large enough to dominate any potential reduction in delay costs that could be achieved by violating the exactly-one constraint. Specifically, if a train selects zero or multiple options, the penalty incurred is at least $\lambda$. Therefore, selecting $\lambda > \max_{i,j} c_{i,j}$ guarantees that any infeasible assignment has a strictly higher energy than the best feasible assignment. The conflict penalty $M$ must similarly satisfy $M > \sum_{i,j} c_{i,j}$ to ensure that violating a track conflict is never cost-effective.
 
 <h3>Correctness Argument</h3>
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal dispatch schedule because (i) for any feasible assignment, all constraint terms vanish, reducing $H(\mathbf{x})$ to the original delay cost plus conflict penalties; (ii) for any infeasible assignment, at least one train is assigned zero or multiple options, incurring a penalty of at least $\lambda$. Since $\lambda$ exceeds the maximum possible objective value of any feasible solution, every infeasible point has strictly higher energy than the best feasible point. Consequently, the global minimum of $H(\mathbf{x})$ must be feasible and, by construction, minimizes the original objective function.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal dispatch schedule because the penalty terms are non-negative and vanish exactly on the feasible set. Any infeasible assignment violates at least one constraint, incurring a penalty strictly greater than the maximum possible objective value of any feasible assignment. Consequently, the global minimum of $H(\mathbf{x})$ must lie within the feasible region. Within this region, $H(\mathbf{x})$ reduces exactly to the original delay cost objective. Thus, the unconstrained QUBO minimum corresponds precisely to the constrained optimization optimum.
 
 <h3>Illustrative Example</h3>
-Consider a concrete instance with $N=2$ trains and $M_0=M_1=2$ options per train. The variables are mapped to indices $0 \to (0,0)$, $1 \to (0,1)$, $2 \to (1,0)$, $3 \to (1,1)$. The conflict set is $\mathcal{C} = \{((0,0),(1,0)), ((0,1),(1,1))\}$. Using the general formulas above, the concrete objective terms are $c_{0,0}x_0 + c_{0,1}x_1 + c_{1,0}x_2 + c_{1,1}x_3 + P x_0 x_2 + P x_1 x_3$. The penalty terms for the exactly-one constraints expand to $-\lambda x_0 - \lambda x_1 + 2\lambda x_0 x_1 - \lambda x_2 - \lambda x_3 + 2\lambda x_2 x_3$, with an offset of $2\lambda$. The resulting Hamiltonian is:
+Consider a concrete instance with $N=3$ trains and $K_i=4$ options per train, yielding $12$ binary variables indexed by $u = 4i + j \in \{0, \dots, 11\}$. Let the delay costs be $c_{i,j}$, the equality penalty weight be $\lambda = 1000$, and the conflict penalty be $M$. The conflict set $\mathcal{C}$ contains three pairs: $((0,0),(1,1))$, $((0,1),(1,0))$, and $((1,0),(2,2))$, corresponding to variable indices $(0,5)$, $(1,8)$, and $(4,10)$.
+
+Instantiating the general formulas, the Hamiltonian becomes:
 \begin{align}
-H(\mathbf{x}) &= (c_{0,0}-\lambda)x_0 + (c_{0,1}-\lambda)x_1 + (c_{1,0}-\lambda)x_2 + (c_{1,1}-\lambda)x_3 \nonumber \\
-&\quad + P x_0 x_2 + P x_1 x_3 + 2\lambda x_0 x_1 + 2\lambda x_2 x_3 + 2\lambda.
+H(\mathbf{x}) = \sum_{u=0}^{11} (c_{i,j} - 1000) x_u + 2000 \sum_{i=0}^{2} \sum_{0 \le j < l \le 3} x_{4i+j} x_{4i+l} + M(x_0 x_5 + x_1 x_8 + x_4 x_{10}) + 3000.
 \end{align}
-For a specific numerical instantiation, let $c_{0,0}=1, c_{0,1}=5, c_{1,0}=3, c_{1,1}=2, P=100, \lambda=10$. The feasible assignments are $(x_0,x_1,x_2,x_3) = (1,0,0,1)$ with energy $1+2 + 2(10) = 23$, and $(0,1,1,0)$ with energy $5+3 + 2(10) = 28$. The global minimum is $\mathbf{x}^* = (1,0,0,1)$, corresponding to selecting option $0$ for train $0$ and option $1$ for train $1$, yielding a minimum feasible delay cost of $3$.
+The corresponding Q matrix entries are:
+\begin{align}
+Q_{u,u} &= c_{i,j} - 1000, \quad u = 4i+j, \\
+Q_{0,5} = Q_{5,0} &= M, \quad Q_{1,8} = Q_{8,1} = M, \quad Q_{4,10} = Q_{10,4} = M, \\
+Q_{u,v} &= 2000 \quad \text{for } u,v \text{ belonging to the same train with } j < l, \\
+Q_{u,v} &= 0 \quad \text{otherwise},
+\end{align}
+and the constant offset is $c = 3000$. Solving this $12$-variable QUBO yields the optimal binary vector $\mathbf{x}^*$, from which the selected timing option for each train is recovered by identifying the index $j$ where $x_{i,j}^* = 1$. The minimum energy value equals the minimum feasible delay cost plus the constant offset.
   </div>
 
   <div class="src-header">
@@ -119,72 +127,80 @@ For a specific numerical instantiation, let $c_{0,0}=1, c_{0,1}=5, c_{1,0}=3, c_
 \subsection*{Single-Track Railway Dispatching Problem}
 
 \paragraph{Problem Statement.}
-Given a set of $N$ trains $\mathcal{T} = \{0, \dots, N-1\}$ that must traverse a shared single-track segment, each train $t \in \mathcal{T}$ is associated with a set of $M_t$ feasible timing options $\mathcal{O}_t = \{0, \dots, M_t-1\}$. Each option $o \in \mathcal{O}_t$ incurs a non-negative delay cost $c_{t,o}$. Certain pairs of options from different trains are mutually exclusive due to track occupancy conflicts, denoted by the conflict set $\mathcal{C} \subseteq \mathcal{T} \times \mathcal{O} \times \mathcal{T} \times \mathcal{O}$. The task is to select exactly one timing option for every train such that no two selected options conflict, thereby minimizing the total dispatch cost.
+Given a set of $N$ trains that must traverse a shared single-track segment, each train $i \in \{0, \dots, N-1\}$ is offered a set of $K_i$ mutually exclusive timing options. Each option $(i,j)$, where $j \in \{0, \dots, K_i-1\}$, incurs a known delay cost $c_{i,j}$. Certain pairs of options $((i,j), (k,l))$ are incompatible due to track occupancy conflicts, denoted by the set $\mathcal{C}$. The task is to select exactly one timing option for every train such that no two selected options conflict, while minimizing the total dispatch delay cost.
 
 \paragraph{Decision Variables.}
-For each train $t \in \mathcal{T}$ and each feasible option $o \in \mathcal{O}_t$, introduce a binary decision variable $x_{t,o} \in \{0,1\}$. The variable $x_{t,o}$ equals $1$ if train $t$ is assigned timing option $o$, and $0$ otherwise. The full decision vector is $\mathbf{x} = (x_{t,o})_{t \in \mathcal{T}, o \in \mathcal{O}_t} \in \{0,1\}^n$, where $n = \sum_{t \in \mathcal{T}} M_t$.
+We introduce binary decision variables $x_{i,j} \in \{0,1\}$ for each train $i \in \{0, \dots, N-1\}$ and each option $j \in \{0, \dots, K_i-1\}$. The variable $x_{i,j}$ equals $1$ if train $i$ selects option $j$, and $0$ otherwise. The full decision vector is $\mathbf{x} = \{x_{i,j}\}_{i,j}$.
 
 \paragraph{QUBO Derivation.}
-\textbf{Step 1 --- Original Objective.}
-The problem requires minimizing the sum of selected delay costs plus a large penalty $P &gt; 0$ for each selected conflicting pair:
+\textbf{Step 1.} The original optimization problem is a minimization of the total delay cost plus a penalty for selecting conflicting options:
 \begin{align}
-\min_{\mathbf{x}} \; f(\mathbf{x}) &amp;= \sum_{t \in \mathcal{T}} \sum_{o \in \mathcal{O}_t} c_{t,o} x_{t,o} + P \sum_{((t_1,o_1),(t_2,o_2)) \in \mathcal{C}} x_{t_1,o_1} x_{t_2,o_2}.
+\min_{\mathbf{x}} \quad H_{\text{obj}}(\mathbf{x}) = \sum_{i=0}^{N-1} \sum_{j=0}^{K_i-1} c_{i,j} x_{i,j} + M \sum_{((i,j),(k,l)) \in \mathcal{C}} x_{i,j} x_{k,l},
+\end{align}
+where $M &gt; 0$ is a sufficiently large penalty constant. Since QUBO solvers minimize a quadratic form, we directly construct the Hamiltonian $H(\mathbf{x})$ to match this objective.
+
+\textbf{Step 2.} The problem is subject to two types of constraints. First, each train must select exactly one option:
+\begin{align}
+\sum_{j=0}^{K_i-1} x_{i,j} = 1, \quad \forall i \in \{0, \dots, N-1\}.
+\end{align}
+Second, no two conflicting options may be selected simultaneously:
+\begin{align}
+x_{i,j} + x_{k,l} \le 1, \quad \forall ((i,j),(k,l)) \in \mathcal{C}.
 \end{align}
 
-\textbf{Step 2 --- Constraints.}
-Each train must be assigned exactly one timing option:
+\textbf{Step 3.} We convert the equality constraints into quadratic penalty terms using a weight $\lambda &gt; 0$. The penalty for train $i$ is:
 \begin{align}
-\sum_{o \in \mathcal{O}_t} x_{t,o} = 1, \quad \forall t \in \mathcal{T}.
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{K_i-1} x_{i,j} - 1 \right)^2.
+\end{align}
+Expanding the square yields:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{K_i-1} x_{i,j}^2 - 2\sum_{j=0}^{K_i-1} x_{i,j} + 1 + \sum_{j=0}^{K_i-1} \sum_{\substack{l=0 \\ l \neq j}}^{K_i-1} x_{i,j} x_{i,l} \right).
+\end{align}
+Using the idempotent property of binary variables, $x_{i,j}^2 = x_{i,j}$, and noting that the double sum counts each distinct pair twice, we obtain:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( \sum_{j=0}^{K_i-1} x_{i,j} - 2\sum_{j=0}^{K_i-1} x_{i,j} + 1 + 2\sum_{0 \le j &lt; l \le K_i-1} x_{i,j} x_{i,l} \right).
+\end{align}
+Collecting linear terms gives the general penalty contribution for train $i$:
+\begin{align}
+P_i(\mathbf{x}) = \lambda \left( -\sum_{j=0}^{K_i-1} x_{i,j} + 2\sum_{0 \le j &lt; l \le K_i-1} x_{i,j} x_{i,l} + 1 \right).
+\end{align}
+The conflict constraints are already enforced by the quadratic terms in $H_{\text{obj}}(\mathbf{x})$ with coefficient $M$, so no additional penalty expansion is required for them.
+
+\textbf{Step 4.} Combining the objective and all equality penalties, the total QUBO Hamiltonian is:
+\begin{align}
+H(\mathbf{x}) = H_{\text{obj}}(\mathbf{x}) + \sum_{i=0}^{N-1} P_i(\mathbf{x}).
 \end{align}
 
-\textbf{Step 3 --- Penalty Term Expansion.}
-We enforce the constraint by adding a quadratic penalty with weight $\lambda &gt; 0$:
+\textbf{Step 5.} Reading off the coefficients from the expanded Hamiltonian, the QUBO matrix entries $Q_{(i,j),(k,l)}$ and constant offset $c$ are given in closed form by:
 \begin{align}
-\mathcal{P}(\mathbf{x}) &amp;= \lambda \sum_{t \in \mathcal{T}} \left( \sum_{o \in \mathcal{O}_t} x_{t,o} - 1 \right)^2.
+Q_{(i,j),(i,j)} &amp;= c_{i,j} - \lambda, \\
+Q_{(i,j),(k,l)} &amp;= M \quad \text{if } ((i,j),(k,l)) \in \mathcal{C}, \\
+Q_{(i,j),(i,l)} &amp;= 2\lambda \quad \text{for } 0 \le j &lt; l \le K_i-1, \\
+Q_{(i,j),(k,l)} &amp;= 0 \quad \text{otherwise},
 \end{align}
-Expanding the square and applying the idempotent property $x_{t,o}^2 = x_{t,o}$ for binary variables yields:
-\begin{align}
-\left( \sum_{o \in \mathcal{O}_t} x_{t,o} - 1 \right)^2 &amp;= \sum_{o \in \mathcal{O}_t} x_{t,o}^2 + \sum_{o \in \mathcal{O}_t} \sum_{\substack{o&#x27; \in \mathcal{O}_t \\ o&#x27; \neq o}} x_{t,o} x_{t,o&#x27;} - 2 \sum_{o \in \mathcal{O}_t} x_{t,o} + 1 \nonumber \\
-&amp;= \sum_{o \in \mathcal{O}_t} x_{t,o} + \sum_{o \neq o&#x27;} x_{t,o} x_{t,o&#x27;} - 2 \sum_{o \in \mathcal{O}_t} x_{t,o} + 1 \nonumber \\
-&amp;= -\sum_{o \in \mathcal{O}_t} x_{t,o} + \sum_{o \neq o&#x27;} x_{t,o} x_{t,o&#x27;} + 1.
-\end{align}
-Summing over all trains, the total penalty contribution to the Hamiltonian is:
-\begin{align}
-\mathcal{P}(\mathbf{x}) = \lambda \sum_{t \in \mathcal{T}} \left( -\sum_{o \in \mathcal{O}_t} x_{t,o} + \sum_{o \neq o&#x27;} x_{t,o} x_{t,o&#x27;} + 1 \right).
-\end{align}
-
-\textbf{Step 4 --- Combined QUBO Hamiltonian.}
-Adding the original objective and the penalty term gives the unconstrained QUBO Hamiltonian $H(\mathbf{x})$:
-\begin{align}
-H(\mathbf{x}) &amp;= \sum_{t \in \mathcal{T}} \sum_{o \in \mathcal{O}_t} c_{t,o} x_{t,o} + P \sum_{((t_1,o_1),(t_2,o_2)) \in \mathcal{C}} x_{t_1,o_1} x_{t_2,o_2} \nonumber \\
-&amp;\quad + \lambda \sum_{t \in \mathcal{T}} \left( -\sum_{o \in \mathcal{O}_t} x_{t,o} + \sum_{o \neq o&#x27;} x_{t,o} x_{t,o&#x27;} + 1 \right).
-\end{align}
-
-\textbf{Step 5 --- Q Matrix Entries and Offset.}
-Collecting linear and quadratic terms, the Hamiltonian takes the standard form $H(\mathbf{x}) = \sum_{i \le j} Q_{i,j} x_i x_j + c$. Mapping each pair $(t,o)$ to a unique index $i \in \{0,\dots,n-1\}$, the matrix entries and constant offset are:
-\begin{align}
-Q_{(t,o),(t&#x27;,o&#x27;)} &amp;= \begin{cases} 
-c_{t,o} - \lambda &amp; \text{if } t=t&#x27; \text{ and } o=o&#x27;, \\
-P/2 &amp; \text{if } ((t,o),(t&#x27;,o&#x27;)) \in \mathcal{C} \text{ and } (t,o) \neq (t&#x27;,o&#x27;), \\
-\lambda &amp; \text{if } t=t&#x27; \text{ and } o \neq o&#x27;, \\
-0 &amp; \text{otherwise},
-\end{cases} \\
-c &amp;= \lambda N.
-\end{align}
+with the constant offset $c = N\lambda$. The QUBO is then expressed as $H(\mathbf{x}) = \mathbf{x}^\top Q \mathbf{x} + c$.
 
 \paragraph{Penalty Weight Justification.}
-The penalty weight $\lambda$ must be chosen sufficiently large to ensure that any violation of the exactly-one constraint is strictly more costly than the maximum possible reduction in the original objective. The maximum possible decrease in delay cost from selecting a suboptimal option is bounded by $\max_{t,o} c_{t,o}$. Therefore, selecting $\lambda &gt; \max_{t,o} c_{t,o}$ guarantees that any infeasible assignment (where $\sum_{o} x_{t,o} \neq 1$ for some $t$) incurs a penalty of at least $\lambda$, which dominates any feasible objective value.
+The equality penalty weight $\lambda$ must be chosen large enough to dominate any potential reduction in delay costs that could be achieved by violating the exactly-one constraint. Specifically, if a train selects zero or multiple options, the penalty incurred is at least $\lambda$. Therefore, selecting $\lambda &gt; \max_{i,j} c_{i,j}$ guarantees that any infeasible assignment has a strictly higher energy than the best feasible assignment. The conflict penalty $M$ must similarly satisfy $M &gt; \sum_{i,j} c_{i,j}$ to ensure that violating a track conflict is never cost-effective.
 
 \paragraph{Correctness Argument.}
-Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal dispatch schedule because (i) for any feasible assignment, all constraint terms vanish, reducing $H(\mathbf{x})$ to the original delay cost plus conflict penalties; (ii) for any infeasible assignment, at least one train is assigned zero or multiple options, incurring a penalty of at least $\lambda$. Since $\lambda$ exceeds the maximum possible objective value of any feasible solution, every infeasible point has strictly higher energy than the best feasible point. Consequently, the global minimum of $H(\mathbf{x})$ must be feasible and, by construction, minimizes the original objective function.
+Minimizing $H(\mathbf{x})$ over $\{0,1\}^n$ recovers the optimal dispatch schedule because the penalty terms are non-negative and vanish exactly on the feasible set. Any infeasible assignment violates at least one constraint, incurring a penalty strictly greater than the maximum possible objective value of any feasible assignment. Consequently, the global minimum of $H(\mathbf{x})$ must lie within the feasible region. Within this region, $H(\mathbf{x})$ reduces exactly to the original delay cost objective. Thus, the unconstrained QUBO minimum corresponds precisely to the constrained optimization optimum.
 
 \paragraph{Illustrative Example.}
-Consider a concrete instance with $N=2$ trains and $M_0=M_1=2$ options per train. The variables are mapped to indices $0 \to (0,0)$, $1 \to (0,1)$, $2 \to (1,0)$, $3 \to (1,1)$. The conflict set is $\mathcal{C} = \{((0,0),(1,0)), ((0,1),(1,1))\}$. Using the general formulas above, the concrete objective terms are $c_{0,0}x_0 + c_{0,1}x_1 + c_{1,0}x_2 + c_{1,1}x_3 + P x_0 x_2 + P x_1 x_3$. The penalty terms for the exactly-one constraints expand to $-\lambda x_0 - \lambda x_1 + 2\lambda x_0 x_1 - \lambda x_2 - \lambda x_3 + 2\lambda x_2 x_3$, with an offset of $2\lambda$. The resulting Hamiltonian is:
+Consider a concrete instance with $N=3$ trains and $K_i=4$ options per train, yielding $12$ binary variables indexed by $u = 4i + j \in \{0, \dots, 11\}$. Let the delay costs be $c_{i,j}$, the equality penalty weight be $\lambda = 1000$, and the conflict penalty be $M$. The conflict set $\mathcal{C}$ contains three pairs: $((0,0),(1,1))$, $((0,1),(1,0))$, and $((1,0),(2,2))$, corresponding to variable indices $(0,5)$, $(1,8)$, and $(4,10)$.
+
+Instantiating the general formulas, the Hamiltonian becomes:
 \begin{align}
-H(\mathbf{x}) &amp;= (c_{0,0}-\lambda)x_0 + (c_{0,1}-\lambda)x_1 + (c_{1,0}-\lambda)x_2 + (c_{1,1}-\lambda)x_3 \nonumber \\
-&amp;\quad + P x_0 x_2 + P x_1 x_3 + 2\lambda x_0 x_1 + 2\lambda x_2 x_3 + 2\lambda.
+H(\mathbf{x}) = \sum_{u=0}^{11} (c_{i,j} - 1000) x_u + 2000 \sum_{i=0}^{2} \sum_{0 \le j &lt; l \le 3} x_{4i+j} x_{4i+l} + M(x_0 x_5 + x_1 x_8 + x_4 x_{10}) + 3000.
 \end{align}
-For a specific numerical instantiation, let $c_{0,0}=1, c_{0,1}=5, c_{1,0}=3, c_{1,1}=2, P=100, \lambda=10$. The feasible assignments are $(x_0,x_1,x_2,x_3) = (1,0,0,1)$ with energy $1+2 + 2(10) = 23$, and $(0,1,1,0)$ with energy $5+3 + 2(10) = 28$. The global minimum is $\mathbf{x}^* = (1,0,0,1)$, corresponding to selecting option $0$ for train $0$ and option $1$ for train $1$, yielding a minimum feasible delay cost of $3$.</pre>
+The corresponding Q matrix entries are:
+\begin{align}
+Q_{u,u} &amp;= c_{i,j} - 1000, \quad u = 4i+j, \\
+Q_{0,5} = Q_{5,0} &amp;= M, \quad Q_{1,8} = Q_{8,1} = M, \quad Q_{4,10} = Q_{10,4} = M, \\
+Q_{u,v} &amp;= 2000 \quad \text{for } u,v \text{ belonging to the same train with } j &lt; l, \\
+Q_{u,v} &amp;= 0 \quad \text{otherwise},
+\end{align}
+and the constant offset is $c = 3000$. Solving this $12$-variable QUBO yields the optimal binary vector $\mathbf{x}^*$, from which the selected timing option for each train is recovered by identifying the index $j$ where $x_{i,j}^* = 1$. The minimum energy value equals the minimum feasible delay cost plus the constant offset.</pre>
 
   <script>
     function copyLatex(btn) {

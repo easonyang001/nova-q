@@ -1,0 +1,143 @@
+{
+ "case": "berlin_playgrounds_s",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 127.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 225.9
+  },
+  "checker": {
+   "ok": false,
+   "seconds": 117.3,
+   "error": "ValueError: checker failed: RuntimeError: KeyError: 'candidates'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/reqcheck.py\", line 165, in _samples\n    mutants = [(why, m, ns[\"evaluate\"](data, m)) for why, m in mutants]\n                        ~~~~~~~~~~~~~~^^^^^^^^^\n  File \"<checker>\", line 24, in evaluate\nKeyError: 'candidates'\n"
+  },
+  "data": {
+   "ok": false,
+   "seconds": 535.4,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: Missing block-level population and coordinates (Einwohnerdichte 2019 block data) and existing playground locations (Spielplätze). The provided Excel tables contain only summary statistics and graphs, not the required granular block and playground data.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 166, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 48, in load_data\nValueError: DATA GAP: Missing block-level population and coordinates (Einwohnerdichte 2019 block data) and existing playground locations (Spielplätze). The provided Excel tables contain only summary statistics and graphs, not the required granular block and playground data.\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-cardinality",
+  "mp-coverage-once",
+  "mp-implication"
+ ],
+ "model_choice": "Maximum Coverage Problem with cardinality constraint. Uses N candidate binary variables and M block indicator variables. Linear constraints enforce exactly k selections and coverage implications. Fits CGA backend easily (<500 vars for realistic instances).",
+ "schema": {
+  "sets": {
+   "candidates": {
+    "meaning": "LOR planning area centers",
+    "source": "public"
+   },
+   "blocks": {
+    "meaning": "Street blocks",
+    "source": "public"
+   },
+   "existing_playgrounds": {
+    "meaning": "Existing playgrounds",
+    "source": "public"
+   }
+  },
+  "params": {
+   "lat_c": {
+    "meaning": "Latitude of candidate centers",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_c": {
+    "meaning": "Longitude of candidate centers",
+    "index": [
+     "candidates"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "lat_b": {
+    "meaning": "Latitude of block centroids",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon_b": {
+    "meaning": "Longitude of block centroids",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "pop": {
+    "meaning": "Population of blocks",
+    "index": [
+     "blocks"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "persons"
+   },
+   "existing_lat": {
+    "meaning": "Latitude of existing playgrounds",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "existing_lon": {
+    "meaning": "Longitude of existing playgrounds",
+    "index": [
+     "existing_playgrounds"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "k": {
+    "meaning": "Number of new playgrounds to select",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 3,
+    "unit": "count"
+   }
+  }
+ },
+ "data_found": [
+  "Einwohnerdichte_2019.xlsx",
+  "Einwohnerdichte_2019_9a65d33f68.xlsx",
+  "Einwohnerdichte_2019_bd490a6666.xlsx",
+  "berlin-lor_planungsraeume_geojson.geojson"
+ ],
+ "cost": {
+  "llm_tokens": 187534,
+  "solver_calls": null
+ },
+ "seconds": 1006.3
+}

@@ -1,0 +1,38 @@
+{
+ "case": "london_ambulance_l",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 141.4
+  },
+  "model": {
+   "ok": false,
+   "seconds": 204.5,
+   "error": "ValueError: model validation failed: variable_keys[6] uses id 0, which is not in set 'demands' (its ids look like ['S0', 'S1', 'S2']): use the set's ids, not positions (data['demands'][j], not j). If variable 6 is a helper that follows from the decisions (an assignment of a point to its nearest open site, a covered indicator), give it {}"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 2,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-p-median",
+  "mp-cardinality",
+  "mp-one-hot-assignment"
+ ],
+ "cost": {
+  "llm_tokens": 91939,
+  "solver_calls": null
+ },
+ "seconds": 345.9
+}

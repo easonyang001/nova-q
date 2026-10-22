@@ -1,0 +1,110 @@
+{
+ "case": "youbike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 196.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 434.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 195.2
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1790.5,
+   "error": "ValueError: data preparation failed: RuntimeError: SyntaxError: positional argument follows keyword argument (<model>, line 84)\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/QuantumQUBO Agent/qubo_auto/annealing/adapter.py\", line 166, in _execute_adapter\n    exec(compile(code, \"<model>\", \"exec\"), ns)\n         ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<model>\", line 84\n    )\n    ^\nSyntaxError: positional argument follows keyword argument\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP encoding (mp-position-tour). For N=30 sites, variables = 30^2 = 900. This fits well within the CGA GPU annealer's 3,600 variable limit and maintains high solution quality.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "YouBike stations within 500m of Da'an Station, including Da'an Station as site 0",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": null
+    }
+   },
+   "positions": {
+    "meaning": "The sequence index in the tour",
+    "source": "public"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "政府資料開放平臺.json"
+ ],
+ "cost": {
+  "llm_tokens": 129690,
+  "solver_calls": null
+ },
+ "seconds": 2616.6
+}

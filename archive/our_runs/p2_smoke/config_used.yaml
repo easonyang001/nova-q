@@ -1,0 +1,45 @@
+agents:
+  history_rounds: 6
+  max_tokens_per_run: 400000
+  mode: multi
+  model: null
+  schema_retries: 1
+  temperature: 0.0
+hardware_budget:
+  dwave_qpu:
+    max_calls: 500
+    max_solver_time_s: 30
+  fujitsu_da:
+    max_calls: 300
+    max_solver_time_s: 3000
+  ledger: results/hardware_ledger.jsonl
+logging:
+  loop_log: results/loop_runs.jsonl
+loop:
+  gap_target: 0.0
+  guardrail_retries: 2
+  max_solver_calls: 10
+  patience: 3
+  penalty_floor_factor: 1.0
+param_caps:
+  dwave_qpu:
+    annealing_time: 200.0
+    num_reads: 1000
+  fujitsu_da:
+    time_limit_sec: 10
+  sa:
+    num_reads: 1000
+    num_sweeps: 20000
+rag:
+  enabled: true
+  exclude_instance_ids: []
+  experience_backends: null
+  experience_path: results/experience.jsonl
+  knowledge_dir: knowledge
+  stores:
+  - backend_docs
+  - formulation_patterns
+  - tuning
+  - experience
+  top_k: 4
+  write_experience: true
