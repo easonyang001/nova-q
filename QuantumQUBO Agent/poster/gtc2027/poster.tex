@@ -6,6 +6,7 @@
 % Numbers: results/experiments/qaoa_cudaq_20261020 (compare.jsonl, summary.json, bench.jsonl);
 % end-to-end: e2e_cfgBt_r*_20261013c rejudged.json; checker faults: results/experiments/E6_summary_dev_20261012.md.
 \documentclass{article}
+\usepackage{qrcode}
 \usepackage[paperwidth=43in,paperheight=24in,margin=0.75in]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage[scaled]{helvet}
@@ -51,7 +52,7 @@
 \posterbox[blankest, valign=center]{name=title, column=1, span=4, below=top, rowspan=7}{%
 \vspace*{3mm}
 \begin{minipage}[c]{0.11\linewidth}\centering\includegraphics[height=2.7in]{logos/nptu.png}\end{minipage}\hfill
-\begin{minipage}[c]{0.76\linewidth}\centering
+\begin{minipage}[c]{0.66\linewidth}\centering
 {\Title\bfseries NOVA-Q: Verified LLM Agents From Natural Language\\[1mm]
 and Open Data to QAOA on CUDA-Q\par}
 \vspace{6mm}
@@ -60,7 +61,10 @@ and Open Data to QAOA on CUDA-Q\par}
 {\fontsize{26}{32}\selectfont $^{1}$National Pingtung University, Pingtung, Taiwan \quad $^{2}$Tohoku University, Sendai, Japan
 \quad cho@mail.nptu.edu.tw\par}
 \end{minipage}\hfill
-\begin{minipage}[c]{0.11\linewidth}\centering\includegraphics[height=2.7in]{logos/tohoku.pdf}\end{minipage}}
+\begin{minipage}[c]{0.21\linewidth}\centering
+\begin{tabular}[c]{@{}c@{}}\includegraphics[height=2.7in]{logos/tohoku.pdf}\end{tabular}\hspace{0.45in}%
+\begin{tabular}[c]{@{}c@{}}\qrcode[height=2.15in]{https://github.com/easonyang001/nova-q}\\[1.5mm]
+{\fontsize{15}{18}\selectfont github.com/easonyang001/nova-q}\end{tabular}\end{minipage}}
 
 
 % ================================================================ column 1
