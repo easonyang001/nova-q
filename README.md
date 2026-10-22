@@ -1,131 +1,185 @@
-# NOVA-Q: Verified LLM Agents From Natural Language and Open Data to QAOA on CUDA-Q
+<div align="center">
 
-**N**atural-language → **O**pen-data → **V**erified **A**gents for **Q**uantum.
-A user describes a real planning problem in one sentence ("place 3 EV chargers in Da'an District, Taipei, to cover the
-most residents"). Local LLM agents clarify it, find and prepare official open data, write a QUBO model, and solve it on
-annealers and on QAOA with NVIDIA CUDA-Q. Independent checks run around every solve, and a frozen judge scores the
-delivered answer against ground truth built from the raw files.
+# NOVA-Q
 
-Chia-Chen Yang¹, Chia-Ho Ou¹,² · ¹National Pingtung University, Taiwan · ²Tohoku University, Japan ·
-cho@mail.nptu.edu.tw
+**Verified LLM Agents From Natural Language and Open Data to QAOA on CUDA-Q**
 
-> **Built on [QuantumQUBO Agent](https://github.com/QuitttCat/QuantumQUBOAgent)** by Niloy Kumar Mondal and Md Rizwan
-> Parvez (ICML 2026 Workshop, arXiv:2609.10629), MIT License. Its formulation agents are the starting point of our
-> Modeler; everything else listed below is new. The earlier README of this repository, including the original
-> project's README unchanged, is in [docs/README_development_log.md](docs/README_development_log.md).
+**N**atural-language → **O**pen-data → **V**erified **A**gents for **Q**uantum
 
-Poster (NVIDIA GTC 2027): [`QuantumQUBO Agent/poster/gtc2027/poster.pdf`](QuantumQUBO%20Agent/poster/gtc2027/poster.pdf)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB.svg)
+![CUDA-Q 0.14](https://img.shields.io/badge/CUDA--Q-0.14-76B900.svg)
+![NVIDIA L40S](https://img.shields.io/badge/GPU-2%C3%97%20NVIDIA%20L40S-76B900.svg)
+
+Chia-Chen Yang<sup>1</sup>, Chia-Ho Ou<sup>1,2</sup><br>
+<sup>1</sup>National Pingtung University, Taiwan  ·  <sup>2</sup>Tohoku University, Japan<br>
+Contact: cho@mail.nptu.edu.tw
+
+[Poster (NVIDIA GTC 2027)](QuantumQUBO%20Agent/poster/gtc2027/poster.pdf)
+
+</div>
 
 ---
 
-## How it works
+## Abstract
+
+Turning a real planning request into a QUBO requires finding and cleaning data, choosing a formulation and tuning
+penalties: expertise that most users do not have. NOVA-Q takes a single sentence, such as *"place 3 EV chargers in
+Da'an District, Taipei, to cover the most residents"*, and lets local LLM agents clarify the request, retrieve and
+prepare official open data, formulate a QUBO, and solve it on simulated, quantum and GPU annealers and on QAOA with
+NVIDIA CUDA-Q. Because LLM output can look right and still be wrong, every solve is surrounded by independent checks:
+three gates before the solver and one after, with checker agents that never see the work they check. A frozen
+acceptance judge scores each delivery against ground truth built directly from the raw public files.
+
+## Highlights
+
+- **End to end on real cities.** 15 of 18 runs across Taipei, London, Melbourne and New York pass the independent judge,
+  using official open data and local models only.
+- **Verification that catches real faults.** Injected harmful faults are caught 97/99 (data) and 66/78 (model); a
+  checker from a second LLM family catches 98% of data faults versus 73% for the same family.
+- **Measurable impact.** On New York's 2017 participatory budget (Council District 3), the delivered plan funds
+  7,103 votes for the same $1 M budget, versus 5,381 under the city's vote-order rule (+32%), and equals the exact optimum.
+- **One verified QUBO, five solvers.** SA, SQA, D-Wave Advantage QPU, a GPU annealer and QAOA on CUDA-Q, compared on
+  39 instances with known optima.
+
+## Method
 
 ```
-one sentence ─► Clarifier ─► confirmed spec ─► Modeler ─► QUBO model ──────────────┐
-                                     │                    │                         │
-                                     │          ② blind requirement checker         │
-                                     ▼                    ▼                         ▼
-                        open-data search (10 portals) ─► data agent ─► data ─► ④ solvers ─► delivery
-                                                  ① schema checks  ③ data cross-check        ┊
-                         failed check → evidence goes back to the Modeler or the data agent  ⑤ judge
-                                                                                    (evaluation only)
+request ─► Clarifier ─► confirmed spec ─► Modeler ─► QUBO model ──────────────────────┐
+                              │                      │                                  │
+                              │            ② blind requirement checker                  │
+                              ▼                      ▼                                  ▼
+            open-data search (10 national portals) ─► data agent ─► instance ─► ④ solvers ─► delivery
+                                          ① schema & model checks  ③ data cross-check        ┊
+            a failed check returns its evidence to the Modeler or the data agent        ⑤ acceptance judge
+                                                                                         (evaluation only)
 ```
 
-| Gate | What it checks | Who checks |
-|---|---|---|
-| ① data schema & model | units, period, area, keys of the prepared data; the model on a small instance by brute force | code |
-| ② requirements | random valid plans must be feasible and ranked like the user's objective; mutated plans must be rejected | an LLM checker that never sees the model |
-| ③ data cross-check | entity counts and totals recomputed from the raw tables | an LLM checker that never sees the preparation code |
-| ④ solution | the delivered plan against the original constraints and a simple baseline | code |
-| ⑤ acceptance judge | data, model and delivery against hand-built ground truth | frozen code, never seen by the system |
+| Gate | Checks | Performed by |
+|:---:|---|---|
+| ① | units, period, area and keys of the prepared data; the model by brute force on a small instance | code |
+| ② | random valid plans are feasible and ranked like the user's objective; mutated plans are rejected | LLM checker without access to the model |
+| ③ | entity counts and totals recomputed from the raw tables | LLM checker without access to the preparation code |
+| ④ | the delivered plan against the original constraints and a simple baseline | code |
+| ⑤ | data, model and delivery against hand-built ground truth | frozen judge, not visible to the system |
 
-A plain-language description of every agent (Traditional Chinese): [docs/agents_overview_zh.md](QuantumQUBO%20Agent/docs/agents_overview_zh.md).
+A plain-language guide to every agent (Traditional Chinese) is in
+[docs/agents_overview_zh.md](QuantumQUBO%20Agent/docs/agents_overview_zh.md).
 
 ## Results
 
-**Real cities, official open data** (3 runs per task; Gemma-4-31B-it as doer and checker, local SA solver):
+### Real cities, official open data
 
-| City & task | Problem type | Official source | Instance | Passed |
-|---|---|---|---|---|
-| Taipei: EV chargers | max coverage | village census | 53 villages, 0.28 M people | 3/3 |
-| Taipei: bike tour | tour (TSP) | YouBike live API | 18 stations | 2/3 |
-| Taipei: AED zones | balanced groups | AED registry | 48 sites | 3/3 |
-| London: ambulances | p-median | ONS Census 2021 | 27 areas, 0.21 M people | 1/3 |
-| Melbourne: bike tour | tour (TSP) | dock registry (data.gov.au) | 11 docks | 3/3 |
-| New York: budget | knapsack | NYC Open Data ballot results | 15 projects, $1 M | 3/3 |
-| **Passed** | | | | **15/18** |
+Three runs per task; Gemma-4-31B-it as doer and checker; simulated annealing as the solver.
 
-New York, Council District 3, 2017: the delivered plan funds 7 projects with 7,103 votes for $980,000, the exact
-optimum; the city's vote-order rule funded 4 projects with 5,381 votes for the same $1 M budget (+32%).
+| City and task | Problem type | Official source | Instance | Passed |
+|---|---|---|---|:---:|
+| Taipei: EV chargers | maximum coverage | village census | 53 villages, 0.28 M residents | 3/3 |
+| Taipei: bike-station tour | travelling salesman | YouBike live API | 18 stations | 2/3 |
+| Taipei: AED inspection zones | balanced partition | AED registry | 48 sites | 3/3 |
+| London: ambulance stations | p-median | ONS Census 2021 | 27 areas, 0.21 M residents | 1/3 |
+| Melbourne: bike-station tour | travelling salesman | City of Melbourne dock registry | 11 docks | 3/3 |
+| New York: participatory budget | knapsack | NYC Open Data ballot results | 15 projects, $1 M | 3/3 |
+| **Total** | | | | **15/18** |
 
-**Test set (code frozen before the reference answers were built):** Singapore hawker centres (balanced groups),
-Paris Vélib' tour, Cambridge (MA) participatory budget. Running; results will be added here.
+**Held-out test set.** The pipeline code was frozen before the reference answers of three new tasks were built:
+Singapore hawker-centre zones (balanced partition), a Paris Vélib' station tour (travelling salesman) and the
+Cambridge, MA participatory budget (knapsack). Results will be reported here when the runs finish.
 
-**Verification gates, injected harmful faults:** caught 97/99 data faults and 66/78 model faults; a checker from a
-second LLM family catches 98% of the data faults (same family: 73%); no false rejections on 300 valid decisions.
+### Solvers on the same verified QUBOs
 
-**Solvers on the same verified QUBOs** (39 instances, 9–27 qubits, optimum known by enumeration; energy gap
-0 = optimum, 1 = random guess, median):
+39 instances from four agent-built models, 9–27 qubits, optimum known by full enumeration. The energy gap is
+(E − E<sub>opt</sub>) / (Ē<sub>random</sub> − E<sub>opt</sub>): 0 is the optimum and 1 a random guess.
 
-| SQA | SA | D-Wave QPU | QAOA p=3 (CUDA-Q) | CGA |
-|---|---|---|---|---|
-| 0.001 | 0.009 | 0.028 | 0.16 | 0.66 |
+| Solver | SQA | SA | D-Wave QPU | QAOA p=3 (CUDA-Q) | GPU annealer |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Median energy gap | 0.001 | 0.009 | 0.028 | 0.16 | 0.66 |
 
-QAOA samples the optimum on every instance but trails the annealers, because penalties cut its feasible fraction.
+QAOA samples the optimum on every instance but trails the annealers, because penalty terms reduce its feasible fraction.
 
-![Energy gap to the optimum](QuantumQUBO%20Agent/results/experiments/qaoa_cudaq_20261020/figures/energy_rep.png)
+<p align="center">
+  <img src="QuantumQUBO%20Agent/results/experiments/qaoa_cudaq_20261020/figures/energy_rep.png" width="900"
+       alt="Energy gap to the optimum per solver and problem">
+</p>
 
-## NVIDIA stack
+## Hardware and software
 
-- LLM agents: vLLM on 2 × NVIDIA L40S (48 GB), FP8 weights: Gemma-4-31B-it and Qwen3.6-35B-A3B (Apache-2.0). No cloud API.
-- QAOA: CUDA-Q 0.14, `nvidia` state-vector target. One L40S holds up to 32 qubits; QAOA cost evaluation at 21 qubits
-  takes 0.079 s on the GPU vs 31.5 s on the CPU (400×). `nvidia-mqpu` on 2 GPUs gives 1.65–1.94× throughput.
-- Next: H200 / B200 (33–34 qubits per GPU, `nvidia-mgpu` over NVLink) and larger agents.
+| Component | Setup |
+|---|---|
+| LLM agents | vLLM on 2 × NVIDIA L40S (48 GB), FP8 weights: Gemma-4-31B-it and Qwen3.6-35B-A3B (Apache-2.0); no cloud API |
+| QAOA | CUDA-Q 0.14, `nvidia` state-vector target; up to 32 qubits on one L40S; 400× faster than CPU at 21 qubits |
+| Multi-GPU | `nvidia-mqpu` on 2 GPUs: 1.65–1.94× QAOA throughput |
+| Annealers | dwave-samplers SA, OpenJij SQA, D-Wave Advantage QPU, GPU annealer |
 
-## Run it
+Planned: H200 and B200 GPUs (33–34-qubit state vectors per GPU, `nvidia-mgpu` over NVLink) and larger agent models.
+
+## Installation
 
 ```bash
-cd "QuantumQUBO Agent"
-cp .env.example .env            # LLM endpoint; optional D-Wave token and CGA server address
+git clone https://github.com/easonyang001/nova-q.git
+cd "nova-q/QuantumQUBO Agent"
 pip install -r requirements.txt
+cp .env.example .env          # LLM endpoint; optional D-Wave token and GPU-annealer address
+```
 
-# local LLM (separate vLLM environment), one server per GPU
-bash scripts/serve_vllm.sh
+The local LLM runs in a separate vLLM environment (`scripts/serve_vllm.sh`), and QAOA in a CUDA-Q environment whose
+interpreter is set with `CUDAQ_PYTHON`.
 
-# guided web UI: describe -> answer questions -> model & data -> solve -> results  (http://localhost:7860)
-python scripts/ui.py
+## Usage
+
+```bash
+# guided web interface: describe -> answer questions -> model and data -> solve -> results
+python scripts/ui.py                                   # http://localhost:7860
 
 # end-to-end batch with the independent judge
 python scripts/run_e2e_batch.py --tag my_batch --repeats 3 --cases nyc_pb_budget --arms full_rag \
     --truth results/acceptance_truth/truth_nyc_pb_20261022.json
 python scripts/rejudge.py my_batch
 
-# tests
+# solver comparison and figures
+python scripts/experiments/qaoa_instances.py --out results/experiments/my_cmp/instances_rep --seeds 0 1 2
+python scripts/experiments/qaoa_compare.py --dir results/experiments/my_cmp --instances instances_rep --layers 3
+python scripts/experiments/qaoa_figures.py --dir results/experiments/my_cmp --results compare.jsonl
+
+# unit tests
 python -m pytest -q tests
 ```
 
-QAOA runs in its own CUDA-Q environment (`CUDAQ_PYTHON`, see `qubo_auto/annealing/backends.py`). The solver comparison
-is `scripts/experiments/qaoa_instances.py` → `qaoa_compare.py` → `qaoa_figures.py`.
+## Repository structure
 
-## Repository layout
-
-| Path (inside `QuantumQUBO Agent/`) | Contents |
+| Path (under `QuantumQUBO Agent/`) | Contents |
 |---|---|
-| `qubo_auto/annealing/` | agents, data tools (`prep/`, `dataplan.py`, `dataagent.py`), checkers, encodings, solver back-ends, workflow and repair |
-| `qubo_auto/prompts/annealing/` | prompts of every agent |
-| `acceptance/` | judge, ground-truth builders, task list, pre-registration |
-| `scripts/` | UI, batch runner, re-judging; `experiments/` for the solver comparison and poster figures |
-| `knowledge/` | general modelling patterns retrieved by the Modeler |
-| `poster/gtc2027/` | poster source (LaTeX) and figures |
-| `results/` | settings notes, reference answers, per-run judge records, solver-comparison data (raw downloads, LLM transcripts and caches stay local) |
+| `qubo_auto/annealing/` | agents, data tools, checkers, encodings, solver back-ends, workflow and repair |
+| `qubo_auto/prompts/annealing/` | agent prompts |
+| `acceptance/` | acceptance judge, ground-truth builders, task definitions, pre-registration |
+| `scripts/` | web interface, batch runner, re-judging; `experiments/` for the solver study and figures |
+| `knowledge/` | general modelling patterns available to the Modeler |
+| `poster/gtc2027/` | poster source and figures |
+| `results/` | run settings, reference answers, per-run judge records, solver-comparison data |
 | `tests/` | unit tests |
 
-The original QuantumQUBO Agent front end (`qubo_auto/agents`, `benchmarks/`, `deliverables/`) is kept as released.
+Raw downloads, LLM transcripts and caches are not versioned.
 
-## License and credits
+## Citation
 
-MIT License (see [LICENSE](LICENSE)); the original QuantumQUBO Agent copyright notice is kept. Please cite the original
-work ([CITATION.cff](CITATION.cff)) when using this code. Benchmark instances from
-[QOBLIB](https://github.com/ZIB-AOPT/QOBLIB) (CC BY 4.0) are used unmodified as data. Open data belongs to its
-publishers (Taipei City Government, UK ONS, City of Melbourne, NYC Open Data, data.gov.sg, Ville de Paris, City of
-Cambridge) under their licences.
+```bibtex
+@misc{yang2027novaq,
+  title        = {{NOVA-Q}: Verified {LLM} Agents From Natural Language and Open Data to {QAOA} on {CUDA-Q}},
+  author       = {Yang, Chia-Chen and Ou, Chia-Ho},
+  year         = {2027},
+  howpublished = {NVIDIA GTC 2027 poster},
+  url          = {https://github.com/easonyang001/nova-q}
+}
+```
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+## Acknowledgements
+
+NOVA-Q extends the formulation agents of QuantumQUBO Agent (N. K. Mondal and M. R. Parvez, ICML 2026 Workshop,
+arXiv:2609.10629; MIT License). Benchmark instances from [QOBLIB](https://github.com/ZIB-AOPT/QOBLIB) (CC BY 4.0) are
+used unmodified. Open data are provided by Taipei City Government, the UK Office for National Statistics, the City of
+Melbourne, NYC Open Data, data.gov.sg, Ville de Paris and the City of Cambridge under their respective licences. The
+project history is kept in [docs/README_development_log.md](docs/README_development_log.md).

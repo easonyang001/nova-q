@@ -1,24 +1,33 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
 type: software
-title: "QuantumQUBO Agent: Automating QUBO Formulation Generation from Natural Language"
+title: "NOVA-Q: Verified LLM Agents From Natural Language and Open Data to QAOA on CUDA-Q"
 authors:
-  - family-names: Mondal
-    given-names: Niloy Kumar
-  - family-names: Parvez
-    given-names: Md Rizwan
-repository-code: "https://github.com/QuitttCat/QuantumQUBOAgent"
-url: "https://quitttcat.github.io/QuantumQUBOAgent/"
+  - family-names: Yang
+    given-names: Chia-Chen
+    affiliation: National Pingtung University
+  - family-names: Ou
+    given-names: Chia-Ho
+    affiliation: "National Pingtung University; Tohoku University"
+    email: cho@mail.nptu.edu.tw
+repository-code: "https://github.com/easonyang001/nova-q"
 license: MIT
 year: 2026
-preferred-citation:
-  type: conference-paper
-  title: "Quantum{QUBO} Agent: Automating Quadratic Unconstrained Binary Optimization ({QUBO}) Formulation Generation from Natural Language"
-  authors:
-    - family-names: Mondal
-      given-names: Niloy Kumar
-    - family-names: Parvez
-      given-names: Md Rizwan
-  collection-title: "ICML 2026 Workshop: AI as a Tool for Mathematics, Computer Science, and Machine Learning"
-  year: 2026
-  url: "https://openreview.net/forum?id=9YTedapat4"
+keywords:
+  - QUBO
+  - QAOA
+  - CUDA-Q
+  - LLM agents
+  - open data
+  - verification
+references:
+  - type: conference-paper
+    title: "Quantum{QUBO} Agent: Automating Quadratic Unconstrained Binary Optimization ({QUBO}) Formulation Generation from Natural Language"
+    authors:
+      - family-names: Mondal
+        given-names: Niloy Kumar
+      - family-names: Parvez
+        given-names: Md Rizwan
+    collection-title: "ICML 2026 Workshop: AI as a Tool for Mathematics, Computer Science, and Machine Learning"
+    year: 2026
+    url: "https://openreview.net/forum?id=9YTedapat4"
