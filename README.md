@@ -11,11 +11,8 @@
 ![CUDA-Q 0.14](https://img.shields.io/badge/CUDA--Q-0.14-76B900.svg)
 ![NVIDIA L40S](https://img.shields.io/badge/GPU-2%C3%97%20NVIDIA%20L40S-76B900.svg)
 
-Chia-Chen Yang<sup>1</sup>, Chia-Ho Ou<sup>1,2</sup><br>
-<sup>1</sup>National Pingtung University, Taiwan  ·  <sup>2</sup>Tohoku University, Japan<br>
-Contact: cho@mail.nptu.edu.tw
+Chia-Chen Yang · National Pingtung University, Taiwan
 
-[Poster (NVIDIA GTC 2027)](QuantumQUBO%20Agent/poster/gtc2027/poster.pdf)  ·
 [Agent guide (繁體中文)](QuantumQUBO%20Agent/docs/agents_overview_zh.md)
 
 </div>
@@ -293,7 +290,7 @@ python -m pytest -q tests
 | `acceptance/` | acceptance judge, ground-truth builders, task definitions, pre-registration |
 | `scripts/` | web interface, batch runner, re-judging; `experiments/` for the solver study and figures |
 | `knowledge/` | general modelling patterns available to the Modeler |
-| `poster/gtc2027/` | poster source and figures |
+| `poster/gtc2027/figures/` | figures and the scripts' outputs used on the poster |
 | `docs/` | agent guide and experiment notes |
 | `results/` | run settings, reference answers, per-run judge records, solver-comparison data |
 | `tests/` | unit tests |
@@ -305,7 +302,7 @@ Raw downloads, LLM transcripts and caches are not versioned.
 ```bibtex
 @misc{yang2027novaq,
   title        = {{NOVA-Q}: Verified {LLM} Agents From Natural Language and Open Data to {QAOA} on {CUDA-Q}},
-  author       = {Yang, Chia-Chen and Ou, Chia-Ho},
+  author       = {Yang, Chia-Chen},
   year         = {2027},
   howpublished = {NVIDIA GTC 2027 poster},
   url          = {https://github.com/easonyang001/nova-q}

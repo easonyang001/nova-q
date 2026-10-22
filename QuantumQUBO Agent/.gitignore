@@ -62,3 +62,10 @@ results/**
 !results/experiments/qaoa_cudaq_20261020/*.jsonl
 !results/experiments/qaoa_cudaq_20261020/summary.json
 !results/experiments/qaoa_cudaq_20261020/figures/*
+
+# Poster source and PDF stay local (author list not published here)
+poster/gtc2027/poster*.tex
+poster/gtc2027/poster*.pdf
+poster/gtc2027/poster*.png
+poster/gtc2027/poster.aux
+poster/gtc2027/poster.log

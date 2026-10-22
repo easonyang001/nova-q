@@ -6,10 +6,6 @@ authors:
   - family-names: Yang
     given-names: Chia-Chen
     affiliation: National Pingtung University
-  - family-names: Ou
-    given-names: Chia-Ho
-    affiliation: "National Pingtung University; Tohoku University"
-    email: cho@mail.nptu.edu.tw
 repository-code: "https://github.com/easonyang001/nova-q"
 license: MIT
 year: 2026
