@@ -53,9 +53,10 @@ acceptance judge scores each delivery against ground truth built directly from t
 - **Verification that catches real faults.** Injected harmful faults are caught 97/99 (data) and 66/78 (model); a
   checker from a second LLM family catches 98% of data faults versus 73% for the doer's own family. No valid plan was
   wrongly rejected (300/300).
-- **Measurable impact.** On New York's 2017 participatory budget (Council District 3), the delivered plan funds
-  7,103 votes for the same $1 M budget, versus 5,381 under the city's vote-order rule (+32%). It equals the exact
-  optimum.
+- **Same budget, a different rule.** On New York's 2017 participatory budget (Council District 3), the plan that
+  maximises total votes funds 7,103 votes for the $1 M budget; the city's own rule, which funds projects in vote
+  order, funds 5,381. The two rules pursue different goals; the point is that the delivered plan is the exact optimum
+  of the objective the user stated.
 - **One verified QUBO, five solvers.** Simulated annealing, simulated quantum annealing, the D-Wave Advantage QPU, a
   GPU annealer and QAOA on CUDA-Q, compared on 39 instances with known optima.
 
@@ -126,6 +127,13 @@ sample rows, key overlaps and which area code lies in which named area; then it 
 `merge_same_place`, `reduce_points` and `join`. Each step runs on the full table and its result is shown before the
 next decision. Public values that are missing are reported as a data gap; they are never filled with defaults.
 
+### Why QUBO
+
+The gates verify a solver-agnostic model. At the sizes used here a MILP solver finds the exact optimum, which serves as
+the reference for the judge and the solver study. Compiling the verified model to a QUBO lets the same model run
+unchanged on simulated, quantum and GPU annealers and on QAOA, so the quantum and GPU solvers are evaluated on exactly
+the problem the user asked for.
+
 ### From model to QUBO
 
 The Modeler describes only variables, objective and hard constraints. Code compiles them into a QUBO: equality and
@@ -191,7 +199,10 @@ Three runs per task; Gemma-4-31B-it as doer and checker; simulated annealing as 
 | New York: participatory budget | knapsack | NYC Open Data ballot results | 15 projects, $1 M | 3/3 |
 | **Total** | | | | **15/18** |
 
-With a Qwen3.6-35B-A3B doer, the first four tasks pass 5/12.
+With a Qwen3.6-35B-A3B doer, the first four tasks pass 5/12. The Melbourne and New York rows and the test set ran
+with the revised agent prompts of 2026-10-21; the other rows with the earlier version. One Melbourne pass followed an
+automatic repair that changed the formulas without human review (such deliveries are now flagged
+`review_required`).
 
 ### Held-out test set
 
@@ -237,6 +248,25 @@ fraction.
   <img src="novaq/results/experiments/qaoa_cudaq_20261020/figures/energy_rep.png" width="900"
        alt="Energy gap to the optimum per solver and problem">
 </p>
+
+### NVIDIA cuOpt on the same verified models
+
+The verified instances were also solved with NVIDIA cuOpt 26.10 on one L40S (routing for the tours, MILP for the
+rest), and exactly with HiGHS MILP on the CPU. Script: `novaq/scripts/experiments/cuopt_compare.py`.
+
+| Task | Size | cuOpt (GPU) | Exact (HiGHS, CPU) | Pipeline deliveries (SA on the QUBO) |
+|---|---|---|---|---|
+| Taipei bike-station tour | 18 stations | optimum, 5.8 s | 0.04 s | optimum |
+| Melbourne bike-station tour | 11 docks | optimum, 4.2 s | 0.02 s | optimum |
+| Paris Vélib' tour | 10 stations | optimum, 5.4 s | 0.03 s | optimum |
+| New York budget | 15 projects | optimum, 20.0 s | 0.01 s | optimum |
+| Cambridge budget | 16 projects | optimum, 12.5 s | 0.01 s | optimum |
+| Taipei EV chargers (coverage) | 53 villages, k = 3 | optimum, 20.6 s | 0.01 s | optimum |
+| London ambulances (p-median) | 27 areas, p = 3 | optimum, 10.2 s | 0.02 s | optimum |
+
+cuOpt confirms every delivered answer. At these sizes a CPU MILP solver is faster: cuOpt's routing runs to its time
+limit (5 s) and its MIP workspace used managed memory because the LLM servers occupy most of each GPU. cuOpt's
+advantage is expected on city-scale instances, which is future work.
 
 ## Hardware and software
 

@@ -23,6 +23,8 @@ BACKEND_LIMITS = {
            "here up to 3,600); solution quality on routing was near the reference up to ~1,000 variables and drops "
            "noticeably above ~1,500; only a per-job time limit is tunable.",
     "sa": "Local simulated annealing: no hard size limit; practical up to a few thousand variables.",
+    "qaoa_cudaq": "QAOA on NVIDIA CUDA-Q (GPU state-vector simulation): at most 30 binary variables in total, including "
+                  "slack bits for inequalities (one L40S holds 32 qubits); only small instances fit.",
 }
 
 
