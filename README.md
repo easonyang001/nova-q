@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/nova-q-banner.png" alt="NOVA-Q: Verified LLM Agents From Natural Language and Open Data to QAOA on CUDA-Q" width="100%">
+<img src="assets/nova-q-banner.jpg" alt="NOVA-Q: Verified LLM Agents From Natural Language and Open Data to QAOA on CUDA-Q" width="80%">
 
 **N**atural-language → **O**pen-data → **V**erified **A**gents for **Q**uantum
 
