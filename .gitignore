@@ -40,3 +40,6 @@ archive/our_runs/*/loops/
 
 # compatibility link for processes started before the rename (not part of the project)
 /QuantumQUBO Agent
+
+# original logo file (copied to assets/nova-q-banner.png)
+/星海流光 NOVA-Q chrome logo.png
