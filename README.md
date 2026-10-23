@@ -57,6 +57,8 @@ acceptance judge scores each delivery against ground truth built directly from t
   maximises total votes funds 7,103 votes for the $1 M budget; the city's own rule, which funds projects in vote
   order, funds 5,381. The two rules pursue different goals; the point is that the delivered plan is the exact optimum
   of the objective the user stated.
+- **A real request solved end to end by QAOA on CUDA-Q.** New York's budget compiles to 25 qubits; 3 of 3 runs pass the
+  judge, each delivering QAOA's own optimal sample.
 - **One verified QUBO, five solvers.** Simulated annealing, simulated quantum annealing, the D-Wave Advantage QPU, a
   GPU annealer and QAOA on CUDA-Q, compared on 39 instances with known optima.
 
@@ -248,6 +250,19 @@ fraction.
   <img src="novaq/results/experiments/qaoa_cudaq_20261020/figures/energy_rep.png" width="900"
        alt="Energy gap to the optimum per solver and problem">
 </p>
+
+### A real request solved end to end by QAOA on CUDA-Q
+
+The New York budget task was rerun with the same pipeline and the solver switched to QAOA (CUDA-Q 0.14, `nvidia`
+target, p = 2, 10,000 shots) on one L40S. The verified model compiles to a 25-qubit QUBO (the budget inequality is
+divided by the gcd of its integer costs before slack encoding).
+
+| Runs | Passed (judge) | Delivered plan | Came from |
+|---|:---:|---|---|
+| 3 | 3/3 | 7 projects, $980,000, 7,103 votes (the exact optimum) | QAOA's own best sample in every run, no classical polish |
+
+About 77% of QAOA's 10,000 shots are feasible plans; the solve stage takes 130–140 s per run.
+Settings and run notes: `novaq/results/e2e_nycqaoa_SETTINGS.md`.
 
 ### NVIDIA cuOpt on the same verified models
 
