@@ -104,7 +104,7 @@ def dry_run(answer: dict, tables: dict[str, pd.DataFrame], ds: dict | None = Non
     plan = {k: answer.get("plan", {}).get(k) for k in ("prepare", "table", "steps", "output")}
     if ds:
         # a set the model defines itself (source user or mock: tour positions, groups) is not a column of the data
-        own = [n for n, d in (ds.get("sets") or {}).items() if (d or {}).get("source") in ("user", "mock")]
+        own = [n for n, d in (ds.get("sets") or {}).items() if (d or {}).get("source") in ("user", "mock", "model")]
         from_table = [n for n in own if isinstance(((plan.get("output") or {}).get("sets") or {}).get(n), str)]
         if from_table:
             return (f"sets {from_table} are defined by the model (source user/mock), not by the data: do not take "
@@ -122,6 +122,7 @@ def dry_run(answer: dict, tables: dict[str, pd.DataFrame], ds: dict | None = Non
         return f"the plan ran but produced empty lists: {sizes}"
     if ds:
         from . import schema
+        data = schema.fill_model_sets(ds, data)                      # the system generates 'model' sets
         need = set(schema.field_keys(ds))
         missing, extra = sorted(need - set(data)), sorted(set(data) - need)
         if missing or extra:

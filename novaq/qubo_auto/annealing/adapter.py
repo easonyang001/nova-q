@@ -251,6 +251,8 @@ def build_adapter(model_ns: dict[str, Any], tables: dict[str, pd.DataFrame], spe
         try:
             out, tool_errors, execution = run_task(__name__, "_execute_adapter", code, tables, sources, situations,
                                                         timeout=ADAPTER_TIMEOUT_S)
+            if isinstance(out, dict) and schema.is_structured(model_ns["DATA_SCHEMA"]):
+                out = schema.fill_model_sets(model_ns["DATA_SCHEMA"], out)     # positions, group labels: system ids
             errors, report = check_output(model_ns, out, example, execution.get("data_metadata"), sources)
             errors += tool_errors
             if schema.is_structured(model_ns["DATA_SCHEMA"]):

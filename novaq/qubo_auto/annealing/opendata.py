@@ -11,6 +11,7 @@ Downloads go into the session's data folder; the user approves datasets before t
 from __future__ import annotations
 import json
 import re
+import urllib.parse
 import time
 from pathlib import Path
 from typing import Any
@@ -67,6 +68,9 @@ def resources_govtw(nid: int) -> list[dict]:
 
 def download(url: str, dest: Path, fmt: str = "", name: str = "") -> Path:
     """Fetch one file (size-capped) into `dest`; the extension follows the declared format or content type."""
+    if "api-open.data.gov.sg" in url and url.rstrip("/").endswith("poll-download"):
+        # data.gov.sg hands out a short-lived signed file URL per request
+        url = _get(url, timeout=60).json()["data"]["url"]
     r = _get(url, stream=True, timeout=120)
     r.raise_for_status()
     import tempfile
@@ -149,6 +153,23 @@ def geocode_bbox(area: str) -> tuple[float, float, float, float] | None:
 _SCOUT = (Path(__file__).parent.parent / "prompts" / "annealing" / "scout.txt").read_text(encoding="utf-8")
 
 
+_DOMAIN = re.compile(r"(?<![@\w.-])((?:[a-z0-9-]+\.)+(?:gov|org|net|com|edu|swiss|gv|go)(?:\.[a-z]{2})?|"
+                     r"(?:[a-z0-9-]+\.)+(?:sg|fr|de|uk|au|ch|jp|tw|nl|ie|ca|us))\b", re.I)
+
+
+def requested_domains(spec_text: str) -> list[str]:
+    """Portals or publishers the user named by their web address ('data.gov.sg', 'opendata.paris.fr'), with or
+    without http://. A source named only in words still reaches the ranking through the specification."""
+    hosts = [m.group(1).lower() for m in _DOMAIN.finditer(spec_text)]
+    hosts += [urllib.parse.urlparse(u).hostname or "" for u in re.findall(r'https?://[^\s<>"\'\\]+', spec_text)]
+    return sorted({h[4:] if h.startswith("www.") else h for h in hosts if h and "." in h})
+
+
+def from_requested(candidate: dict, domains: list[str]) -> bool:
+    text = " ".join(str(candidate.get(k, "")) for k in ("url", "page", "source")).lower()
+    return any(d in text for d in domains)
+
+
 def scout(spec_text: str, schema: dict, client, model: str) -> dict:
     """The local LLM proposes searches; code runs them. Returns {"plan", "candidates"} where each candidate is
     {"id", "source", "title", "detail", "format", "url" | "osm"} for the user to choose from."""
@@ -201,6 +222,29 @@ def scout(spec_text: str, schema: dict, client, model: str) -> dict:
         candidates += catalog.search(needs, catalog.portals_for(plan.get("area", "")), k=8)[:40]
     except Exception:
         pass
+    # the portals the user named: search them first - their own catalogue entry if we index it, else the web
+    # restricted to that site (a named source that was never searched lost to OpenStreetMap, Singapore 2026-10-22)
+    domains = requested_domains(spec_text)
+    if domains:
+        try:
+            from . import catalog
+            mine = [p for p in catalog.available() if any(d.endswith(p) or p.endswith(d) for d in domains)]
+            needs = [str(n) for n in (plan.get("needs") or [])[:4]]
+            if mine and needs:
+                candidates += catalog.search(needs, mine, k=8)[:24]
+        except Exception:
+            pass
+        for d in domains[:2]:
+            for need in [str(n).split(" / ")[0] for n in (plan.get("needs") or [])[:2]]:
+                finding = lookup(f"site:{d} {need}"[:200], region="wt-wt")
+                for item in finding.get("results", [])[:3]:
+                    try:
+                        candidates += resources_from_page(item["url"])
+                    except Exception:
+                        continue
+    for c in candidates:
+        if domains and from_requested(c, domains):
+            c["requested_source"] = True
     from .platforms import search as platform_search
     for item in (plan.get("platform_queries") or [])[:5]:
         if isinstance(item, dict):

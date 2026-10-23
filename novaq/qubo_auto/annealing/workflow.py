@@ -119,6 +119,10 @@ def run_workflow(store: ArtifactStore, backend, policy_factory, cfg: dict, *, bu
                                   checkpoint=checkpoint, resume=bool(saved_context),
                                   seed=saved_context["seed"] if saved_context else 0)
                 saved_context = None
+                raw_head = list(result.best_solution[:ir.n_variables]) if result.best_solution is not None else None
+                raw_feasible = raw_head is not None and all(c.satisfied(raw_head) for c in ir.constraints)
+                solver_raw = {"feasible": raw_feasible,
+                              "objective": ir.objective(raw_head) if raw_feasible else None, "polished": False}
                 if result.best_solution is not None and ir.quadratic:
                     # classical polish of the annealer's answer with constraint-preserving exchanges (same moves as
                     # the baseline); the solver's own result stays in the loop record (Melbourne tour, 2026-10-21:
@@ -133,9 +137,13 @@ def run_workflow(store: ArtifactStore, backend, policy_factory, cfg: dict, *, bu
                             store.event("solve", "polished", before=ir.objective(head), after=ir.objective(polished))
                             result.best_solution = polished + list(result.best_solution[ir.n_variables:])
                             result.best_objective = ir.objective(polished)
+                            solver_raw["polished"] = True
                 calls += result.solver_calls
                 all_attempts.append({"version": version, "checkpoint": str(checkpoint), "loop": result.model_dump()})
                 delivery = evaluate_delivery(ir, result, inspection, settings.get("quality_tolerance", 0.01))
+                # what the solver itself returned, before the classical exchange polish: a delivery "by QAOA" must be
+                # told apart from one QAOA started and the polish finished
+                delivery["solver_raw"] = solver_raw
                 sol_issues = []
                 if validator is not None and delivery["status"] != "no_solution":
                     raw_ir = raw_ir or ns["build_ir"](bundle["data"])
@@ -269,6 +277,10 @@ def run_workflow(store: ArtifactStore, backend, policy_factory, cfg: dict, *, bu
             delivery["message"] = delivery.get("message", "") + "；獨立需求檢查與模型不一致，需人工確認"
         if metadata.get("formula_changes"):
             delivery["formula_changes"] = metadata["formula_changes"]      # shown for human confirmation
+            # an automatic repair changed the formulation: the answer stands, but nobody has confirmed the new formulas
+            # yet (batch mode accepted one silently, Melbourne 2026-10-21) - flag it so reports can count it apart
+            delivery["review_required"] = True
+            delivery["message"] = (delivery.get("message", "") + "；自動修復改了模型公式，尚未經人工確認").lstrip("；")
         output = {"version": version, "delivery": delivery, "inspection": inspection,
                   "loop": result.model_dump() if result is not None else None,
                   "solution": fallback if fallback is not None else

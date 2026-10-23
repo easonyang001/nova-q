@@ -130,3 +130,12 @@ def test_area_code_rule_applies_only_when_the_code_column_is_used():
     assert adapter.enforcement_errors([sit], rec, {"t"}, untouched) == []
     filtered = 'PLAN = {"steps": [{"op": "keep", "column": "Borough Code", "values": ["1"]}]}'
     assert adapter.enforcement_errors([sit], rec, {"t"}, filtered)
+
+
+def test_named_portals_are_recognised_and_substitutes_are_detected():
+    from qubo_auto.annealing.opendata import requested_domains, from_requested
+    assert requested_domains("請用新加坡政府開放資料（data.gov.sg）的 Hawker Centres 資料。") == ["data.gov.sg"]
+    assert requested_domains("Vélib' 站點（opendata.paris.fr）") == ["opendata.paris.fr"]
+    assert requested_domains("請用 NYC Open Data 的資料，聯絡 a@b.com") == []
+    assert from_requested({"url": "https://api-open.data.gov.sg/v1/public/api/datasets/d_1/poll-download"}, ["data.gov.sg"])
+    assert not from_requested({"source": "OpenStreetMap", "url": ""}, ["data.gov.sg"])

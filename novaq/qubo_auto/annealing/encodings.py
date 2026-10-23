@@ -121,6 +121,14 @@ def _slack_le(c: LinearConstraint, next_aux: int, unary: bool) -> Encoded:
         raise ValueError(f"constraint {c.name} is infeasible for every x")
     if any(abs(v - round(v)) > 1e-9 for v in list(coeffs.values()) + [rhs]):
         raise ValueError("slack encodings need integer coefficients and rhs")
+    # divide by the gcd of the coefficients: the left side is a multiple of g, so  sum <= rhs  <=>  sum/g <= floor(rhs/g).
+    # Costs in dollars that are all multiples of 1,000 needed 20 slack bits instead of 10 (NYC budget, 2026-10-23)
+    g = math.gcd(*[int(round(abs(v))) for v in coeffs.values() if round(v)]) if coeffs else 1
+    if g > 1:
+        coeffs = {i: v / g for i, v in coeffs.items()}
+        rhs = math.floor(round(rhs) / g)
+        lo = sum(v for v in coeffs.values() if v < 0)
+        span = rhs - lo
     span = int(round(span))
     if unary:
         weights = [1] * span

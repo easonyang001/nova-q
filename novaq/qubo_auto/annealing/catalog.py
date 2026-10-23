@@ -33,7 +33,7 @@ CKAN = {"data.gov.uk": "https://data.gov.uk/api/action",
         "data.overheid.nl": "https://data.overheid.nl/data/api/3/action"}
 COUNTRY = {"data.gov.tw": "tw", "data.gov.uk": "gb", "datenregister.berlin.de": "de", "govdata.de": "de",
            "open.canada.ca": "ca", "data.gov.au": "au", "opendata.swiss": "ch", "data.go.jp": "jp",
-           "data.gov.ie": "ie", "data.overheid.nl": "nl"}
+           "data.gov.ie": "ie", "data.overheid.nl": "nl", "data.gov.sg": "sg"}
 PAGES = {"datenregister.berlin.de": "https://daten.berlin.de/datensaetze/", "govdata.de": "https://www.govdata.de/suche/daten/",
          "open.canada.ca": "https://open.canada.ca/data/en/dataset/", "data.gov.au": "https://data.gov.au/data/dataset/",
          "opendata.swiss": "https://opendata.swiss/en/dataset/", "data.go.jp": "https://www.data.go.jp/data/dataset/",
@@ -106,13 +106,45 @@ def harvest_ckan(portal: str, rows: int = 1000, pause: float = 0.5) -> list[dict
     return out
 
 
+def harvest_datagovsg(pause: float = 0.2) -> list[dict]:
+    """data.gov.sg (Singapore): its search API ignores the query, so the whole list (title, agency, format) is indexed
+    here; files are fetched through the poll-download API (a Singapore request fell back to OpenStreetMap twice
+    because the official Hawker Centres layer was never found, 2026-10-22)."""
+    s, out, page, pages = _session(), [], 1, 1
+    while page <= pages:
+        for attempt in range(4):
+            try:
+                d = s.get("https://api-production.data.gov.sg/v2/public/api/datasets", params={"page": page},
+                          timeout=60).json()["data"]
+                break
+            except Exception:
+                time.sleep(5 * (attempt + 1))
+        else:
+            break
+        pages = d.get("pages", pages)
+        for x in d["datasets"]:
+            fmt = _fmt(x.get("format"))
+            out.append({"id": f"cat-data.gov.sg-{x['datasetId']}", "title": x.get("name", ""),
+                        "publisher": x.get("managedByAgencyName", "")[:80], "description": "", "fields": "",
+                        "updated": (x.get("lastUpdatedAt") or "")[:10],
+                        "files": [{"format": fmt, "url": f"https://api-open.data.gov.sg/v1/public/api/datasets/"
+                                                          f"{x['datasetId']}/poll-download"}],
+                        "page": f"https://data.gov.sg/datasets/{x['datasetId']}/view"})
+        if page % 100 == 0:
+            print(f"  data.gov.sg: page {page}/{pages}", flush=True)
+        page += 1
+        time.sleep(pause)
+    return out
+
+
 def _text(d: dict) -> str:
     return f"{d['title']} | {d['publisher']} | {d['description'][:300]} | {d['fields'][:200]}"
 
 
 def build(portal: str, dest: Path | None = None) -> int:
     from fastembed import TextEmbedding
-    docs = harvest_govtw() if portal == "data.gov.tw" else harvest_ckan(portal)
+    docs = (harvest_govtw() if portal == "data.gov.tw" else harvest_datagovsg() if portal == "data.gov.sg"
+            else harvest_ckan(portal))
     dest = dest or DIR
     dest.mkdir(parents=True, exist_ok=True)
     emb = np.array(list(TextEmbedding(MODEL).embed([_text(d) for d in docs], batch_size=256)), dtype=np.float32)

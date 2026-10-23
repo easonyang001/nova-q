@@ -48,16 +48,23 @@ def segments(run: Path):
     deliv = v.get("delivery", {}).get("checks", {})
     g2 = (f"{rc.get('valid_feasible_in_model', '?')}/{rc.get('valid', '?')} kept\n"
           f"{rc.get('invalid_rejected', '?')}/{rc.get('invalid', '?')} rejected") if rc else "checked"
+    # notes from the run's own record, whatever the task
+    srcs = (rec.get("prep") or {}).get("sources") or []
+    from urllib.parse import urlparse
+    pubs = sorted({(urlparse(str(s_.get("url") or s_.get("page") or "")).hostname or "").replace("www.", "")
+                   for s_ in srcs} - {""})
+    found = f"{len(srcs)} official file" + ("s" if len(srcs) != 1 else "") if srcs else "files found"
+    n_ent, ent = data_ck.get("instance_entities", "?"), str(data_ck.get("entity_set", "items")).replace("_", " ")
+    solver = {"sa": "SA", "cga": "CGA", "qaoa_cudaq": "QAOA, CUDA-Q", "sqa": "SQA"}.get(rec.get("backend", ""), rec.get("backend", ""))
+    chosen = deliv.get("decisions", "?")
     return t_end, [
         # (start, end, title, color, output below the bar, gate badges)
-        (0, t_clar, "Clarify request", AGENT, "spec confirmed", []),
-        (t_clar, t_model, "Write QUBO model", AGENT, "model + schema", [1]),
-        (t_model, t_check, "Blind\ncheck", GATE, g2, [2]),
-        (t_check, t_search, "Search data", AGENT, "2 official\nfiles", []),
-        (t_search, t_data, f"Prepare data ({tries} tries)", AGENT,
-         f"{data_ck.get('instance_entities', '?')} villages, "
-         f"{data_ck.get('population_total', 0):,.0f} residents", [1, 3]),
-        (t_data, t_end, "Solve\n(CGA)", SOLVE, f"{deliv.get('decisions', '?')} sites,\nrules hold", [4]),
+        (0, t_clar, "Clarify", AGENT, "spec confirmed", []),
+        (t_clar, t_model, "Model", AGENT, "", [1]),
+        (t_model, t_check, "Check", GATE, g2, [2]),
+        (t_check, t_search, "Search data", AGENT, pubs[0] if pubs else found, []),
+        (t_search, t_data, "Prepare data", AGENT, f"{n_ent} {ent}", [1, 3]),
+        (t_data, t_end, f"Solve ({solver})", SOLVE, f"{chosen} chosen,\nrules hold", [4]),
     ]
 
 
@@ -75,21 +82,25 @@ def main():
     fig, ax = plt.subplots(figsize=(8.2, 1.95))
     h = 1.3
     out_rows = [-1.0, -1.0]            # alternate rows so neighbouring notes never overlap
+    wide = total * 0.085                                    # a title fits inside a bar this long (in minutes)
+    step = total * 0.022                                    # gap between gate badges
     for i, (x0, x1, title, color, note, gates) in enumerate(segs):
         d = x1 - x0
-        ax.barh(0, d, left=x0, height=h, color=color, edgecolor="white", lw=2)
+        ax.barh(0, max(d, total * 0.006), left=x0, height=h, color=color, edgecolor="white", lw=2)
         mid = x0 + d / 2
-        if d >= 1.25:
-            ax.text(mid, 0.0, f"{title}\n{d:.1f} min", ha="center", va="center", color="white", fontsize=10,
+        dur = f"{d:.1f} min" if d >= 0.1 else "<0.1 min"
+        if d >= wide:
+            ax.text(mid, 0.0, f"{title}\n{dur}", ha="center", va="center", color="white", fontsize=10,
                     fontweight="bold", linespacing=1.05)
         else:                                               # narrow stage: title above the bar
-            ax.text(mid, h / 2 + 0.08, f"{title}\n{d:.1f} min", ha="center", va="bottom", color=color, fontsize=10,
+            ax.text(mid, h / 2 + 0.08, f"{title}\n{dur}", ha="center", va="bottom", color=color, fontsize=10,
                     fontweight="bold", linespacing=1.05)
         for k, g in enumerate(gates):                       # gate badges on the lower edge of the stage
-            badge(ax, x1 - 0.22 - 0.42 * (len(gates) - 1 - k), -h / 2, g)
+            bx = x1 - step * 0.6 - step * (len(gates) - 1 - k) if d >= step * len(gates) else x1 + step * (0.6 + k)
+            badge(ax, bx, -h / 2, g)
         y = out_rows[i % 2]
         ax.text(mid, y, note, ha="center", va="top", color=MUTED, fontsize=9, linespacing=1.05)
-    ax.set_xlim(-0.05, total + 0.15)
+    ax.set_xlim(-0.05, total * 1.035)
     ax.set_ylim(-1.85, 1.6)
     ax.set_yticks([])
     ticks = list(range(0, int(total) + 1, 2))
@@ -102,7 +113,7 @@ def main():
     ax.legend(handles=[Patch(color=AGENT, label="LLM agent"),
                        Patch(color=GATE, label="check"),
                        Patch(color=SOLVE, label="solver")],
-              loc="upper left", bbox_to_anchor=(0.56, 1.1), ncol=3, frameon=False, fontsize=9,
+              loc="upper left", bbox_to_anchor=(0.0, 1.1), ncol=3, frameon=False, fontsize=9,
               handlelength=1.2, columnspacing=1.2)
     fig.tight_layout()
     out = ROOT / a.out

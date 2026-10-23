@@ -4,6 +4,7 @@ import json
 import os
 import time
 from pathlib import Path
+from types import SimpleNamespace
 
 import itertools
 import re
@@ -17,6 +18,29 @@ class TokenBudgetExceeded(Exception):
 
 class PromptTooLong(Exception):
     """A prompt that cannot fit the model's context: a bug in how that step builds its prompt."""
+
+
+class StreamTimeout(Exception):
+    """A streamed answer passed its deadline (the stream is closed, so the server stops generating)."""
+
+
+class ReasoningLoop(Exception):
+    """The model's reasoning repeats the same passage verbatim and will not finish."""
+    def __init__(self, tail: str):
+        super().__init__("reasoning repeats itself")
+        self.tail = tail
+
+
+def looping(text: str, min_period: int = 30, max_period: int = 1500, repeats: int = 4) -> bool:
+    """True when the end of `text` is one passage repeated `repeats` times verbatim. Greedy decoding (temperature 0)
+    sent Gemma's reasoning on route problems into such a loop after ~2 minutes; it then ran to the 20-minute timeout
+    (Paris and Melbourne model steps, 2026-10-21/22)."""
+    t = text[-(max_period * repeats):]
+    for p in range(min_period, min(max_period, len(t) // repeats) + 1):
+        last = t[-p:]
+        if all(t[-(k + 1) * p:-k * p] == last for k in range(1, repeats)):
+            return True
+    return False
 
 
 MAX_COMPLETION_TOKENS = int(os.environ.get("LLM_MAX_COMPLETION_TOKENS", "32768"))   # thinking + answer, per call
@@ -183,15 +207,28 @@ class LLMClient:
             thinking = os.environ.get(var, default).strip().lower() not in ("0", "false", "no")
             kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": thinking}}
 
+        thinking = bool((kwargs.get("extra_body") or {}).get("chat_template_kwargs", {}).get("enable_thinking"))
+        stream = provider in ("local", "local2") and thinking
         try:
-            resp = self._create(client, kwargs, step_name)
+            try:
+                resp = self._create(client, kwargs, step_name, stream=stream)
+            except ReasoningLoop as loop:
+                # keep thinking, but leave greedy decoding: the model's own sampling with a repetition penalty
+                self._log(step_name + "_loop", model, temperature, prompt, "", None, reasoning=loop.tail)
+                print(f"  [{step_name}] reasoning loop detected: retrying with sampling", flush=True)
+                kwargs = {**kwargs, "temperature": 0.7,
+                          "extra_body": {**kwargs["extra_body"], "repetition_penalty": 1.1, "top_p": 0.95}}
+                resp = self._create(client, kwargs, step_name, stream=True)
+                step_name += "_resampled"
         except Exception as e:
             # a thinking model that is still reasoning when the request times out (Gemma, model step, 4 x 15 min,
             # Melbourne 2026-10-21): answer once without thinking, like the exhausted-budget case below
             thinking_on = (kwargs.get("extra_body") or {}).get("chat_template_kwargs", {}).get("enable_thinking")
-            if "Timeout" not in type(e).__name__ or provider not in ("local", "local2") or not thinking_on:
+            if not ("Timeout" in type(e).__name__ or isinstance(e, ReasoningLoop)) or provider not in ("local", "local2") \
+                    or not thinking_on:
                 raise
-            self._log(step_name + "_timeout", model, temperature, prompt, "", None)
+            self._log(step_name + ("_loop" if isinstance(e, ReasoningLoop) else "_timeout"), model, temperature, prompt,
+                      "", None, reasoning=getattr(e, "tail", ""))
             kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
             resp = self._create(client, kwargs, step_name)
             step_name += "_nothink"
@@ -207,19 +244,58 @@ class LLMClient:
             self._count(resp.usage)
             step_name += "_nothink"
         usage = resp.usage
+        reasoning = getattr(resp, "reasoning", "")
 
         if self.use_cache and temperature == 0.0:
             self._cache[cache_key] = content
             self._save_cache()
 
-        self._log(step_name, model, temperature, prompt, content, usage)
+        self._log(step_name, model, temperature, prompt, content, usage, reasoning=reasoning)
         return content
 
-    def _create(self, client: OpenAI, kwargs: dict, step_name: str):
+    def _open(self, client: OpenAI, kwargs: dict, stream: bool):
+        if not stream:
+            return client.chat.completions.create(**kwargs)
+        return self._collect(client.chat.completions.create(**kwargs, stream=True,
+                                                            stream_options={"include_usage": True}))
+
+    def _collect(self, chunks):
+        """Assemble a streamed answer (reasoning kept apart); stop at a reasoning loop or at the deadline."""
+        if hasattr(chunks, "choices"):                 # a client that ignores stream=True (test fakes)
+            return chunks
+        start, parts, thought, finish, usage, seen = time.time(), [], [], None, None, 0
+        try:
+            for chunk in chunks:
+                if getattr(chunk, "usage", None):
+                    usage = chunk.usage
+                if chunk.choices:
+                    ch = chunk.choices[0]
+                    d = ch.delta
+                    extra = getattr(d, "model_extra", None) or {}
+                    r = getattr(d, "reasoning_content", None) or extra.get("reasoning_content") or extra.get("reasoning")
+                    if r:
+                        thought.append(r)
+                        seen += 1
+                        if seen % 40 == 0 and looping("".join(thought[-400:])):
+                            raise ReasoningLoop("".join(thought)[-4000:])
+                    if d.content:
+                        parts.append(d.content)
+                    finish = ch.finish_reason or finish
+                if time.time() - start > self.request_timeout:
+                    raise StreamTimeout(f"no complete answer after {self.request_timeout:.0f} s")
+        finally:
+            close = getattr(chunks, "close", None)
+            if close:
+                close()
+        message = SimpleNamespace(content="".join(parts))
+        return SimpleNamespace(choices=[SimpleNamespace(message=message, finish_reason=finish)], usage=usage,
+                               reasoning="".join(thought))
+
+    def _create(self, client: OpenAI, kwargs: dict, step_name: str, stream: bool = False):
         # Retry on 429 with exponential backoff (free-tier rate limits)
         for attempt in range(5):
             try:
-                return client.chat.completions.create(**kwargs)
+                return self._open(client, kwargs, stream)
             except RateLimitError:
                 if attempt == 4:
                     raise
@@ -240,7 +316,7 @@ class LLMClient:
                             print(f"  [{step_name}] prompt longer than estimated: retrying with max_tokens={room}",
                                   flush=True)
                             try:
-                                return client.chat.completions.create(**kwargs)
+                                return self._open(client, kwargs, stream)
                             except BadRequestError as e2:
                                 raise PromptTooLong(f"step '{step_name}': {str(e2)[:300]}") from e2
                     raise PromptTooLong(f"step '{step_name}': {msg[:300]}") from e
@@ -260,6 +336,7 @@ class LLMClient:
         response: str,
         usage,
         from_cache: bool = False,
+        reasoning: str = "",
     ) -> None:
         ts = int(time.time())
         log_path = self.transcript_dir / f"{step_name}_{ts}_{next(_SEQ):04d}.json"
@@ -268,6 +345,7 @@ class LLMClient:
             "temperature": temperature,
             "prompt": prompt,
             "response": response,
+            "reasoning": reasoning,
             "from_cache": from_cache,
             "usage": usage.model_dump() if usage and hasattr(usage, "model_dump") else None,
             "timestamp": ts,

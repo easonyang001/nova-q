@@ -213,6 +213,7 @@ def run_one(case, arm, budget, truth, out: Path):
         return finish(rec, out, client)
     data, prep = got
     rec["prep"] = {k: prep.get(k) for k in ("tools_used", "notes", "prep_log", "flags", "review_required", "sources",
+                                             "substitution",
                                              "n_variables", "n_constraints", "data_check")}
     raw_ir = stage("build_ir", lambda: ns["build_ir"](data))
 
@@ -241,7 +242,8 @@ def run_one(case, arm, budget, truth, out: Path):
     result = stage("solve", solve)          # also when build_ir failed: the preflight sees it and may route a repair
     if result is not None:
         rec["delivery"] = {k: result["delivery"].get(k) for k in ("status", "message", "solution_source", "quality_gap",
-                                                                  "objective", "baseline_objective")}
+                                                                  "objective", "baseline_objective", "review_required",
+                                                                  "formula_changes", "solver_raw")}
 
     # 5. independent judge, on the model and data the solution belongs to
     if result is not None and result.get("_final_code") != code:

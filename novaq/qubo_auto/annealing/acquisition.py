@@ -53,7 +53,7 @@ def prepare_real_data(code: str, spec: str, client, model: str, directory: Path,
             except Exception as e:
                 log(f"[資料] {path.name} 讀取失敗：{e}；嘗試其他來源")
         if tables:
-            log(f"[預處理] 第 {round_index + 1} 次，使用 {len(readable)} 份可讀資料")
+            log(f"[預處理] 搜尋第 {round_index + 1} 輪的資料，共 {len(readable)} 份可讀")
             provenance = [sources.get(p.name, {"title": p.name, "publisher": "使用者上傳"}) for p in readable]
             try:
                 adapter_code, data, errors, report = build_adapter(ns, tables, spec, client, model,
@@ -61,6 +61,17 @@ def prepare_real_data(code: str, spec: str, client, model: str, directory: Path,
                 atomic_write(directory / "_adapter.py", adapter_code)
                 if not errors:
                     report["sources"] = provenance
+                    named = opendata.requested_domains(spec)
+                    if named and not any(opendata.from_requested({"url": s_.get("url", ""), "page": s_.get("page", ""),
+                                                                    "source": s_.get("publisher", "")}, named)
+                                         for s_ in provenance):
+                        # the user named a source that was not found: the answer may still be useful, but it rests on
+                        # a substitute and must say so (OpenStreetMap food courts for hawker centres, 2026-10-22)
+                        used = ", ".join(sorted({str(s_.get("publisher") or s_.get("title")) for s_ in provenance}))
+                        report["substitution"] = {"requested": named, "used": used}
+                        report["review_required"] = list(report.get("review_required", [])) + [
+                            f"使用者指定的資料來源 {', '.join(named)} 沒有找到，改用 {used}（替代資料，需使用者確認）"]
+                        log(f"[資料] 指定來源 {', '.join(named)} 沒找到，改用替代資料：{used}（已標記需確認）")
                     atomic_write(cache_path, json.dumps(modeler.to_jsonable({"identity": identity, "files": file_versions,
                                  "data": data, "report": report}), ensure_ascii=False, allow_nan=False, default=str))
                     record_progress(directory.parent, "data", "ready")

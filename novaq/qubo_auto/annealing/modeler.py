@@ -234,6 +234,33 @@ def to_jsonable(obj: Any) -> Any:
     return obj
 
 
+def required_sets(ds: dict, data: dict, built: dict) -> list[str]:
+    """Reducible sets whose every member is forced into the solution by a hard constraint: for (nearly) every id, a
+    linear constraint '>= 1' or '= 1' over variables that all belong to that id."""
+    keys = built.get("variable_keys") or []
+    names = built.get("variable_names") or []
+    index = {str(n): i for i, n in enumerate(names)}
+    out = []
+    for set_name, d in (ds.get("sets") or {}).items():
+        ids = data.get(set_name)
+        if not d.get("reducible") or not isinstance(ids, list) or not ids:
+            continue
+        forced = set()
+        for c in built.get("constraints") or []:
+            if c.get("kind") != "linear" or c.get("sense") not in ("eq", "ge") or float(c.get("rhs", 0)) < 1:
+                continue
+            members = set()
+            for v, coef in (c.get("coeffs") or {}).items():
+                i = index.get(str(v), int(v) if str(v).isdigit() else None)
+                k = keys[i] if i is not None and i < len(keys) else {}
+                members.add(str((k or {}).get(set_name)) if float(coef) > 0 else None)
+            if len(members) == 1 and None not in members and "None" not in members:
+                forced |= members
+        if len(forced) >= 0.8 * len(ids):
+            out.append(set_name)
+    return out
+
+
 def validate(ns: dict[str, Any], small_size: int = 6, require_visualize: bool = False,
              strict_schema: bool = False) -> tuple[list[str], dict]:
     """Run the module on a small synthetic instance and check it. Returns (errors, report).
@@ -284,6 +311,13 @@ def validate(ns: dict[str, Any], small_size: int = 6, require_visualize: bool = 
             return errors, report
         if errors:
             return errors, report
+        if structured:
+            for name in required_sets(ds, data, built):
+                # every member must be chosen (visit each stop, assign each item): a reduced instance would drop real
+                # members (Melbourne marked its stations reducible, 2026-10-21) - the flag is removed, not obeyed
+                ds["sets"][name].pop("reducible", None)
+                report.setdefault("warnings", []).append(
+                    f"集合 {name} 的每個成員都必須被選到，已取消「可縮減」標記")
         if structured and ns.get("__source__"):
             unused = schema.unused_params(ds, ns["__source__"], data)
             if unused:

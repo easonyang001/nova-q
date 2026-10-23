@@ -219,3 +219,29 @@ def test_plan_mode_runs_the_agents_plan_through_the_tools(monkeypatch):
                                                        sources=[{"title": "sites", "url": "https://example.org/sites.csv"}])
     assert errors == [] and data["sites"] == ["A", "B", "C"] and len(data["dist"]) == 3
     assert steps == ["adapter_plan"] and report["adapter_mode"] == "plan"
+
+
+def test_model_sets_are_generated_by_the_system_and_need_a_size():
+    from qubo_auto.annealing import schema
+    ds = {"sets": {"sites": {"meaning": "stations", "source": "public"},
+                   "positions": {"meaning": "tour position", "source": "model", "size_of": "sites"}},
+          "params": {"lat": {"meaning": "latitude", "index": ["sites"], "type": "number", "source": "public",
+                             "unit": "deg_lat"}}}
+    assert not [e for e in schema.declaration_errors(ds) if "positions" in e]
+    out = schema.fill_model_sets(ds, {"sites": ["10", "25", "4"], "lat": [0, 0, 0], "positions": ["10", "25", "4"]})
+    assert out["positions"] == ["0", "1", "2"]                   # never the station ids (2026-10-21)
+    bad = {"sets": {"positions": {"meaning": "p", "source": "model"}}, "params": {}}
+    assert any("size_of" in e for e in schema.declaration_errors(bad))
+
+
+def test_sets_whose_every_member_is_required_lose_the_reducible_flag():
+    from qubo_auto.annealing import modeler as M
+    ds = {"sets": {"stops": {"meaning": "s", "source": "public", "reducible": {"method": "reduce_points", "weight": None}}}}
+    data = {"stops": ["a", "b", "c"]}
+    keys = [{"stops": s} for s in "abc"]
+    each_once = {"constraints": [{"kind": "linear", "coeffs": {str(i): 1}, "sense": "eq", "rhs": 1} for i in range(3)],
+                 "variable_keys": keys, "variable_names": ["0", "1", "2"]}
+    choose_two = {"constraints": [{"kind": "linear", "coeffs": {"0": 1, "1": 1, "2": 1}, "sense": "eq", "rhs": 2}],
+                  "variable_keys": keys, "variable_names": ["0", "1", "2"]}
+    assert M.required_sets(ds, data, each_once) == ["stops"]
+    assert M.required_sets(ds, data, choose_two) == []

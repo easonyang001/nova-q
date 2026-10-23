@@ -1156,3 +1156,24 @@ def test_data_scope_rules_lead_the_specification_for_the_data_agents():
                                                           "one place per name even with several AEDs"])
     text = spec_for_data(d)
     assert text.index("DATA SCOPE") < text.index("{") and "exclude 學校" in text and "one place per name" in text
+
+
+def test_slack_encoding_divides_by_the_gcd_and_stays_exact():
+    # costs that are multiples of 1,000 (NYC budget): 20 slack bits became 10, feasibility unchanged
+    from qubo_auto.annealing.encodings import LinearConstraint, enc_binary_slack, verify_encoding
+    c = LinearConstraint(name="budget", coeffs={0: 200000, 1: 150000, 2: 575000, 3: 450000, 4: 60000},
+                         sense="le", rhs=1000000)
+    enc = enc_binary_slack(c, next_aux=5)
+    assert len(enc.aux) == 8                                     # gcd 5,000: rhs 1,000,000 -> 200
+    rep = verify_encoding(c, enc, n_decision=5)
+    assert rep["checked"] and rep["passed"], rep
+    odd = LinearConstraint(name="b", coeffs={0: 4, 1: 6, 2: 10}, sense="le", rhs=13)   # gcd 2, rhs -> 6
+    rep = verify_encoding(odd, enc_binary_slack(odd, next_aux=3), n_decision=3)
+    assert rep["passed"], rep
+
+
+def test_reasoning_loop_detector():
+    from qubo_auto.llm_client import looping
+    block = "    *   `S0` at pos 0.\n    *   `S1` at pos 1.\n    *   `S2` at pos 2.\n    *   This is a closed loop.\n\n"
+    assert looping("Plan: positions x[i,t].\n" + block * 6)
+    assert not looping("Plan: positions x[i,t].\n" + block * 2 + "Now the distance terms between t and t+1.\n")
