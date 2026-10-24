@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/nova-q-banner.jpg" alt="NOVA-Q: Verified LLM Agents From Natural Language and Open Data to QAOA on CUDA-Q" width="80%">
+<img src="assets/nova-q-banner.jpg" alt="NOVA-Q: Verified LLM Agents From Natural Language and Open Data to QUBOs for Annealers and QAOA on CUDA-Q" width="80%">
 
 **N**atural-language → **O**pen-data → **V**erified **A**gents for **Q**uantum
 
@@ -49,7 +49,8 @@ acceptance judge scores each delivery against ground truth built directly from t
 
 - **End to end on real cities.** 15 of 18 runs across Taipei, London, Melbourne and New York pass the independent
   judge, using official open data and local models only (no cloud LLM). On a held-out test set built after freezing
-  the code (Singapore, Paris, Cambridge MA), 8 of 9 pass.
+  the code (Singapore, Paris, Cambridge MA), 8 of 9 pass; on a second one run as independent samples (Basel, Dublin,
+  Somerville), 4 of 9 pass. Its failures are documented run by run and fixed afterwards.
 - **Verification that catches real faults.** Injected harmful faults are caught 97/99 (data) and 66/78 (model); a
   checker from a second LLM family catches 98% of data faults versus 73% for the doer's own family. No valid plan was
   wrongly rejected (300/300).
@@ -57,10 +58,12 @@ acceptance judge scores each delivery against ground truth built directly from t
   maximises total votes funds 7,103 votes for the $1 M budget; the city's own rule, which funds projects in vote
   order, funds 5,381. The two rules pursue different goals; the point is that the delivered plan is the exact optimum
   of the objective the user stated.
-- **A real request solved end to end by QAOA on CUDA-Q.** New York's budget compiles to 25 qubits; 3 of 3 runs pass the
-  judge, each delivering QAOA's own optimal sample.
-- **One verified QUBO, five solvers.** Simulated annealing, simulated quantum annealing, the D-Wave Advantage QPU, a
-  GPU annealer and QAOA on CUDA-Q, compared on 48 instances with known optima.
+- **Real requests solved end to end by QAOA on CUDA-Q.** New York's budget (25 qubits): 3 of 3 pass the judge, each
+  with QAOA's own optimal sample; Cambridge's (26 qubits): 3 of 3 pass, 2.7% below the optimum; Somerville's
+  (28 qubits): 2 of 2 pass, 4.7% below.
+- **One verified model, six solvers.** On its QUBO: simulated annealing, simulated quantum annealing, the D-Wave
+  Advantage QPU, a GPU annealer and QAOA on CUDA-Q, compared on 48 instances with known optima. On its MILP form:
+  NVIDIA cuOpt, which proves the optimum of the agents' own models on 9 of 11 tasks.
 
 ## Motivation
 
@@ -135,6 +138,14 @@ The gates verify a solver-agnostic model. At the sizes used here a MILP solver f
 the reference for the judge and the solver study. Compiling the verified model to a QUBO lets the same model run
 unchanged on simulated, quantum and GPU annealers and on QAOA, so the quantum and GPU solvers are evaluated on exactly
 the problem the user asked for.
+
+### Why QAOA, when the annealers do better
+
+At these sizes simulated and simulated-quantum annealing reach lower energies than QAOA (median gap 0.008 and 0.001
+against 0.16 over 48 instances), and the end-to-end benchmark runs deliver with SA. QAOA is not presented as the
+faster solver. It is the gate-model path: the pipeline produces real-data, agent-built instances with known optima on
+which QAOA can be tracked as circuit depth and qubit counts grow, and the New York budget shows that a verified model
+runs end to end on QAOA at 25 qubits.
 
 ### From model to QUBO
 
@@ -222,6 +233,27 @@ The failed run found no official source and fell back to OpenStreetMap food cour
 centres); the judge caught it. All three Cambridge runs return the exact optimum (24,769 votes, versus 22,004 under the
 vote-order rule). Run-by-run notes: [results/e2e_test_RESULTS.md](novaq/results/e2e_test_RESULTS.md).
 
+### Second held-out test set
+
+Built and run the same way (code frozen at hash `e9f33f6315f8db90` before the reference answers were built), with one
+difference: every agent samples at temperature 0.7, so the three runs of a task are independent.
+
+| City and task | Problem type | Official source | Instance | Passed |
+|---|---|---|---|:---:|
+| Basel: AED inspection groups | balanced partition | opendata.swiss Defibrillatoren | 35 places, 5 groups | 0/3 |
+| Dublin: Dublinbikes station tour | travelling salesman | data.gov.ie | 9 stations | 2/3 |
+| Somerville, MA: participatory budget | knapsack | data.somervillema.gov | 20 proposals, $1 M | 2/3 |
+| **Total** | | | | **4/9** |
+
+The five failures have four causes, all in the pipeline rather than the solver: rows with the same place name but
+more than 150 m apart were not merged although the request said one name is one place (Basel, twice); model
+validation shrank its example to an empty instance and reported correct constraints as missing (Basel); a portal's
+internal row id became the proposal name (Somerville); and the Clarifier turned the landmark that only defines the
+area into the tour's start, against the user's answer (Dublin). Each is fixed generically after the test (name-only
+merging, validation on the full example, no portal row ids, a check of the draft against the user's answers, and the
+data cross-check now also covers data the model labels private). Post-fix runs are reported apart
+(`novaq/results/e2e_postfix2_SETTINGS.md`). Run-by-run notes: [results/e2e_test2_RESULTS.md](novaq/results/e2e_test2_RESULTS.md).
+
 ### Verification gates
 
 Injected harmful faults, 9–18 per type; doer Qwen3.6-35B-A3B, checker Gemma-4-31B-it.
@@ -264,9 +296,46 @@ divided by the gcd of its integer costs before slack encoding).
 About 77% of QAOA's 10,000 shots are feasible plans; the solve stage takes 130–140 s per run.
 Settings and run notes: `novaq/results/e2e_nycqaoa_SETTINGS.md`.
 
-### NVIDIA cuOpt on the same verified models
+The judged models of the other tasks that fit (30 qubits at most) were re-solved with the same QAOA loop, raw samples
+only (`novaq/scripts/experiments/agent_models_qaoa.py`):
 
-The verified instances were also solved with NVIDIA cuOpt 26.10 on one L40S (routing for the tours, MILP for the
+| Task | Qubits | Models | Passed (judge) | QAOA's best sample |
+|---|:---:|:---:|:---:|---|
+| Cambridge budget | 26 | 3 | 3/3 | 24,096 votes, 2.7% below the optimum (24,769); 88% of shots feasible |
+| Somerville budget | 28 | 2 | 2/2 | 98,167 points, 4.7% below the optimum (103,058); 85% of shots feasible |
+
+Every other task needs 57 to 756 qubits.
+
+### NVIDIA cuOpt on the agents' own models
+
+cuOpt does not take a QUBO, so every judged model was solved in its MILP form: the agent's verified IR (binary
+variables, linear constraints, linear and quadratic objective) with each product x<sub>i</sub>x<sub>j</sub> replaced by
+a continuous y<sub>ij</sub> under the standard linearisation (y ≤ x<sub>i</sub>, y ≤ x<sub>j</sub>, y ≥ x<sub>i</sub> + x<sub>j</sub> − 1).
+The MILP has exactly the feasible set and objective of the agent's model, and cuOpt's answer is judged by the same
+frozen judge. Time limit 60 s, 300 s for the two most quadratic models; cuOpt 26.10 on one L40S
+(`novaq/scripts/experiments/agent_models_cuopt.py`).
+
+| Task | Variables | Judged models | cuOpt (GPU) |
+|---|:---:|:---:|---|
+| Taipei EV chargers | 106 | 20 | proven optimum = SA's answer, 4–29 s |
+| Taipei bike-station tour | 324 | 12 | time limit; at 300 s 10/12 equal SA's answer, 2 are 2.0% longer |
+| Taipei AED zones | 144 | 8 | time limit; at 300 s 7/8 equal SA's answer, 1 is 0.9% higher |
+| London ambulances | 756 | 3 | proven optimum = SA's answer, 1–4 s |
+| Melbourne bike-station tour | 121 | 3 | proven optimum = SA's answer, 13–19 s |
+| New York budget | 15 | 9 | proven optimum = SA's answer, 1–22 s |
+| Singapore hawker-centre zones | 36 | 2 | proven optimum, **5.8% better than SA's delivery** (true metric), < 1 s |
+| Paris Vélib' tour | 100 | 4 | proven optimum = SA's answer, 4 s |
+| Cambridge budget | 16 | 3 | proven optimum = SA's answer, 13 s |
+| Dublin bike-station tour | 81 | 2 | proven optimum = SA's answer, 1–2 s |
+| Somerville budget | 20 | 2 | proven optimum = SA's answer, < 1 s |
+
+SA's deliveries include a classical exchange polish; cuOpt's numbers are its own output. The linearised tour and
+grouping models are hard for a MILP solver (thousands of products), which is where the annealers do well.
+
+### NVIDIA cuOpt on the same instances, standard formulations
+
+cuOpt does not take a QUBO. The same real-city instances (the entities and distances the judge uses) were written as
+standard routing and MILP formulations and solved with NVIDIA cuOpt 26.10 on one L40S (routing for the tours, MILP for the
 rest), and exactly with HiGHS MILP on the CPU. Script: `novaq/scripts/experiments/cuopt_compare.py`.
 
 | Task | Size | cuOpt (GPU) | Exact (HiGHS, CPU) | Pipeline deliveries (SA on the QUBO) |
@@ -283,13 +352,14 @@ rest), and exactly with HiGHS MILP on the CPU. Script: `novaq/scripts/experiment
 
 | Problem | Size | cuOpt (GPU) | CPU |
 |---|---|---|---|
-| Paris Vélib' tour | 50 / 100 / 200 / 400 / 800 stations | 13.1 / 25.4 / 50.7 / 100.3 / 214.5 km | nearest neighbour + 2-opt: 1.2–3.4% longer; exact MILP: no tour beyond 50 stations |
+| Paris Vélib' tour | 50 / 100 / 200 / 400 / 800 stations | 13.1 / 25.4 / 50.7 / 100.3 / 214.5 km | nearest neighbour + 2-opt: 1.2–3.4% longer, but done in < 0.1 s (cuOpt used its full 10–80 s limit); exact MILP: no tour beyond 50 stations |
 | p-median, Camden + Islington | 256 areas, p = 8 (≈66k binaries), 60 s | cost 3.38e8 | HiGHS: 3.90e8 (15% higher) |
 | Max coverage, all Taipei villages | 456 villages, k = 5, 60 s | optimum, 25.5 s | HiGHS: optimum, < 0.1 s |
 
 cuOpt confirms every delivered answer. At the small sizes a CPU MILP solver is faster: cuOpt's routing runs to its time
-limit (5 s) and its MIP workspace used managed memory because the LLM servers occupy most of each GPU. cuOpt's
-advantage is expected on city-scale instances, which is future work.
+limit (5 s) and its MIP workspace used managed memory because the LLM servers occupy most of each GPU. At city scale
+cuOpt finds shorter tours than the CPU heuristic and a 13% cheaper p-median than HiGHS in the same 60 s; on coverage
+the CPU stays faster.
 
 ## Hardware and software
 
@@ -308,8 +378,8 @@ constraint-preserving QAOA mixers.
 - **Scale.** The solver comparison stops at 27 qubits so that optima are known; one L40S simulates at most 32 qubits.
 - **Larger instances.** City-scale versions of the tasks pass far less often; the main failures are in data
   preparation.
-- **Repeats.** Runs use temperature 0, so the three repeats of a task often share the same specification and model;
-  they are not fully independent samples.
+- **Repeats.** The development tasks and the first test set ran at temperature 0, so their three repeats often share
+  the same specification and model; only the second test set (temperature 0.7) has independent repeats.
 - **Judge.** Ground truth and judge are written by the authors; they are frozen before the runs and published here for
   inspection.
 
