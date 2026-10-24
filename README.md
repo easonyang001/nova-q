@@ -279,7 +279,15 @@ rest), and exactly with HiGHS MILP on the CPU. Script: `novaq/scripts/experiment
 | Taipei EV chargers (coverage) | 53 villages, k = 3 | optimum, 20.6 s | 0.01 s | optimum |
 | London ambulances (p-median) | 27 areas, p = 3 | optimum, 10.2 s | 0.02 s | optimum |
 
-cuOpt confirms every delivered answer. At these sizes a CPU MILP solver is faster: cuOpt's routing runs to its time
+**At city scale** (`novaq/scripts/experiments/cuopt_scale.py`, same time limit for GPU and CPU):
+
+| Problem | Size | cuOpt (GPU) | CPU |
+|---|---|---|---|
+| Paris Vélib' tour | 50 / 100 / 200 / 400 / 800 stations | 13.1 / 25.4 / 50.7 / 100.3 / 214.5 km | nearest neighbour + 2-opt: 1.2–3.4% longer; exact MILP: no tour beyond 50 stations |
+| p-median, Camden + Islington | 256 areas, p = 8 (≈66k binaries), 60 s | cost 3.38e8 | HiGHS: 3.90e8 (15% higher) |
+| Max coverage, all Taipei villages | 456 villages, k = 5, 60 s | optimum, 25.5 s | HiGHS: optimum, < 0.1 s |
+
+cuOpt confirms every delivered answer. At the small sizes a CPU MILP solver is faster: cuOpt's routing runs to its time
 limit (5 s) and its MIP workspace used managed memory because the LLM servers occupy most of each GPU. cuOpt's
 advantage is expected on city-scale instances, which is future work.
 
