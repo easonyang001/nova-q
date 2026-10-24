@@ -1,0 +1,295 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 519.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 719.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 451.8
+  },
+  "data": {
+   "ok": true,
+   "seconds": 725.0
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 5.7
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Unique AED location in Basel 4051",
+    "source": "public",
+    "reducible": null
+   },
+   "teams": {
+    "meaning": "Inspection team identifier",
+    "source": "model",
+    "size_of": "num_teams"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "site_name": {
+    "meaning": "Name of the AED location",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   },
+   "num_teams": {
+    "meaning": "Number of inspection teams",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   }
+  }
+ },
+ "data_found": [
+  "Defibrillatoren.geojson",
+  "Fischereistatistik_Basel-Stadt_csv.csv",
+  "Open_Data_Basel-Stadt_Mastodon-Posts_csv.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "merge_same_place",
+   "normalize_text"
+  ],
+  "notes": "",
+  "prep_log": "**資料來源**\n\n- Defibrillatoren（opendata.swiss） <https://opendata.swiss/de/dataset/defibrillatoren>，授權：待確認，取得 2026-10-24T15:46:10.803579+00:00\n- Fischereistatistik Basel-Stadt — csv（catalogue opendata.swiss） <https://opendata.swiss/en/dataset/fischereistatistik-basel-stadt>，授權：待確認，取得 2026-10-24T15:46:19.165724+00:00\n- Open Data Basel-Stadt Mastodon-Posts — csv（catalogue opendata.swiss） <https://opendata.swiss/en/dataset/open-data-basel-stadt-mastodon-posts>，授權：待確認，取得 2026-10-24T15:46:19.994736+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| keep {\"column\": \"plz\", \"values\": [4051]} | 235 | 44 |  |\n| 合併同名的同一地點（只看名稱，座標取平均） | 44 | 35 | 合併 9 筆 |\n| drop_missing {\"columns\": [\"lat\", \"lon\"]} | 35 | 35 |  |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "site_name: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, num_teams, site_name, sites, teams"
+  ],
+  "sources": [
+   {
+    "title": "Defibrillatoren",
+    "url": "https://opendata.swiss/de/dataset/defibrillatoren",
+    "resource_url": "https://data-bs.ch/stata/fgi/stac/DEFI_Defibrillatoren.geojson",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T15:46:10.803579+00:00",
+    "sha256": "d24860618fbad67d0ea58a646a72c43013300fe8dd4f6392767a0306cc667e4c",
+    "bytes": 116986
+   },
+   {
+    "title": "Fischereistatistik Basel-Stadt — csv",
+    "url": "https://opendata.swiss/en/dataset/fischereistatistik-basel-stadt",
+    "resource_url": "https://data.bs.ch/api/v2/catalog/datasets/100193/exports/csv?use_labels=true",
+    "publisher": "catalogue opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T15:46:19.165724+00:00",
+    "sha256": "382a3e6fb51d671df95d182668663eebe7052eb06af77ac99c704ed404739b2c",
+    "bytes": 37384542
+   },
+   {
+    "title": "Open Data Basel-Stadt Mastodon-Posts — csv",
+    "url": "https://opendata.swiss/en/dataset/open-data-basel-stadt-mastodon-posts",
+    "resource_url": "https://data.bs.ch/api/v2/catalog/datasets/100468/exports/csv?use_labels=true",
+    "publisher": "catalogue opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T15:46:19.994736+00:00",
+    "sha256": "558ea9c4262620542bcc3c2d0fc8380c89622e952830b4b13da78d331a360efe",
+    "bytes": 23262
+   }
+  ],
+  "substitution": null,
+  "n_variables": 175,
+  "n_constraints": 40,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 35
+    },
+    "totals": {
+     "lat": 1664.4217959999999,
+     "lon": 265.566966
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "7f55c7116e9f9524fd95338c",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 54,
+    "invalid": 54,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "7f55c7116e9f9524fd95338c",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.0570263606380064,
+  "objective": 26503.5,
+  "baseline_objective": 28106.3,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 51698.0,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 35,
+    "mapped": 35,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 35,
+    "meets_original_requirements": true,
+    "true_quality": 26503.034781062073,
+    "reference_quality": 26503.03478106207,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 139696,
+  "solver_calls": 3
+ },
+ "seconds": 2422.6
+}

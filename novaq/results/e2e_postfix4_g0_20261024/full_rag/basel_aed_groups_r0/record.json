@@ -1,0 +1,109 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 578.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 924.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 191.5
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1490.8,
+   "error": "ValueError: data preparation failed: RuntimeError: ValueError: DATA GAP: AED location list for Basel PLZ 4051 not found in provided tables.\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/novaq/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/novaq/qubo_auto/annealing/adapter.py\", line 211, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 53, in load_data\nValueError: DATA GAP: AED location list for Basel PLZ 4051 not found in provided tables.\n | The tables dict has exactly these keys: ['Einzugsgebiet_der_ARA_Basel_csv']"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment (sites x teams). For N=150, vars=750. Fits SA backend.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Unique AED locations in Basel PLZ 4051",
+    "source": "private"
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": 5
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the AED location",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "private"
+   },
+   "lat": {
+    "meaning": "Latitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Haversine distance between two sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance matrix"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Einzugsgebiet_der_ARA_Basel_csv.csv"
+ ],
+ "cost": {
+  "llm_tokens": 149878,
+  "solver_calls": null
+ },
+ "seconds": 3184.7
+}

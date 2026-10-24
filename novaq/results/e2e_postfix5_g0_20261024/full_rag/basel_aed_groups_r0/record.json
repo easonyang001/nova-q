@@ -1,0 +1,111 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 636.9
+  },
+  "model": {
+   "ok": true,
+   "seconds": 554.1
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 152.7
+  },
+  "data": {
+   "ok": false,
+   "seconds": 1573.0,
+   "error": "ValueError: data preparation failed: FORBIDDEN: deduplicating by coordinates alone; different places in one building share coordinates. Use prep.merge_same_place(df, name_col, lat_col, lon_col) (same name AND close together)"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment (N locations * 5 teams). For N=100, 500 binary variables. Quadratic objective for intra-group distances. Fits SA backend easily.",
+ "schema": {
+  "sets": {
+   "locations": {
+    "meaning": "Unique AED inspection locations in PLZ 4051",
+    "source": "private"
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": "num_teams"
+   }
+  },
+  "params": {
+   "num_teams": {
+    "meaning": "Number of inspection teams",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "lat": {
+    "meaning": "Latitude of the location",
+    "index": [
+     "locations"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the location",
+    "index": [
+     "locations"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Haversine distance between two locations",
+    "index": [
+     "locations",
+     "locations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "all-pairs distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Defibrillatoren.geojson",
+  "Gemeindefinanzen_Nettoschuld_pro_Einwohner.csv",
+  "Wasserverbrauch_im_Kanton_Basel-Stadt_und_in_Binningen_seit_.csv"
+ ],
+ "cost": {
+  "llm_tokens": 149194,
+  "solver_calls": null
+ },
+ "seconds": 2916.7
+}

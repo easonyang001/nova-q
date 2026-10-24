@@ -1,0 +1,276 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 755.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 798.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 112.0
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1591.8
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 3.3
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Unique AED locations in Basel 4051",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": 5
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "unit": "deg_lat",
+    "source": "public"
+   },
+   "lon": {
+    "meaning": "Longitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "unit": "deg_lon",
+    "source": "public"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between two sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "unit": "m",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "straight line distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "AED-Standorte.json",
+  "AED-Standorte.zip",
+  "Defibrillatoren.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "drop_stray_points",
+   "haversine_matrix",
+   "merge_same_place"
+  ],
+  "notes": "\n1. Filtered the 'Defibrillatoren' table to keep only locations within Basel postal code (PLZ) 4051.\n2. Cleaned coordinates using 'prep.drop_stray_points' to remove invalid entries.\n3. Applied 'prep.merge_same_place' using positional arguments (to avoid TypeError) on the 'standort' column to treat multiple AEDs at the same location as a single site (max_m=150).\n4. Used the 'standort' name as the primary identifier for the 'sites' set, ensuring absolute uniqueness by appending a sequence number where names overlap.\n5. Computed the straight-line distance matrix using 'prep.haversine_matrix' and converted it into a sparse list of [site_i, site_j, value] as required.\n",
+  "prep_log": "**資料來源**\n\n- AED-Standorte（opendata.swiss） <https://opendata.swiss/de/dataset/aed-standorte>，授權：待確認，取得 2026-10-24T13:05:17.879939+00:00\n- AED-Standorte（opendata.swiss） <https://opendata.swiss/de/dataset/aed-standorte>，授權：待確認，取得 2026-10-24T13:05:17.157591+00:00\n- Defibrillatoren（opendata.swiss） <https://opendata.swiss/en/dataset/defibrillatoren>，授權：待確認，取得 2026-10-24T13:05:13.240650+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter by PLZ 4051 | 235 | 44 | Kept only sites in Basel 4051 |\n| 移除離群座標（距中心 > 20 km） | 44 | 44 | 移除 0 筆，例：[] |\n| Drop stray points | 44 | 44 | Removed invalid coordinates |\n| 合併同名且相距 150 m 內的同一地點 | 44 | 38 | 合併 6 筆 |\n| Merge same places | 44 | 38 | Merged multiple AEDs at same location into one site |",
+  "flags": [],
+  "review_required": [
+   "sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist: ['Straight-line distance used instead of road distance as per specification.']",
+   "adapter 沒有聲明這些欄位的來源與單位：teams",
+   "獨立資料核對不一致：set 'sites' has 38 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 40. Check which rows you keep and whether duplicates of the same place are merged"
+  ],
+  "sources": [
+   {
+    "title": "AED-Standorte",
+    "url": "https://opendata.swiss/de/dataset/aed-standorte",
+    "resource_url": "https://geofiles.be.ch/geoportal/pub/stac/de/AEDSTO/collection.json?.language=de-CH",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T13:05:17.879939+00:00",
+    "sha256": "7a268fa65da224fc7c67bdeb767bc51e81255d599f4c603f4f067fbb45457f97",
+    "bytes": 2318
+   },
+   {
+    "title": "AED-Standorte",
+    "url": "https://opendata.swiss/de/dataset/aed-standorte",
+    "resource_url": "https://geofiles.be.ch/geoportal/pub/download/AEDSTO/aedsto.zip",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T13:05:17.157591+00:00",
+    "sha256": "126fe1840e3f9aba153209e7dfcfc99e156b22d39343a44115e94a28a88bd7eb",
+    "bytes": 8884436
+   },
+   {
+    "title": "Defibrillatoren",
+    "url": "https://opendata.swiss/en/dataset/defibrillatoren",
+    "resource_url": "https://data-bs.ch/stata/fgi/stac/DEFI_Defibrillatoren.geojson",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T13:05:13.240650+00:00",
+    "sha256": "d24860618fbad67d0ea58a646a72c43013300fe8dd4f6392767a0306cc667e4c",
+    "bytes": 116986
+   }
+  ],
+  "substitution": null,
+  "n_variables": 190,
+  "n_constraints": 43,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 40
+    },
+    "totals": {}
+   },
+   "issues": [
+    "set 'sites' has 38 entities, but an independent computation from the raw tables and the specification's filters (area, category, period, level, one entity per real place) expects 40. Check which rows you keep and whether duplicates of the same place are merged"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "a264097a70a5b96fb1f23d7d",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 55,
+    "invalid": 55,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "a264097a70a5b96fb1f23d7d",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.11359986053067302,
+  "objective": 50772.64500678719,
+  "baseline_objective": 57279.59952396209,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 50772.64500678719,
+   "polished": false
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 38,
+    "mapped": 35,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [
+     "MAB Musikakademie_1",
+     "Departement Geschichte_1",
+     "Theologische Fakultät_1"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [
+     "Departement Geschichte"
+    ],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "structure": "38 decision entities but only 35 map to real ones: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 35,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 26503.03478106207
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 192751,
+  "solver_calls": 3
+ },
+ "seconds": 3261.5
+}
