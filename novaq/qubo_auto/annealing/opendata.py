@@ -90,6 +90,8 @@ def download(url: str, dest: Path, fmt: str = "", name: str = "") -> Path:
     if head.startswith((b"<!doctype html", b"<html")) or b"<head" in head[:300]:
         # moved or retired files often redirect to the publisher's home page (Berlin LOR zip, 2026-10-12)
         raise ValueError(f"the link returned a web page, not a data file: {url}")
+    if is_metadata_json(raw):
+        raise ValueError(f"the link returned the dataset's column descriptions, not its data: {url}")
     ext = {"CSV": ".csv", "JSON": ".json", "GEOJSON": ".geojson", "XLSX": ".xlsx", "XLS": ".xls",
            "SHP": ".zip", "ZIP": ".zip"}.get(fmt.upper()) or (".zip" if raw[:2] == b"PK" and "sheet" not in ctype else None) or (
         ".json" if "json" in ctype else ".xlsx" if "spreadsheet" in ctype else ".csv")
@@ -265,6 +267,25 @@ def scout(spec_text: str, schema: dict, client, model: str) -> dict:
     return {"plan": plan, "candidates": list(unique.values())}
 
 
+# links that describe a dataset instead of holding it: Socrata column schemas and view records, DCAT catalogues
+METADATA_URL = re.compile(r"(/columns\.json$|/api/views/[\w-]+\.json$|/data\.json$|/metadata\.json$)", re.I)
+
+
+def is_metadata_json(raw: bytes) -> bool:
+    """A JSON file that lists a dataset's columns (fieldName / dataTypeName ...) rather than its rows: the NYC budget
+    run downloaded Socrata's columns.json next to the data (2026-10-23)."""
+    try:
+        doc = json.loads(raw[:2_000_000])
+    except Exception:
+        return False
+    if isinstance(doc, dict) and isinstance(doc.get("columns"), list) and "rows" not in doc and "data" not in doc \
+            and "features" not in doc:
+        doc = doc["columns"]
+    return (isinstance(doc, list) and len(doc) > 0 and all(isinstance(d, dict) for d in doc[:20])
+            and sum({"fieldName", "dataTypeName"} <= set(d) or {"name", "dataTypeName"} <= set(d)
+                    for d in doc[:20]) >= min(3, len(doc)))
+
+
 def resources_from_page(page):
     """Discover actual download links from a fetched publisher page, never guessed URLs."""
     import hashlib
@@ -289,7 +310,7 @@ def resources_from_page(page):
     for link in soup.find_all("a", href=True):
         url = urljoin(response.url, link["href"])
         suffix = Path(urlparse(url).path).suffix.lower().lstrip(".").upper()
-        if suffix not in READABLE or url in seen:
+        if suffix not in READABLE or url in seen or METADATA_URL.search(urlparse(url).path):
             continue
         seen.add(url)
         candidates.append({"id": "web-" + hashlib.sha256(url.encode()).hexdigest()[:12],

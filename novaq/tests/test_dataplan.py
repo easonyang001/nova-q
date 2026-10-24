@@ -139,3 +139,13 @@ def test_named_portals_are_recognised_and_substitutes_are_detected():
     assert requested_domains("請用 NYC Open Data 的資料，聯絡 a@b.com") == []
     assert from_requested({"url": "https://api-open.data.gov.sg/v1/public/api/datasets/d_1/poll-download"}, ["data.gov.sg"])
     assert not from_requested({"source": "OpenStreetMap", "url": ""}, ["data.gov.sg"])
+
+
+def test_dataset_metadata_is_not_taken_for_data():
+    import json as _json
+    from qubo_auto.annealing.opendata import is_metadata_json, METADATA_URL
+    cols = [{"id": i, "name": n, "dataTypeName": "text", "fieldName": n.lower()} for i, n in enumerate(["A", "B", "C", "D"])]
+    rows = [{"vote_year": "2017", "council_district": "3", "votes": "1405"}] * 4
+    assert is_metadata_json(_json.dumps(cols).encode())
+    assert not is_metadata_json(_json.dumps(rows).encode())
+    assert METADATA_URL.search("/api/views/wwhr-5ven/columns.json") and not METADATA_URL.search("/api/views/wwhr-5ven/rows.json")
