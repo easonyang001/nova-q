@@ -75,3 +75,12 @@ def test_draft_contradicting_the_user_is_redrafted(monkeypatch):
     s.rounds.append({"questions": [], "answers": "any station can be the start"})
     s = clarify.step(s, Fake(), "m", web=False)
     assert drafts == [False, True] and s.draft.assumptions == ["tour can start at any station"]
+
+
+def test_data_check_compares_sets_read_from_tables_whatever_their_source_label():
+    from qubo_auto.annealing.datacheck import compare
+    ds = {"sets": {"sites": {"meaning": "places", "source": "private"},
+                   "teams": {"meaning": "teams", "source": "model", "size_of": 5}}, "params": {}}
+    data = {"sites": [str(i) for i in range(38)], "teams": [str(i) for i in range(5)]}
+    assert compare({"counts": {"sites": 35}}, data, ds)              # open data labelled "private": still checked
+    assert not compare({"counts": {"teams": 4}}, data, ds)           # model sets are not the checker's business

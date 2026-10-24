@@ -77,13 +77,18 @@ def build(spec_text: str, ds: dict, tables: dict, client, model: str, attempts: 
     return code, {}, errors
 
 
+TABLE_SOURCES = ("public", "private")
+
+
 def compare(expected: dict, data: dict, ds: dict) -> list[str]:
     """Disagreements between the independent expectation and the adapter's output."""
     issues = []
     sets = ds.get("sets", {}) if schema.is_structured(ds) else {}
     params = ds.get("params", {}) if schema.is_structured(ds) else {}
     for name, n in (expected.get("counts") or {}).items():
-        if name not in sets or sets[name].get("source") != "public" or sets[name].get("reducible") \
+        # public and private sets both come from the tables the checker also read ("private" for downloaded open
+        # data hid a 38-vs-35 mismatch the checker had found, Basel 2026-10-24); user / mock / model sets do not
+        if name not in sets or sets[name].get("source") not in TABLE_SOURCES or sets[name].get("reducible") \
                 or not isinstance(data.get(name), list):
             continue
         try:
@@ -100,7 +105,7 @@ def compare(expected: dict, data: dict, ds: dict) -> list[str]:
                           f"real place) expects {n}. Check which rows you keep and whether duplicates of the same "
                           f"place are merged")
     for name, total in (expected.get("totals") or {}).items():
-        if name not in params or params[name].get("source") != "public" or data.get(name) is None:
+        if name not in params or params[name].get("source") not in TABLE_SOURCES or data.get(name) is None:
             continue
         try:
             total = float(total)
