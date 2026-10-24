@@ -17,7 +17,8 @@ TRUTHS = [ROOT / "results/acceptance_truth/truth_20261011.json", ROOT / "results
           ROOT / "results/acceptance_truth/truth_melbourne_20261021.json",
           ROOT / "results/acceptance_truth/truth_basel_20261021.json",
           ROOT / "results/acceptance_truth/truth_nyc_pb_20261022.json",
-          ROOT / "results/acceptance_truth/truth_test_20261022.json"]
+          ROOT / "results/acceptance_truth/truth_test_20261022.json",
+          ROOT / "results/acceptance_truth/truth_test2_20261024.json"]
 
 
 def main(tag: str):

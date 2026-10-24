@@ -161,6 +161,10 @@ class LLMClient:
         json_mode: bool = False,
         max_tokens: int | None = None,
     ) -> str:
+        if os.environ.get("LLM_TEMPERATURE"):
+            # one sampling temperature for every agent (repeats at temperature 0 share nearly the same spec and model,
+            # so they are not independent samples; a test set run at e.g. 0.7 makes them so)
+            temperature = float(os.environ["LLM_TEMPERATURE"])
         explicit, model = split_model(model)
         provider = explicit or self.provider
         if provider == "local" and not explicit and os.environ.get("LLM_MODEL"):

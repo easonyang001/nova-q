@@ -398,10 +398,12 @@ CASES = {"ev_chargers": Chargers, "youbike_tour": Tour, "aed_groups": Groups,
          "berlin_playgrounds_s": NewCoverage, "berlin_playgrounds_l": NewCoverage,
          "melbourne_bike_tour": Tour, "basel_aed_groups": Groups, "nyc_pb_budget": Budget,
          # test set (2026-10-22, after the code freeze): existing judges, new cities and data
-         "sg_hawker_groups": Groups, "paris_velib_tour": Tour, "cambridge_pb_budget": Budget}
-TOUR_PREFIXES = ("youbike_tour", "melbourne_bike_tour", "paris_velib_tour")
+         "sg_hawker_groups": Groups, "paris_velib_tour": Tour, "cambridge_pb_budget": Budget,
+         # second held-out set (2026-10-24)
+         "dublin_bike_tour": Tour, "somerville_pb_budget": Budget}
+TOUR_PREFIXES = ("youbike_tour", "melbourne_bike_tour", "paris_velib_tour", "dublin_bike_tour")
 GROUP_PREFIXES = ("aed_groups", "basel_aed_groups", "sg_hawker_groups")
-BUDGET = ("nyc_pb_budget", "cambridge_pb_budget")
+BUDGET = ("nyc_pb_budget", "cambridge_pb_budget", "somerville_pb_budget")
 SELECT_K = ("ev_chargers", "ev_chargers_s", "london_ambulance_s", "london_ambulance_l", "berlin_playgrounds_s",
             "berlin_playgrounds_l")
 

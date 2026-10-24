@@ -85,6 +85,7 @@ def manifest(cases, truth_paths):
             "adapter_mode": os.environ.get("QUBO_ADAPTER_MODE"), "backend": os.environ.get("QUBO_BACKEND"), "checker_model": os.environ.get("LLM_MODEL_CHECKER"),
             "checker_thinking": os.environ.get("LLM_ENABLE_THINKING_LOCAL2", "(default off)"),
             "max_completion_tokens": os.environ.get("LLM_MAX_COMPLETION_TOKENS", "(default)"),
+            "temperature": os.environ.get("LLM_TEMPERATURE", "0 (per call)"),
             "budget": cases["budget"], "started": time.strftime("%Y-%m-%d %H:%M:%S")}
 
 

@@ -144,6 +144,22 @@
    "test_set": true,
    "sentence": "我是麻州劍橋市的參與式預算辦公室。第 7 屆（FY22）參與式預算有 52.5 萬美元，要從該屆選票上的提案中選出要撥款的一組，總經費不能超過 52.5 萬美元，被選中提案的總得票數越多越好。請用劍橋市開放資料（data.cambridgema.gov）的 Participatory Budgeting Final Ballot Projects 資料。",
    "answers": "範圍是該資料中 PB Cycle 為 7 的全部提案（不論當年是否勝出）；每個提案只能整案撥款或不撥款；經費和得票數都用資料裡的數字；只需要一組方案。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "dublin_bike_tour",
+   "size": "small",
+   "country": "IE",
+   "test_set": 2,
+   "sentence": "我要排一條都柏林 Dublinbikes 共享單車站巡檢路線：Connolly 火車站 600 公尺內的所有站點，每站走訪一次後回到起點，總距離越短越好。站點位置請用愛爾蘭政府開放資料（data.gov.ie）的 dublinbikes 資料。",
+   "answers": "範圍是以 Connolly 火車站（緯度 53.3509、經度 -6.2500）為中心、直線距離 600 公尺內的全部站點；距離用經緯度算的直線距離；起點可以是任一站；只需要一條路線。其他問題請用你的預設，我接受你的假設。"
+  },
+  {
+   "id": "somerville_pb_budget",
+   "size": "small",
+   "country": "US",
+   "test_set": 2,
+   "sentence": "我是麻州薩默維爾市的參與式預算辦公室。2023 年參與式預算有 100 萬美元，要從選票上的提案中選出要撥款的一組，總經費不能超過 100 萬美元，被選中提案的總分（Total.Score，排序投票的加權分數）越高越好。請用薩默維爾市開放資料（data.somervillema.gov）的 Participatory Budgeting Voting Results 資料。",
+   "answers": "範圍是該資料中 Year 為 2023 的全部提案；每個提案只能整案撥款或不撥款；經費和總分都用資料裡的數字；只需要一組方案。其他問題請用你的預設，我接受你的假設。"
   }
  ],
  "arms": {

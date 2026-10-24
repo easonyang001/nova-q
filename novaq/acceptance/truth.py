@@ -484,11 +484,58 @@ def test_set(raw: str, out: str):
           f"{t['cambridge_pb_budget']['city_rule']['votes']:.0f}")
 
 
+def test_set2(raw: str, out: str):
+    """Second held-out set (built after the 2026-10-24 freeze): Dublin bike tour and Somerville budget (Basel AED groups
+    uses truth_basel_20261021.json)."""
+    import itertools as it
+    raw = Path(raw)
+    t = {}
+    g = json.loads((raw / "dublinbikes_stations.geojson").read_text(encoding="utf-8"))
+    rows = []
+    for f in g["features"]:
+        lon, lat = f["geometry"]["coordinates"][:2]
+        d = float(_hav(lat, lon, 53.3509, -6.2500))
+        rows.append({"sno": str(f["properties"].get("station_id")), "sna": str(f["properties"].get("name")),
+                     "lat": lat, "lon": lon, "dist_m": round(d, 1)})
+    t["dublin_bike_tour"] = {"centre": [53.3509, -6.2500], "radius_m": 600,
+                             "stations": [r for r in rows if r["dist_m"] <= 590],
+                             "optional": [r for r in rows if 590 < r["dist_m"] <= 610],
+                             "snapshot": "data.smartdublin.ie stations.geojson 2026-10-24", "bbox": [53.2, -6.5, 53.5, -6.0]}
+    d = pd.read_csv(raw / "somerville_pb.csv")
+    d = d[d["Year"] == 2023]
+    proj = [{"number": "", "title": str(r["Project"]).strip(), "cost": float(r["Cost"]), "votes": float(r["Total.Score"]),
+             "winner": 0} for _, r in d.iterrows()]            # "votes" holds the ballot's Total.Score
+    budget = 1_000_000
+    best = (-1.0, ())
+    for k in range(len(proj) + 1):
+        for c in it.combinations(range(len(proj)), k):
+            if sum(proj[i]["cost"] for i in c) <= budget:
+                v = sum(proj[i]["votes"] for i in c)
+                if v > best[0]:
+                    best = (v, c)
+    greedy, spent = [], 0.0
+    for i in sorted(range(len(proj)), key=lambda i: -proj[i]["votes"]):
+        if spent + proj[i]["cost"] <= budget:
+            greedy.append(i); spent += proj[i]["cost"]
+    t["somerville_pb_budget"] = {"projects": proj, "n_projects": len(proj), "budget": budget,
+                                 "optimum": {"votes": best[0], "projects": list(best[1]),
+                                             "cost": sum(proj[i]["cost"] for i in best[1])},
+                                 "city_rule": {"votes": sum(proj[i]["votes"] for i in greedy), "projects": greedy,
+                                               "cost": spent},
+                                 "bbox": [42.37, -71.14, 42.42, -71.07]}
+    Path(out).write_text(json.dumps(t, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"dublin_bike_tour: {len(t['dublin_bike_tour']['stations'])} stations (+{len(t['dublin_bike_tour']['optional'])} "
+          f"optional); somerville_pb_budget: {len(proj)} projects, optimum {best[0]:.0f} points / "
+          f"${t['somerville_pb_budget']['optimum']['cost']:,.0f}, score-order rule {t['somerville_pb_budget']['city_rule']['votes']:.0f}")
+
+
 if __name__ == "__main__":
     if sys.argv[1] == "intl":
         intl(*sys.argv[2:4])
     elif sys.argv[1] == "basel":
         basel_aed(*sys.argv[2:4])
+    elif sys.argv[1] == "test_set2":
+        test_set2(*sys.argv[2:4])
     elif sys.argv[1] == "test_set":
         test_set(*sys.argv[2:4])
     elif sys.argv[1] == "nyc_pb":

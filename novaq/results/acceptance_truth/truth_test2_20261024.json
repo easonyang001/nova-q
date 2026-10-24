@@ -1,0 +1,262 @@
+{
+ "dublin_bike_tour": {
+  "centre": [
+   53.3509,
+   -6.25
+  ],
+  "radius_m": 600,
+  "stations": [
+   {
+    "sno": "109",
+    "sna": "BUCKINGHAM STREET LOWER",
+    "lat": 53.35333251953125,
+    "lon": -6.249319076538086,
+    "dist_m": 274.2
+   },
+   {
+    "sno": "115",
+    "sna": "KILLARNEY STREET",
+    "lat": 53.35484313964844,
+    "lon": -6.247579097747803,
+    "dist_m": 467.0
+   },
+   {
+    "sno": "16",
+    "sna": "GEORGES QUAY",
+    "lat": 53.34750747680664,
+    "lon": -6.25219202041626,
+    "dist_m": 404.3
+   },
+   {
+    "sno": "23",
+    "sna": "CUSTOM HOUSE",
+    "lat": 53.34828186035156,
+    "lon": -6.254357814788818,
+    "dist_m": 410.4
+   },
+   {
+    "sno": "38",
+    "sna": "TALBOT STREET",
+    "lat": 53.35099792480469,
+    "lon": -6.252661228179932,
+    "dist_m": 177.0
+   },
+   {
+    "sno": "45",
+    "sna": "DEVERELL PLACE",
+    "lat": 53.351463317871094,
+    "lon": -6.255265235900879,
+    "dist_m": 355.0
+   },
+   {
+    "sno": "48",
+    "sna": "EXCISE WALK",
+    "lat": 53.3477783203125,
+    "lon": -6.24423885345459,
+    "dist_m": 516.4
+   },
+   {
+    "sno": "8",
+    "sna": "CUSTOM HOUSE QUAY",
+    "lat": 53.34788513183594,
+    "lon": -6.248047828674316,
+    "dist_m": 359.4
+   },
+   {
+    "sno": "99",
+    "sna": "CITY QUAY",
+    "lat": 53.34663772583008,
+    "lon": -6.246153831481934,
+    "dist_m": 538.3
+   }
+  ],
+  "optional": [],
+  "snapshot": "data.smartdublin.ie stations.geojson 2026-10-24",
+  "bbox": [
+   53.2,
+   -6.5,
+   53.5,
+   -6.0
+  ]
+ },
+ "somerville_pb_budget": {
+  "projects": [
+   {
+    "number": "",
+    "title": "Support Direct Community Food Access",
+    "cost": 55000.0,
+    "votes": 18832.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Bike Lane Acceleration",
+    "cost": 250000.0,
+    "votes": 14446.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Bus Stop Improvement",
+    "cost": 200000.0,
+    "votes": 14216.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Faster Bigbelly Trash Can Adoption for Rat Abatement",
+    "cost": 250000.0,
+    "votes": 13848.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Keep It Cool in the 'Ville",
+    "cost": 200000.0,
+    "votes": 11657.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Improve Pedestrian Safety Near GLX Stops",
+    "cost": 150000.0,
+    "votes": 11174.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Pedestrian Safety at Community Path Intersections",
+    "cost": 150000.0,
+    "votes": 10807.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Light up the 'Ville",
+    "cost": 75000.0,
+    "votes": 10687.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Outdoor Living Rooms in Parks",
+    "cost": 150000.0,
+    "votes": 9053.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Summer Music in the Park Series",
+    "cost": 50000.0,
+    "votes": 8256.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Library of Things Expansion",
+    "cost": 50000.0,
+    "votes": 7954.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Somerville Safe Crossings",
+    "cost": 115000.0,
+    "votes": 7933.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Residential Street Speed Bumps and Daylighting",
+    "cost": 150000.0,
+    "votes": 7315.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Play for all in the 'Ville",
+    "cost": 200000.0,
+    "votes": 6446.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Beating the Heat - Misting + Water Fountains",
+    "cost": 50000.0,
+    "votes": 6397.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Additional Bike Racks and Fix-it Stations",
+    "cost": 85000.0,
+    "votes": 6362.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Concrete Safety Island Crossings on Wide Thoroughfares",
+    "cost": 200000.0,
+    "votes": 6220.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "STEM Programming in Libraries",
+    "cost": 50000.0,
+    "votes": 5603.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Get Ripped in the 'Ville",
+    "cost": 100000.0,
+    "votes": 4580.0,
+    "winner": 0
+   },
+   {
+    "number": "",
+    "title": "Solar System Sculpture",
+    "cost": 150000.0,
+    "votes": 2045.0,
+    "winner": 0
+   }
+  ],
+  "n_projects": 20,
+  "budget": 1000000,
+  "optimum": {
+   "votes": 103058.0,
+   "projects": [
+    0,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    14,
+    15,
+    17
+   ],
+   "cost": 980000.0
+  },
+  "city_rule": {
+   "votes": 72999.0,
+   "projects": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "cost": 955000.0
+  },
+  "bbox": [
+   42.37,
+   -71.14,
+   42.42,
+   -71.07
+  ]
+ }
+}
