@@ -115,10 +115,21 @@ def socrata(portal: str, query: str, limit: int = 6) -> list[dict]:
 
 def opendatasoft(portal: str, query: str, limit: int = 6) -> list[dict]:
     domain = portal if portal in OPENDATASOFT else OPENDATASOFT[1]
-    url = (f"https://{domain}/api/explore/v2.1/catalog/datasets?where=search({quote(repr(query).replace(chr(39), chr(34)))})"
-           f"&limit={limit}")
+
+    def found(q):
+        q = " ".join(re.sub(r"[\"'’`()\[\]{}:;,]+", " ", q).split())      # an apostrophe ("Vélib'") made the search
+        url = (f"https://{domain}/api/explore/v2.1/catalog/datasets?where=search({quote(chr(34) + q + chr(34))})"
+               f"&limit={limit}")                                             # return nothing (Paris, 2026-10-24)
+        return _get(url).json().get("results", []) if q else []
+    results = found(query)
+    if not results:
+        # a phrase the portal does not hold: try its words one by one, longest first
+        for word in sorted({w for w in re.split(r"\W+", query) if len(w) >= 4}, key=len, reverse=True)[:3]:
+            results = found(word)
+            if results:
+                break
     out = []
-    for d in _get(url).json().get("results", []):
+    for d in results:
         meta = (d.get("metas") or {}).get("default", {})
         geo = any(f.get("type") in ("geo_point_2d", "geo_shape") for f in d.get("fields", []))
         kind = "geojson" if geo else "csv"

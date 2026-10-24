@@ -171,8 +171,9 @@ def portals_for(area: str) -> list[str] | None:
         cc = hit[0]["address"]["country_code"]
     except Exception:
         return None
-    mine = [p for p in available() if COUNTRY.get(p) == cc]
-    return mine or None
+    # a known country without a catalogue here: search none rather than every other country's (a Paris request got
+    # Dutch railway layers, 2026-10-24); the platform APIs and named portals still search that country
+    return [p for p in available() if COUNTRY.get(p) == cc]
 
 
 def available() -> list[str]:
@@ -215,6 +216,8 @@ def _embed(texts: list[str]) -> np.ndarray:
 def search(queries: list[str], portals: list[str] | None = None, k: int = 5) -> list[dict]:
     """Datasets closest in meaning to each query, as acquisition candidates (one per readable file, at most 3 files
     per dataset). Empty when no catalogue has been built."""
+    if portals is not None and not portals:
+        return []
     portals = [p for p in (portals or available()) if p in available()]
     # "English description / 本地語言" needs: search each language separately (a mixed query dilutes the lexical match)
     queries = list(dict.fromkeys(p.strip() for q in queries for p in str(q).split(" / ") if p.strip()))
