@@ -93,3 +93,18 @@ def test_repeated_names_are_questioned_but_codes_with_numbers_are_not():
     assert repeated_names(ds, {"sites": ["Fakultät", "Fakultät_1", "Museum"]}) == ["Fakultät"]
     assert repeated_names(ds, {"sites": ["160", "161"], "site_name": ["Fakultät", "Fakultät"]}) == ["Fakultät"]
     assert repeated_names(ds, {"sites": ["S_1", "S_2", "S_3"]}) == []
+
+
+def test_geojson_inside_a_zip_is_read(tmp_path):
+    import io
+    import zipfile
+    from qubo_auto.annealing.datakit import load_tables
+    fc = {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "properties": {"Standort": "Museum"}, "geometry": {"type": "Point", "coordinates": [7.59, 47.56]}}]}
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("defibrillatoren.geojson", json.dumps(fc))
+    path = tmp_path / "Defibrillatoren_geojson.geojson"
+    path.write_bytes(buf.getvalue())
+    (name, df), = load_tables([path]).items()
+    assert name.endswith("#defibrillatoren") and df["Standort"].tolist() == ["Museum"]

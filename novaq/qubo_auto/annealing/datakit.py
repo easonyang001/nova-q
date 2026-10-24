@@ -158,12 +158,15 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
                         extension = Path(info.filename).suffix.lower()
                         if extension == ".gml" and info.file_size <= 64 * 1024 * 1024:
                             tables[f"{stem}#{Path(info.filename).stem}"] = _gml(archive.read(info))
+                        if extension in (".json", ".geojson") and info.file_size <= 64 * 1024 * 1024:
+                            # a portal's "geojson" download can be a zip holding the GeoJSON (Basel AED, 2026-10-24)
+                            tables.update(_json_tables(archive.read(info), f"{stem}#{Path(info.filename).stem}"))
                         if extension in (".csv", ".tsv", ".txt") and info.file_size <= 64 * 1024 * 1024:
                             # A graph README is not a data table.
                             if not (extension == ".txt" and any(n.lower().endswith(".gml") for n in archive.namelist())):
                                 tables[f"{stem}#{Path(info.filename).stem}"] = _delimited(archive.read(info), extension)
                     if not any(k.startswith(stem + "#") for k in tables):
-                        raise ValueError(f"{p.name}: archive contains no readable CSV/TSV/text or Shapefile")
+                        raise ValueError(f"{p.name}: archive contains no readable CSV/TSV/text, JSON or Shapefile")
         elif suf in (".xlsx", ".xlsm", ".xls"):
             sheets = pd.read_excel(io.BytesIO(raw), sheet_name=None)
             for sheet, df in sheets.items():
@@ -171,18 +174,24 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
         elif suf == ".gml":
             tables[stem] = _gml(raw)
         elif suf in (".json", ".geojson"):
-            obj = json.loads(_decode(raw))
-            if isinstance(obj, dict) and obj.get("type") == "FeatureCollection":
-                tables[stem] = _geojson_table(obj)
-            elif isinstance(obj, list):
-                tables[stem] = pd.json_normalize(obj)
-            elif isinstance(obj, dict):
-                lists = _record_lists(obj)
-                for k, v in lists.items() or {"data": [obj]}.items():
-                    tables[f"{stem}.{k}" if lists else stem] = pd.json_normalize(v)
+            tables.update(_json_tables(raw, stem))
         else:                                      # delimited text
             tables[stem] = _delimited(raw, suf)
     return {k: _flat_cells(v) for k, v in tables.items()}
+
+
+def _json_tables(raw: bytes, stem: str) -> dict[str, pd.DataFrame]:
+    obj = json.loads(_decode(raw))
+    if isinstance(obj, dict) and obj.get("type") == "FeatureCollection":
+        return {stem: _geojson_table(obj)}
+    if isinstance(obj, list):
+        return {stem: pd.json_normalize(obj)}
+    out: dict[str, pd.DataFrame] = {}
+    if isinstance(obj, dict):
+        lists = _record_lists(obj)
+        for k, v in lists.items() or {"data": [obj]}.items():
+            out[f"{stem}.{k}" if lists else stem] = pd.json_normalize(v)
+    return out
 
 
 def _record_lists(obj, path: str = "", depth: int = 0) -> dict[str, list]:
