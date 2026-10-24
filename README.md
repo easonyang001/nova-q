@@ -60,7 +60,7 @@ acceptance judge scores each delivery against ground truth built directly from t
 - **A real request solved end to end by QAOA on CUDA-Q.** New York's budget compiles to 25 qubits; 3 of 3 runs pass the
   judge, each delivering QAOA's own optimal sample.
 - **One verified QUBO, five solvers.** Simulated annealing, simulated quantum annealing, the D-Wave Advantage QPU, a
-  GPU annealer and QAOA on CUDA-Q, compared on 39 instances with known optima.
+  GPU annealer and QAOA on CUDA-Q, compared on 48 instances with known optima.
 
 ## Motivation
 
@@ -234,14 +234,14 @@ No false rejections in 15 verified runs (300/300 valid decisions accepted).
 
 ### Solvers on the same verified QUBOs
 
-39 instances from four agent-built models (3 instances per size, k-means on random 80% subsets of the real points),
-9–27 qubits, optimum known by full enumeration. The energy gap is
+48 instances from five agent-built models (3 instances per size, k-means on random 80% subsets of the real points;
+budget: random subsets with the budget kept at the same share of total cost), 9–27 qubits, optimum known by full enumeration. The energy gap is
 (E − E<sub>opt</sub>) / (Ē<sub>random</sub> − E<sub>opt</sub>): 0 is the optimum and 1 a random guess.
 
 | Solver | SQA | SA | D-Wave QPU | QAOA p=3 (CUDA-Q) | GPU annealer |
 |---|:---:|:---:|:---:|:---:|:---:|
-| Median energy gap | 0.001 | 0.009 | 0.028 | 0.16 | 0.66 |
-| Instances where the optimum was sampled | 39/39 | 39/39 | 37/39 | 39/39 | 39/39 |
+| Median energy gap | 0.001 | 0.008 | 0.029 | 0.16 | 0.57 |
+| Instances where the optimum was sampled | 48/48 | 48/48 | 44/48 | 48/48 | 48/48 |
 
 QAOA samples the optimum on every instance but trails the annealers, because penalty terms reduce its feasible
 fraction.

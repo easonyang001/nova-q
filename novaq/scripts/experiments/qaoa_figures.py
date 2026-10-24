@@ -23,7 +23,8 @@ for _f in ("NimbusSans-Regular.otf", "NimbusSans-Bold.otf", "NimbusSans-Italic.o
 
 ROOT = Path(__file__).resolve().parents[2]
 CASES = [("ev_chargers_s", "EV chargers (MCLP)"), ("youbike_tour", "Bike-station tour (TSP)"),
-         ("london_ambulance_s", "Ambulance sites (p-median)"), ("aed_groups", "AED zoning (balanced groups)")]
+         ("london_ambulance_s", "Ambulance sites (p-median)"), ("aed_groups", "AED zoning (balanced groups)"),
+         ("nyc_pb_budget", "Budget, New York (knapsack)")]
 # Okabe-Ito palette
 SOLVERS = [("sa", "SA", "#E69F00", "o"), ("sqa", "SQA", "#D55E00", "s"), ("dwave_qpu", "D-Wave QPU", "#009E73", "D"),
            ("cga", "CGA", "#CC79A7", "v"), ("qaoa_p3", "QAOA $p$=3 (CUDA-Q)", "#0072B2", "^")]
@@ -48,7 +49,7 @@ def by_instance(recs):
 def fig_popt(by, out):
     present = {s for rs in by.values() for s in rs}
     solvers = [s for s in SOLVERS if s[0] in present]
-    fig, axes = plt.subplots(1, 4, figsize=(13.0, 3.3), sharey=True)
+    fig, axes = plt.subplots(1, len(CASES), figsize=(3.25 * len(CASES), 3.3), sharey=True)
     for ax, (case, title) in zip(axes, CASES):
         rows = sorted((rs for rs in by.values() if rs["exact"]["case"] == case), key=lambda rs: rs["exact"]["n_qubits"])
         q = [rs["exact"]["n_qubits"] for rs in rows]
@@ -106,7 +107,7 @@ def fig_energy(by, out):
     """Normalised energy gap (lower is better): mean line with a +-1 std ribbon per solver, one panel per problem."""
     present = {s for rs in by.values() for s in rs}
     solvers = [s for s in SOLVERS if s[0] in present]
-    fig, axes = plt.subplots(1, 4, figsize=(13.0, 3.5), sharey=True)
+    fig, axes = plt.subplots(1, len(CASES), figsize=(3.25 * len(CASES), 3.5), sharey=True)
     for ax, (case, title) in zip(axes, CASES):
         rows = sorted((rs for rs in by.values() if rs["exact"]["case"] == case), key=lambda rs: rs["exact"]["n_qubits"])
         q = [rs["exact"]["n_qubits"] for rs in rows]
@@ -168,8 +169,9 @@ def fig_energy_rep(recs, out, floor=5e-4):
         ax.plot(xs, np.maximum(m, floor), color=color, marker=marker, ms=5 * scale, lw=lw.get(key, 1.5) * scale,
                 ls=ls.get(key, "-"))
 
-    fig = plt.figure(figsize=(14.0, 4.6))
-    gs = GridSpec(2, 4, figure=fig, width_ratios=[2.3, 0.08, 1, 1], wspace=0.28, hspace=0.55, top=0.86)
+    ncol = math.ceil(len(CASES) / 2)                   # small panels: two rows
+    fig = plt.figure(figsize=(9.4 + 2.3 * ncol, 4.6))
+    gs = GridSpec(2, 2 + ncol, figure=fig, width_ratios=[2.3, 0.08] + [1] * ncol, wspace=0.28, hspace=0.55, top=0.86)
     ax = fig.add_subplot(gs[:, 0])
     bins = [(9, 12), (13, 17), (18, 22), (23, 27)]
     for key, label, color, marker in SOLVERS:
@@ -186,7 +188,7 @@ def fig_energy_rep(recs, out, floor=5e-4):
     ax.set_ylim(floor * 0.8, 2.0)
     ax.set_xlabel("qubits")
     ax.set_ylabel("energy gap to optimum (log)\n0 = optimum, 1 = random guess")
-    ax.set_title("All four problems pooled, 3 instances per size", loc="left")
+    ax.set_title(f"{len(CASES)} agent-built models (development tasks) pooled, 3 instances per size", loc="left")
     ax.grid(axis="y", color="#e5e5e5", lw=0.6, which="major")
     h, l = ax.get_legend_handles_labels()
     fig.legend(h, l, loc="lower center", bbox_to_anchor=(0.5, 0.93), ncol=6, fontsize=10.5, handlelength=2.0,
@@ -194,7 +196,7 @@ def fig_energy_rep(recs, out, floor=5e-4):
     ax.text(0.99, 0.02, "line = mean, band = $\pm$1 s.d. over instances", transform=ax.transAxes, ha="right",
             va="bottom", fontsize=9.5, color="#555555")
     for k, (case, title) in enumerate(CASES):
-        sub = fig.add_subplot(gs[k // 2, 2 + k % 2])
+        sub = fig.add_subplot(gs[k // ncol, 2 + k % ncol])
         for key, label, color, marker in SOLVERS:
             pts = collections.defaultdict(list)
             for r in rows:
@@ -210,9 +212,9 @@ def fig_energy_rep(recs, out, floor=5e-4):
         sub.set_ylim(floor * 0.8, 2.0)
         sub.set_title(title, loc="left", fontsize=10.5)
         sub.tick_params(labelsize=9.5)
-        if k % 2:
+        if k % ncol:
             sub.set_yticklabels([])
-        if k // 2:
+        if k // ncol or k + ncol >= len(CASES):          # bottom of its column
             sub.set_xlabel("qubits", fontsize=10.5)
     fig.savefig(out, dpi=300)
     fig.savefig(out.with_suffix(".pdf"))
@@ -234,7 +236,8 @@ def table(by, out):
 
 def latex_table(by, out):
     """P(optimal) per sample for every instance and solver, as LaTeX rows for the poster (\\input)."""
-    lab = {"ev_chargers_s": "EV chargers", "youbike_tour": "Bike tour", "london_ambulance_s": "Ambulance",
+    lab = {"ev_chargers_s": "EV chargers", "youbike_tour": "Bike tour", "nyc_pb_budget": "NY budget",
+           "london_ambulance_s": "Ambulance",
            "aed_groups": "AED zoning"}
 
     def num(v):

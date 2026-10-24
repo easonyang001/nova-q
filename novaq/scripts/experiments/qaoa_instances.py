@@ -29,6 +29,8 @@ CASES = {   # case -> judged-passing run (rejudged.json: joint=true)
     "london_ambulance_s": R / "e2e_cfgBt_r3_20261013c/full_rag/london_ambulance_s_r0",
     # international replacement for Berlin (judge-passing, 2026-10-21; this run's positions are P0..P10)
     "melbourne_bike_tour": R / "e2e_melb7_g1_20261021/full_rag/melbourne_bike_tour_r0",
+    # knapsack (budget inequality -> slack bits): the first problem type with an inequality constraint
+    "nyc_pb_budget": R / "e2e_nycpb2_g1_20261022/full_rag/nyc_pb_budget_r0",
 }
 
 
@@ -37,6 +39,8 @@ def reduce_data(schema: dict, data: dict, n: int, seed: int = 0) -> dict:
     name, spec = next((k, v) for k, v in schema["sets"].items() if v.get("reducible"))
     members = list(data[name])
     params = schema["params"]
+    if not any(v.get("index") == [name] and "lat" in p.lower() for p, v in params.items()):
+        return reduce_by_subset(schema, data, name, n, seed)
     lat = next(p for p, v in params.items() if v.get("index") == [name] and "lat" in p.lower())
     lon = next(p for p, v in params.items() if v.get("index") == [name] and "lon" in p.lower())
     weight = spec["reducible"].get("weight")
@@ -67,6 +71,29 @@ def reduce_data(schema: dict, data: dict, n: int, seed: int = 0) -> dict:
     return out
 
 
+def reduce_by_subset(schema: dict, data: dict, name: str, n: int, seed: int) -> dict:
+    """Sets without coordinates (budget ballots): a random subset of n members; a scalar user setting in the same unit
+    as a per-member parameter (a budget in USD over costs in USD) is scaled by the subset's share of that parameter's
+    total, so the instance keeps the original tightness instead of becoming trivially feasible."""
+    rng = np.random.default_rng(seed)
+    members = list(data[name])
+    idx = sorted(rng.choice(len(members), size=n, replace=False).tolist())
+    params = schema["params"]
+    out = dict(data)
+    out[name] = [members[i] for i in idx]
+    for p, v in params.items():
+        if p in data and v.get("index") == [name]:
+            out[p] = [data[p][i] for i in idx]
+    for p, v in params.items():
+        if p in data and v.get("index") == [] and isinstance(data[p], (int, float)):
+            same = next((q for q, w in params.items() if w.get("index") == [name] and w.get("unit") == v.get("unit")
+                         and v.get("unit")), None)
+            if same:
+                share = sum(out[same]) / sum(data[same])
+                out[p] = int(round(data[p] * share / 1000.0)) * 1000 if data[p] >= 1000 else data[p] * share
+    return out
+
+
 def build(case: str, n: int, seed: int = 0) -> dict:
     run = CASES[case]
     ns = load_module((run / "artifacts/model.py").read_text())
@@ -91,11 +118,12 @@ def main():
     ap.add_argument("--survey", action="store_true", help="only print qubit counts per n")
     ap.add_argument("--seeds", type=int, nargs="*", default=[0], help="repeat instances per size (seed 0 = all points)")
     ap.add_argument("--cases", nargs="*", help="only these cases (default: all)")
+    ap.add_argument("--sizes", type=int, nargs="*", help="only these numbers of points (default: 3, 4, ...)")
     a = ap.parse_args()
     out = ROOT / a.out
     out.mkdir(parents=True, exist_ok=True)
     for case in (a.cases or CASES):
-        for n in range(3, 13):
+        for n in (a.sizes or range(3, 13)):
             stop = False
             for seed in a.seeds:
                 try:
