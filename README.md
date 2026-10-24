@@ -88,7 +88,7 @@ The New York participatory-budget task, as it ran in the evaluation (about 20–
 | 2. Clarifier | asks only questions that change the model; decides the rest as explicit assumptions the user confirms | asked about extra hard limits and dependencies between projects; assumed no category quotas and votes as the only value |
 | 3. Modeler | writes a typed binary model: variables, objective, hard constraints, the data it needs, and a map from each user requirement to its constraints | one binary variable per project, one budget inequality (0-1 knapsack) |
 | 4. Gate ② | a checker agent, given only the specification, writes its own evaluator; random valid plans must be feasible in the model and ranked alike, mutated plans must be infeasible | 20/20 valid plans kept, 13/13 over-budget plans rejected, rank agreement 1.0 |
-| 5. Data search | searches a catalogue of 10 national portals and the open-data platform APIs; ranks candidates by their actual columns | `Participatory Budgeting Projects`, data.cityofnewyork.us |
+| 5. Data search | searches a catalogue of 11 national portals and the open-data platform APIs; ranks candidates by their actual columns | `Participatory Budgeting Projects`, data.cityofnewyork.us |
 | 6. Data agent | looks at the table with read-only tools, then writes a preparation plan made of tested steps | kept Vote Year 2017 and Council District 3: 15 projects |
 | 7. Gates ① and ③ | the prepared data must match the declared units, period and area; a second checker recomputes counts and totals from the raw table | consistent |
 | 8. Solve | the model is compiled to a QUBO (penalties and slack variables chosen and tuned by code) and solved | 7 projects, $980,000, 7,103 votes |
@@ -118,7 +118,7 @@ All agents run on local models served by vLLM. Doer and checker can be assigned 
 
 ### Open data
 
-The data layer searches a pre-built catalogue of 10 national portals (Taiwan, Japan, Australia, Ireland, UK, the
+The data layer searches a pre-built catalogue of 11 national portals (Taiwan, Singapore, Japan, Australia, Ireland, UK, the
 Netherlands, Berlin, Germany, Canada, Switzerland) plus CKAN, Socrata, Opendatasoft, ArcGIS, EU and Nomis APIs and
 OpenStreetMap. Candidates are ranked by a preview of their real columns, official sources are preferred over
 crowd-sourced ones, and the latest period of a dataset is kept.
