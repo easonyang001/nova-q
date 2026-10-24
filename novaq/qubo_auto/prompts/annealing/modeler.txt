@@ -51,7 +51,8 @@ DATA_SCHEMA = {          # every input the model needs, declared as INDEX SETS +
 #     "public"); "user" = a setting the user confirmed (put its value in "value"); "private" = the user's own data
 #     (e.g. staff lists); "mock" = synthetic stand-in, labelled as such; "model" (sets only) = an index YOUR
 #     formulation defines (tour positions, group labels, time slots): add "size_of": "<set>" (one id per member of that
-#     set) or "<user param>" (the count); the system generates its ids "0", "1", ... - never read them from the data.
+#     set), "<user param>" (the count) or the count itself (e.g. 3); the system generates its ids "0", "1", ... - never
+#     read them from the data.
 #   - Use "derived" when a param is computed from others: e.g. distances from coordinates with the prep tool
 #     haversine_matrix or road_matrix. The adapter is then REQUIRED to call that tool.
 #   - Mark a set "reducible" only if a smaller representative instance is acceptable for the specification. NEVER

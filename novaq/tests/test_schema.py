@@ -245,3 +245,30 @@ def test_sets_whose_every_member_is_required_lose_the_reducible_flag():
                   "variable_keys": keys, "variable_names": ["0", "1", "2"]}
     assert M.required_sets(ds, data, each_once) == ["stops"]
     assert M.required_sets(ds, data, choose_two) == []
+
+
+def test_model_set_size_can_be_a_number():
+    # Singapore groups, 2026-10-24: "size_of": 3 for three inspection teams was rejected four times
+    from qubo_auto.annealing import schema
+    ds = {"sets": {"centres": {"meaning": "c", "source": "public"},
+                   "teams": {"meaning": "team", "source": "model", "size_of": 3}}, "params": {}}
+    assert not [e for e in schema.declaration_errors(ds) if "teams" in e]
+    assert schema.fill_model_sets(ds, {"centres": ["a", "b"]})["teams"] == ["0", "1", "2"]
+
+
+def test_example_data_gets_model_sets_from_the_system():
+    from qubo_auto.annealing import modeler as M
+    code = '''
+DATA_SCHEMA = {"sets": {"items": {"meaning": "i", "source": "public"},
+                        "teams": {"meaning": "t", "source": "model", "size_of": 2}},
+               "params": {"w": {"meaning": "w", "index": ["items"], "type": "number", "source": "public"}}}
+REQUIREMENT_MAP = {}
+def make_example_data(size, seed):
+    return {"items": [str(i) for i in range(size)], "w": [1.0] * size}
+def build_ir(data):
+    return {}
+def describe_solution(data, x):
+    return {}
+'''
+    ns = M.load_module(code)
+    assert ns["make_example_data"](3, 0)["teams"] == ["0", "1"]

@@ -80,9 +80,12 @@ def declaration_errors(ds: Any) -> list[str]:
             errors.append(f"set {name!r}: give its meaning")
         if d.get("source") not in SOURCES:
             errors.append(f"set {name!r}: source must be one of {SOURCES}")
-        if d.get("source") == "model" and d.get("size_of") not in set(sets) | set(params):
+        size = d.get("size_of")
+        if d.get("source") == "model" and not (isinstance(size, int) and not isinstance(size, bool) and size > 0) \
+                and size not in set(sets) | set(params):
             errors.append(f"set {name!r}: a 'model' set (an index the formulation defines: tour positions, group labels, "
-                          f"time slots) needs \"size_of\": the set with one id per member, or a user parameter giving the count")
+                          f"time slots) needs \"size_of\": the set with one id per member, a user parameter giving the count, or the "
+                          f"count itself (e.g. 3)")
         red = d.get("reducible")
         if red is not None:
             if not isinstance(red, dict) or red.get("method") != "reduce_points":
@@ -484,7 +487,7 @@ def fill_model_sets(ds: Any, data: dict) -> dict:
     value (a user parameter). The data never supplies them (station ids taken as tour positions, 2026-10-21)."""
     out = dict(data)
     for name, of in model_sets(ds).items():
-        src = out.get(of)
+        src = of if isinstance(of, int) and not isinstance(of, bool) else out.get(of)
         n = len(src) if isinstance(src, list) else int(src) if isinstance(src, (int, float)) and not isinstance(src, bool) else None
         if n is not None:
             out[name] = [str(i) for i in range(n)]
