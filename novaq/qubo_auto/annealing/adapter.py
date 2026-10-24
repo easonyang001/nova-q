@@ -54,6 +54,31 @@ def _shape(example: Any, depth: int = 0) -> Any:
     return example if depth == 0 or isinstance(example, (int, float, str, bool)) else _kind(example)
 
 
+_NUMBER_SUFFIX = re.compile(r"\s*(?:[_#-]\s*|\()\d+\)?$")
+
+
+def repeated_names(ds: dict, data: dict, limit: int = 8) -> list[str]:
+    """Names that occur more than once in one data-derived set: as ids, in a name-like parameter, or as an id plus the
+    same id with an added number ("X" and "X_1"). [] when there are none."""
+    if not schema.is_structured(ds):
+        return []
+    found: list[str] = []
+    for name, d in ds["sets"].items():
+        if d.get("source") not in ("public", "private") or not isinstance(data.get(name), list):
+            continue
+        columns = [[str(i) for i in data[name]]]
+        columns += [[str(v) for v in data[k]] for k, p in ds.get("params", {}).items()
+                    if p.get("index") == [name] and isinstance(data.get(k), list)
+                    and re.search(r"name|title|名", k, re.I) and len(data[k]) == len(data[name])]
+        for values in columns:
+            seen = set(values)
+            for v in values:
+                base = _NUMBER_SUFFIX.sub("", v).strip()
+                if (values.count(v) > 1 or (base != v and base in seen)) and base not in found:
+                    found.append(base)
+    return found[:limit]
+
+
 PORTAL_ROW_ID = re.compile(r"^row-[0-9a-z]{4}([~._-][0-9a-z]{4}){2}$")      # Socrata ':id' values
 
 
@@ -227,6 +252,7 @@ def build_adapter(model_ns: dict[str, Any], tables: dict[str, pd.DataFrame], spe
     # "agent": the same plan attempts, but each one first LOOKS at the data with read-only tools (dataagent.py)
     plan_attempts = PLAN_ATTEMPTS if ADAPTER_MODE in ("plan", "agent") else 0
     agent_history: list[str] = []
+    names_questioned = False
     attempts += plan_attempts          # the code attempts keep their budget; plan attempts come first
     for attempt in range(attempts):
         if attempt == plan_attempts and plan_attempts:
@@ -302,6 +328,19 @@ def build_adapter(model_ns: dict[str, Any], tables: dict[str, pd.DataFrame], spe
                     [f"獨立資料核對不一致：{m}" for m in mismatch]
         elif data_check:
             report["data_check"] = {"expected": {}, "issues": [], "checker_errors": check_errors}
+        if not errors and attempt < attempts - 1:
+            clash = repeated_names(model_ns["DATA_SCHEMA"], report.get("data") or {})
+            if clash and not names_questioned:
+                # one question, not a loop: the agent decides from the DATA SCOPE (Basel AED: one faculty's two
+                # records 200 m apart became "Theologische Fakultät" and "Theologische Fakultät_1", 2026-10-24)
+                names_questioned = True
+                errors = [f"these members of the same set share a name (or differ only by an added number): {clash}. "
+                          f"Check the DATA SCOPE: if rows with the same name are one place, merge them by name "
+                          f"(merge_same_place with max_m null); if they are different places, name them with a "
+                          f"column of the data (address, district). Never number them to make ids unique"]
+            elif clash:
+                report["review_required"] = list(report.get("review_required", [])) + \
+                    [f"同一集合中有同名成員（資料代理判斷為不同地點）：{clash}"]
         if not errors:
             report["adapter_mode"] = (ADAPTER_MODE if attempt < plan_attempts else "code")
             if agent_history:

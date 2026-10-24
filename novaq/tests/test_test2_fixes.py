@@ -84,3 +84,12 @@ def test_data_check_compares_sets_read_from_tables_whatever_their_source_label()
     data = {"sites": [str(i) for i in range(38)], "teams": [str(i) for i in range(5)]}
     assert compare({"counts": {"sites": 35}}, data, ds)              # open data labelled "private": still checked
     assert not compare({"counts": {"teams": 4}}, data, ds)           # model sets are not the checker's business
+
+
+def test_repeated_names_are_questioned_but_codes_with_numbers_are_not():
+    from qubo_auto.annealing.adapter import repeated_names
+    ds = {"sets": {"sites": {"meaning": "places", "source": "private"}},
+          "params": {"site_name": {"meaning": "name", "index": ["sites"], "type": "text", "source": "private"}}}
+    assert repeated_names(ds, {"sites": ["Fakultät", "Fakultät_1", "Museum"]}) == ["Fakultät"]
+    assert repeated_names(ds, {"sites": ["160", "161"], "site_name": ["Fakultät", "Fakultät"]}) == ["Fakultät"]
+    assert repeated_names(ds, {"sites": ["S_1", "S_2", "S_3"]}) == []
