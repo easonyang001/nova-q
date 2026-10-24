@@ -62,7 +62,8 @@ def prepare_real_data(code: str, spec: str, client, model: str, directory: Path,
                 if not errors:
                     report["sources"] = provenance
                     named = opendata.requested_domains(spec)
-                    if named and not any(opendata.from_requested({"url": s_.get("url", ""), "page": s_.get("page", ""),
+                    if named and not any(opendata.from_requested({"url": " ".join(str(s_.get(k) or "") for k in ("url", "resource_url")),
+                                                                    "page": s_.get("page", ""),
                                                                     "source": s_.get("publisher", "")}, named)
                                          for s_ in provenance):
                         # the user named a source that was not found: the answer may still be useful, but it rests on

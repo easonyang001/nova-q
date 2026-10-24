@@ -55,7 +55,8 @@ PREPROCESSING TOOLKIT (module `prep`, tested; PREFER these over hand-written pan
   (real boundaries; use it instead of guessing which area code is which; when the table has an area-code
   column pass code_column="<column>" so the publisher's own codes decide membership)
 - prep.points_in_polygon(lat, lon, geojson)   which points lie inside a polygon
-- prep.merge_same_place(df, name_col, lat_col, lon_col, max_m=150, log=log)   one row per real place (same name, close)
+- prep.merge_same_place(df, name_col, lat_col, lon_col, max_m=150, log=log)   one row per real place (same name, close);
+  max_m=None merges by name alone (mean coordinates) when the specification says one name is one place
 - prep.drop_stray_points(df, lat_col, lon_col, log=log)   drop the few rows with impossible coordinates, logged
 - prep.road_matrix(lat, lon, log=log)                   real road distance (m) / time (s) via OSRM (cached)
 - prep.geocode(addresses, country="tw", log=log)        addresses -> lat/lon with a precision label
@@ -74,6 +75,8 @@ Write:
 - Apply EVERY rule under DATA SCOPE in the specification (area, excluded categories, period, one entity per real
   place: merge rows that describe the same place with prep.merge_same_place (same name, close together); never
   dedupe by coordinates alone: different venues in one building share coordinates), each as a logged step.
+- Set ids come from a column that names or codes each member (title, name, official code); never a portal's
+  internal row id (Socrata ':id' row-xxxx~xxxx.xxxx, CKAN '_id'): the answer must say which members were chosen.
 - Use the FEWEST tables that provide what the format needs. Join tables only when one table lacks a needed field;
   never join two sources that describe the same things just because both were downloaded.
 - Drop or repair rows with missing or invalid values, and say what you did in a comment.

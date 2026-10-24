@@ -172,6 +172,16 @@ def step(session: Session, client, model: str, answers: str | None = None, tempe
                 log(f"web lookup: {q}")
             session.web_findings.append(lookup(q))
         out = _draft(session, client, model, temperature, retries, web)    # rethink with the findings
+    if session.rounds:
+        clash = contradictions(session, out.draft, client, model)
+        if clash:
+            # a draft that overrides what the user said (an area-defining station turned into the start "as an
+            # assumption" after the user answered "any station can be the start", Dublin 2026-10-24) is redrafted
+            if log:
+                log(f"draft contradicts the user's answers: {clash}")
+            out = _draft(session, client, model, temperature, retries, web, note=(
+                "YOUR DRAFT CONTRADICTS WHAT THE USER SAID. Follow the user's words; change these items:\n- "
+                + "\n- ".join(f"{c.get('item')} (user said: {c.get('user_said')})" for c in clash)))
     _check_sources(out.draft, session.web_findings)
     session.draft, session.pending_questions, session.coverage = out.draft, out.questions[:MAX_QUESTIONS], out.coverage
     session.ready_to_confirm = (out.ready_to_confirm and not any(q.blocking for q in out.questions)
@@ -194,7 +204,40 @@ def _check_sources(draft: DraftSpec, findings: list[dict]) -> None:
             src.claim = f"（未驗證：網址不在查詢結果中）{src.claim}"
 
 
-def _draft(session: Session, client, model: str, temperature: float, retries: int, web: bool) -> ClarifierOut:
+_CONTRADICTION_PROMPT = """The user described a problem and answered questions. A draft specification was written.
+List every item of the draft (summary, objective, constraint, data scope or assumption) that CONTRADICTS something
+the user said explicitly. Only direct contradictions: an item the user did not mention is not a contradiction.
+
+USER'S REQUEST:
+{description}
+
+USER'S ANSWERS:
+{answers}
+
+DRAFT:
+{draft}
+
+Return JSON only: {{"contradictions": [{{"item": "<draft item, quoted>", "user_said": "<the user's words, quoted>"}}]}}
+(an empty list when there is none)."""
+
+
+def contradictions(session: Session, draft: DraftSpec, client, model: str) -> list[dict]:
+    """Draft items that contradict the user's own words (checked separately from drafting; [] when none or when
+    the check itself fails, which never blocks the conversation)."""
+    answers = "\n".join(r["answers"] for r in session.rounds if r.get("answers"))
+    view = draft.model_dump(include={"problem_summary", "objectives", "constraints", "data_scope", "assumptions"})
+    prompt = _CONTRADICTION_PROMPT.format(description=session.description, answers=answers,
+                                          draft=json.dumps(view, ensure_ascii=False, indent=1))
+    try:
+        found = json.loads(client.call(model=model, prompt=prompt, temperature=0.0, step_name="clarify_check",
+                                       json_mode=True)).get("contradictions") or []
+        return [c for c in found if isinstance(c, dict) and c.get("item")]
+    except Exception:
+        return []
+
+
+def _draft(session: Session, client, model: str, temperature: float, retries: int, web: bool,
+           note: str = "") -> ClarifierOut:
     from .websearch import render_findings
     qa = [{"questions": [q["question"] for q in r["questions"]], "answers": r["answers"]} for r in session.rounds]
     prompt = (_PROMPT.replace("{description}", session.description)
@@ -206,7 +249,8 @@ def _draft(session: Session, client, model: str, temperature: float, retries: in
               .replace("{schema}", json.dumps(ClarifierOut.model_json_schema(), indent=1)))
     error = ""
     for _ in range(retries + 1):
-        raw = client.call(model=model, prompt=prompt + (f"\n\nYOUR PREVIOUS ANSWER WAS INVALID: {error}" if error else ""),
+        raw = client.call(model=model, prompt=prompt + (f"\n\n{note}" if note else "")
+                          + (f"\n\nYOUR PREVIOUS ANSWER WAS INVALID: {error}" if error else ""),
                           temperature=temperature, step_name="clarify", json_mode=True)
         try:
             out = ClarifierOut.model_validate(json.loads(raw))

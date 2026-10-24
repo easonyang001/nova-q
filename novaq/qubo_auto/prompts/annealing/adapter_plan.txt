@@ -40,6 +40,8 @@ STEPS (each one JSON object; columns are the table's exact column names at that 
 - {"op": "dedupe", "keys": ["名稱", "地址"]}                      identical rows of one entity
 - {"op": "merge_same_place", "name": "名稱", "lat": "lat", "lon": "lon", "max_m": 150}   one row per real place
   (same name within max_m metres; raise max_m for large venues such as a stadium or a campus, e.g. 1000)
+  "max_m": null merges by name alone (mean coordinates): use it when the specification says rows with the same
+  name are one place, whatever their distance
 - {"op": "drop_stray_points", "lat": "lat", "lon": "lon"}         the few impossible coordinates (logged)
 - {"op": "reduce_points", "k": 150, "lat": "lat", "lon": "lon", "weight": null}   a reducible set with more members than
                                                                     allowed -> k representatives (never the first k rows)

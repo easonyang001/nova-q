@@ -359,14 +359,25 @@ def in_area(df: pd.DataFrame, lat: str, lon: str, areas: str | list[str], countr
     return out
 
 
-def merge_same_place(df: pd.DataFrame, name: str, lat: str, lon: str, max_m: float = 150, log=None) -> pd.DataFrame:
+def merge_same_place(df: pd.DataFrame, name: str, lat: str, lon: str, max_m: float | None = 150,
+                     log=None) -> pd.DataFrame:
     """One row per real place: rows with the same normalised name whose coordinates lie within max_m are merged
     (the first is kept). Two records of one metro station 20 m apart survived a coordinate-only dedupe (Taipei AED,
-    2026-10-12); same-named places far apart (two '中山里' in different districts) stay separate."""
+    2026-10-12); same-named places far apart (two '中山里' in different districts) stay separate.
+    max_m=None merges by name alone, at the mean coordinates, for requests that say one name is one place (Basel AED:
+    two records of one faculty 200 m apart stayed separate, 2026-10-24)."""
     from .text import normalize_text
     out = df.reset_index(drop=True)
     key = out[name].map(normalize_text)
     la, lo = pd.to_numeric(out[lat], errors="coerce").to_numpy(), pd.to_numeric(out[lon], errors="coerce").to_numpy()
+    if max_m is None:
+        first = ~key.duplicated()
+        res = out[first].reset_index(drop=True)
+        res[lat] = key[first].map(pd.Series(la).groupby(key).mean()).to_numpy()
+        res[lon] = key[first].map(pd.Series(lo).groupby(key).mean()).to_numpy()
+        if log is not None:
+            log.step("合併同名的同一地點（只看名稱，座標取平均）", len(out), len(res), f"合併 {len(out) - len(res)} 筆")
+        return res
     drop = np.zeros(len(out), bool)
     for _, idx in out.groupby(key).groups.items():
         idx = list(idx)

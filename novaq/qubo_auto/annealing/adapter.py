@@ -7,6 +7,7 @@ code (repair, don't rewrite). The user approves the result in the UI before it i
 """
 from __future__ import annotations
 import json
+import re
 import traceback
 from pathlib import Path
 from typing import Any
@@ -53,6 +54,9 @@ def _shape(example: Any, depth: int = 0) -> Any:
     return example if depth == 0 or isinstance(example, (int, float, str, bool)) else _kind(example)
 
 
+PORTAL_ROW_ID = re.compile(r"^row-[0-9a-z]{4}([~._-][0-9a-z]{4}){2}$")      # Socrata ':id' values
+
+
 def check_output(model_ns: dict[str, Any], data: Any, example: dict, metadata=None, sources=None) -> tuple[list[str], dict]:
     """Problems with load_data's output for this model ([] = usable), plus a size report."""
     errors, report = [], {}
@@ -74,6 +78,13 @@ def check_output(model_ns: dict[str, Any], data: Any, example: dict, metadata=No
     report["review_required"] = review
     report["data_metadata"] = metadata or {}
     set_names = set(ds["sets"]) if schema.is_structured(ds) else set()
+    for name in sorted(set_names & set(data)):
+        ids = [str(i) for i in data[name]] if isinstance(data[name], list) else []
+        if ids and sum(bool(PORTAL_ROW_ID.match(i)) for i in ids) > len(ids) / 2:
+            # a portal's internal row id names nothing the user can recognise, and the answer cannot say which
+            # proposal or place was chosen (Somerville, Socrata ':id' row-xxxx~xxxx.xxxx, 2026-10-24)
+            errors.append(f"set {name!r} uses the portal's internal row ids ({ids[0]!r} ...) as identifiers; use a "
+                          f"column that names or codes each member (title, name, official code)")
     for k, v in example.items():
         if k in set_names:
             continue                      # set ids may be strings or integers; data_errors checks them properly

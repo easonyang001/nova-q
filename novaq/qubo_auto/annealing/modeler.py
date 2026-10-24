@@ -291,6 +291,7 @@ def validate(ns: dict[str, Any], small_size: int = 6, require_visualize: bool = 
         raw = ns["make_example_data"](small_size, 0)
         try:      # the UI stores data as JSON and reloads it, so build_ir must work on the JSON form
             data = json.loads(json.dumps(to_jsonable(raw)))
+            report["_full_data"] = data         # requirement mapping is checked on this size, never on a shrunk copy
         except (TypeError, ValueError) as e:
             errors.append(f"make_example_data returned data that cannot be stored as JSON ({e}); "
                           f"use dicts, lists, numbers and strings only")
@@ -362,8 +363,13 @@ def validate(ns: dict[str, Any], small_size: int = 6, require_visualize: bool = 
         while n_feas == -1 and size > 2:
             # too many variables to enumerate (assignment models grow as N*M): prove correctness on a smaller instance
             size -= 1
-            data = json.loads(json.dumps(to_jsonable(ns["make_example_data"](size, 0))))
-            ir = to_ir(ns["build_ir"](data), "validation")
+            smaller = json.loads(json.dumps(to_jsonable(ns["make_example_data"](size, 0))))
+            smaller_ir = to_ir(ns["build_ir"](smaller), "validation")
+            if smaller_ir.n_variables == 0:
+                # a model that rounds its size (multiples of the group count) can shrink to nothing: an empty
+                # instance proves nothing and lost its constraints (Basel AED, 4 sites -> 0, 2026-10-24)
+                break
+            data, ir = smaller, smaller_ir
             best, x, n_feas = brute_force(ir)
         report["checked_size"] = size if n_feas != -1 else None
         report["_data"] = data
@@ -524,7 +530,7 @@ def build_model(spec_json: str, qa_json: str, client, model: str, max_attempts: 
         errors += missing_hard_constraints(spec_json, report)
         if ns and not errors:
             from .contracts import check_requirements
-            errors += check_requirements(json.loads(spec_json), ns, ns["build_ir"](report["_data"]))
+            errors += check_requirements(json.loads(spec_json), ns, ns["build_ir"](report.get("_full_data", report["_data"])))
         report["patterns"] = pattern_ids
         if not errors:
             add_visualization(code, ns, report, client, model, temperature)
