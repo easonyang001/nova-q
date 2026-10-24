@@ -254,7 +254,7 @@ fraction.
 ### A real request solved end to end by QAOA on CUDA-Q
 
 The New York budget task was rerun with the same pipeline and the solver switched to QAOA (CUDA-Q 0.14, `nvidia`
-target, p = 2, 10,000 shots) on one L40S. The verified model compiles to a 25-qubit QUBO (the budget inequality is
+target, p = 2 as the pipeline default, 10,000 shots) on one L40S. The verified model compiles to a 25-qubit QUBO (the budget inequality is
 divided by the gcd of its integer costs before slack encoding).
 
 | Runs | Passed (judge) | Delivered plan | Came from |
