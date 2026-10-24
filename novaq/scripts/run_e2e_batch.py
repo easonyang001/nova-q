@@ -144,7 +144,7 @@ def run_one(case, arm, budget, truth, out: Path):
         return finish(rec, out, client)
     rec["human"] = {"answers_given": len(s.rounds), "spec_confirmed": 1, "data_approved": 1}
     spec_json, qa = s.draft.model_dump_json(indent=1), json.dumps(s.rounds, ensure_ascii=False, indent=1)
-    spec_text = C.spec_for_data(s.draft)
+    spec_text = C.spec_for_data(s.draft, session=s)
     say("spec confirmed: " + s.draft.problem_summary[:200])
 
     # 2. Modeler

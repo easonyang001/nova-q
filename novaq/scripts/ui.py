@@ -332,7 +332,7 @@ def _files_dir(sid: str) -> Path:
 
 def _spec_text(sid: str) -> str:
     s = _load_session(sid)
-    return C.spec_for_data(s.draft)
+    return C.spec_for_data(s.draft, session=s)
 
 
 def _files_overview(sid: str) -> str:

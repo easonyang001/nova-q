@@ -262,12 +262,20 @@ def _draft(session: Session, client, model: str, temperature: float, retries: in
     return out
 
 
-def spec_for_data(draft: "DraftSpec", limit: int = 2500) -> str:
+def spec_for_data(draft: "DraftSpec", limit: int = 2500, session: "Session | None" = None) -> str:
     """The confirmed specification as the data agents get it: the data-scope rules come first and verbatim, so a
-    category exclusion or "one entity per place" is not lost in a long JSON (an AED run ignored both, 2026-10-12)."""
+    category exclusion or "one entity per place" is not lost in a long JSON (an AED run ignored both, 2026-10-12).
+    With the session, the user's own words follow: a drafted rule can drift from them ("same name is one place"
+    became "same location is one place", and checker and data agent then both counted the wrong places, Basel
+    2026-10-24), and the user's words win."""
     scope = "\n".join(f"- {r}" for r in draft.data_scope)
+    words = ""
+    if session is not None:
+        answers = "\n".join(f"- {r['answers']}" for r in session.rounds if r.get("answers"))
+        words = ("\nTHE USER'S OWN WORDS (where the specification differs from them, follow the user):\n"
+                 f"- {session.description}" + (f"\n{answers}" if answers else ""))
     return (draft.problem_summary + ("\nDATA SCOPE (every rule must hold for the prepared data):\n" + scope if scope else "")
-            + "\n" + draft.model_dump_json()[:limit])
+            + words + "\n" + draft.model_dump_json()[:limit])
 
 
 def confirm(session: Session) -> Session:

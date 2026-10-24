@@ -108,3 +108,11 @@ def test_geojson_inside_a_zip_is_read(tmp_path):
     path.write_bytes(buf.getvalue())
     (name, df), = load_tables([path]).items()
     assert name.endswith("#defibrillatoren") and df["Standort"].tolist() == ["Museum"]
+
+
+def test_data_agents_see_the_users_own_words():
+    s = clarify.new_session("AED places in Basel 4051 into 5 groups", "sa")
+    s.rounds.append({"questions": [], "answers": "places with the same name are one place"})
+    s.draft = clarify.DraftSpec.model_validate({"problem_summary": "groups", "data_scope": ["same location = one place"]})
+    text = clarify.spec_for_data(s.draft, session=s)
+    assert "places with the same name are one place" in text and "follow the user" in text
