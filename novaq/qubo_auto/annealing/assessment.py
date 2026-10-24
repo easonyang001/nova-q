@@ -54,7 +54,10 @@ def _exchange_improve(ir: ProblemIR, x: list, feasible, sign: int, max_rounds: i
     variables p, q and two unchosen r, s, where r shares a constraint with p and with q, and s does too, and flips
     all four (for a position tour: two stops swap positions). Only the constraint structure is used, so it applies to
     any model; every candidate is checked on the original constraints. Best improvement, bounded rounds."""
-    groups = [set(c.coeffs) for c in ir.constraints if isinstance(c, LinearConstraint) and c.sense == "eq"]
+    # every linear constraint, not only equalities: balanced group sizes are written as <= / >= rows, and without them
+    # "two sites swap groups" was never found (Basel AED delivery 98% above the reference, 2026-10-24); feasibility
+    # is still checked on the original constraints
+    groups = [set(c.coeffs) for c in ir.constraints if isinstance(c, LinearConstraint)]
     member: dict[int, list[int]] = {}
     for g, vars_ in enumerate(groups):
         for v in vars_:

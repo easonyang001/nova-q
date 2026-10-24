@@ -116,3 +116,18 @@ def test_data_agents_see_the_users_own_words():
     s.draft = clarify.DraftSpec.model_validate({"problem_summary": "groups", "data_scope": ["same location = one place"]})
     text = clarify.spec_for_data(s.draft, session=s)
     assert "places with the same name are one place" in text and "follow the user" in text
+
+
+def test_exchange_polish_swaps_groups_when_sizes_are_inequalities():
+    from qubo_auto.annealing.assessment import _exchange_improve
+    from qubo_auto.annealing.encodings import LinearConstraint, ProblemIR
+    # 4 sites on a line (0, 1, 10, 11), 2 groups of 2; x[s, g] = 2 s + g; cost = distance inside a group
+    pos = [0, 1, 10, 11]
+    quad = {(2 * a + g, 2 * b + g): float(abs(pos[a] - pos[b])) for g in range(2) for a in range(4) for b in range(a + 1, 4)}
+    cons = [LinearConstraint(name=f"site{s}", coeffs={2 * s: 1, 2 * s + 1: 1}, sense="eq", rhs=1) for s in range(4)]
+    cons += [LinearConstraint(name=f"size{g}_{k}", coeffs={2 * s + g: 1 for s in range(4)}, sense=k, rhs=2)
+             for g in range(2) for k in ("le", "ge")]
+    ir = ProblemIR(name="g", instance_id="t", n_variables=8, sense="minimize", quadratic=quad, constraints=cons)
+    x = [1, 0, 0, 1, 1, 0, 0, 1]                     # {0, 10} and {1, 11}: cost 20
+    y = _exchange_improve(ir, x, lambda v: all(c.satisfied(v) for c in cons), 1)
+    assert ir.objective(y) == 2.0                    # {0, 1} and {10, 11}
