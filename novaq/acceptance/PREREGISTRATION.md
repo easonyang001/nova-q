@@ -101,3 +101,12 @@ manifest 記錄下列項目的 SHA256，任何一項改變就拒絕繼續：程�
 - **凍結後唯一的程式改動**（2026-10-22，測試集執行中）：為了公開程式碼，CGA 伺服器位址從程式預設值移到 `.env`
   （`qubo_auto/annealing/backends.py`、`scripts/preflight.py`），沒設定時直接報錯。只影響 CGA，測試集用 SA，
   執行中的行程已載入舊模組、不受影響。新雜湊 `16991ee637030289`。
+
+## 補記：第二組測試集（2026-10-24）
+- **系統程式凍結**：雜湊 `8b3b26e5451dc785`（commit d9ae034），包含 10/23–24 的全流程修正。跑的期間不改系統程式。
+- 三題，都在凍結之後才建立標準答案或第一次執行：
+  1. `basel_aed_groups`：巴塞爾郵遞區號 4051 的 35 個 AED 場所分 5 組（平衡分組，opendata.swiss；標準答案 10/21 建立，從未執行）。
+  2. `dublin_bike_tour`：都柏林 Connolly 車站 600 m 內 9 個 Dublinbikes 站（路線，data.gov.ie）。
+  3. `somerville_pb_budget`：薩默維爾 2023 參與式預算 20 案、預算 100 萬美元、目標為總分（預算選案，data.somervillema.gov）。
+- **重複獨立**：所有 agent 用 `LLM_TEMPERATURE=0.7` 取樣，每題 3 次（先跑完的 3 次計分），每次互相獨立。
+- 其他設定同第一組測試集（Gemma 執行＋檢查、思考開、1200 s、64000 tokens、資料先看再做、SA）。
