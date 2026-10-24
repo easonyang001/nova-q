@@ -8,3 +8,7 @@
 - RESULT g0 Basel: PASS (name-only merge, 35 places, gap 0). RESULT g1 Basel: FAIL (data): the data agent merged
   within 100 m only (38 places); the independent check found 35 but compare() skipped the set because the model
   labelled it "private". Fixed in 6f62b94 (after these batches started: they keep the code they loaded, 990851b).
+- RESULT Dublin g0, g1: PASS, PASS (rank 1.0, tour = reference). RESULT Somerville g0: PASS (no substitute flag).
+- Follow-up e2e_postfix3_g0_20261024 (code 6f62b94, data cross-check covers "private" sets): basel_aed_groups,
+  2 runs on GPU 0, same config.
+- RESULT Somerville g1: PASS. Post-fix 2 overall: Basel 1/2 (the failure's cause fixed in 6f62b94), Dublin 2/2, Somerville 2/2.

@@ -1,0 +1,280 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 712.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1236.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 144.4
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1196.2
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.2
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 7.8
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Deduplicated AED locations in PLZ 4051",
+    "source": "private"
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": 5
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the AED site",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "private"
+   },
+   "lat": {
+    "meaning": "Latitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "AED-Standorte.zip",
+  "Defibrillatoren.geojson",
+  "Land_use_projections_and_services_for_Switzerland_ZIP.zip"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "merge_same_place",
+   "normalize_text"
+  ],
+  "notes": "",
+  "prep_log": "**資料來源**\n\n- AED-Standorte（opendata.swiss） <https://opendata.swiss/de/dataset/aed-standorte>，授權：待確認，取得 2026-10-24T10:42:45.737667+00:00\n- Defibrillatoren（opendata.swiss） <https://opendata.swiss/en/dataset/defibrillatoren>，授權：待確認，取得 2026-10-24T10:42:41.869674+00:00\n- Land use projections and services for Switzerland — ZIP（catalogue opendata.swiss） <https://opendata.swiss/en/dataset/land-use-projections-and-services-for-switzerland>，授權：待確認，取得 2026-10-24T10:42:50.615614+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| keep {\"column\": \"plz\", \"values\": [4051]} | 235 | 44 |  |\n| drop_missing {\"columns\": [\"lat\", \"lon\"]} | 44 | 44 |  |\n| 合併同名且相距 100 m 內的同一地點 | 44 | 38 | 合併 6 筆 |",
+  "flags": [],
+  "review_required": [
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, site_name, sites, teams"
+  ],
+  "sources": [
+   {
+    "title": "AED-Standorte",
+    "url": "https://opendata.swiss/de/dataset/aed-standorte",
+    "resource_url": "https://geofiles.be.ch/geoportal/pub/download/AEDSTO/aedsto.zip",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T10:42:45.737667+00:00",
+    "sha256": "126fe1840e3f9aba153209e7dfcfc99e156b22d39343a44115e94a28a88bd7eb",
+    "bytes": 8884436
+   },
+   {
+    "title": "Defibrillatoren",
+    "url": "https://opendata.swiss/en/dataset/defibrillatoren",
+    "resource_url": "https://data-bs.ch/stata/fgi/stac/DEFI_Defibrillatoren.geojson",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T10:42:41.869674+00:00",
+    "sha256": "d24860618fbad67d0ea58a646a72c43013300fe8dd4f6392767a0306cc667e4c",
+    "bytes": 116986
+   },
+   {
+    "title": "Land use projections and services for Switzerland — ZIP",
+    "url": "https://opendata.swiss/en/dataset/land-use-projections-and-services-for-switzerland",
+    "resource_url": "https://www.envidat.ch/dataset/c259ac71-37ea-477e-94b0-c463cc195304/resource/3f13ea3a-3dd2-48a3-98a1-284b565b2c2d/download/data.zip",
+    "publisher": "catalogue opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T10:42:50.615614+00:00",
+    "sha256": "a30d687721af3cc5f5bc6586145d3be05aecd6c9578d5464e20e1db151b5a30a",
+    "bytes": 4119284
+   }
+  ],
+  "substitution": null,
+  "n_variables": 190,
+  "n_constraints": 48,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 35
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "aea3098c8ac8d9ebb0af19c9",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 52,
+    "invalid": 52,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "aea3098c8ac8d9ebb0af19c9",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.26876910291984174,
+  "objective": 51915.2,
+  "baseline_objective": 70997.0,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 51915.2,
+   "polished": false
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 38,
+    "mapped": 38,
+    "duplicates": [
+     "Departement Geschichte",
+     "MAB Musikakademie",
+     "Theologische Fakultät"
+    ],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [
+     "160",
+     "161"
+    ],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "structure": "the instance has 38 mapped places instead of 35: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 38,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 26503.03478106207
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 133033,
+  "solver_calls": 3
+ },
+ "seconds": 3299.0
+}
