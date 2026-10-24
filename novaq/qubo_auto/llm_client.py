@@ -22,6 +22,9 @@ class PromptTooLong(Exception):
 
 class StreamTimeout(Exception):
     """A streamed answer passed its deadline (the stream is closed, so the server stops generating)."""
+    def __init__(self, message: str, tail: str = ""):
+        super().__init__(message)
+        self.tail = tail                       # the end of the reasoning, logged to see why it did not finish
 
 
 class ReasoningLoop(Exception):
@@ -31,14 +34,18 @@ class ReasoningLoop(Exception):
         self.tail = tail
 
 
-def looping(text: str, min_period: int = 30, max_period: int = 1500, repeats: int = 4) -> bool:
+def looping(text: str, min_period: int = 30, max_period: int = 4000, repeats: int = 4, long_period: int = 200,
+            long_repeats: int = 3) -> bool:
     """True when the end of `text` is one passage repeated `repeats` times verbatim. Greedy decoding (temperature 0)
     sent Gemma's reasoning on route problems into such a loop after ~2 minutes; it then ran to the 20-minute timeout
     (Paris and Melbourne model steps, 2026-10-21/22)."""
     t = text[-(max_period * repeats):]
-    for p in range(min_period, min(max_period, len(t) // repeats) + 1):
+    for p in range(min_period, max_period + 1):
+        need = repeats if p < long_period else long_repeats      # a long passage repeated 3 times is already a loop
+        if len(t) < need * p:
+            break
         last = t[-p:]
-        if all(t[-(k + 1) * p:-k * p] == last for k in range(1, repeats)):
+        if all(t[-(k + 1) * p:-k * p] == last for k in range(1, need)):
             return True
     return False
 
@@ -280,13 +287,13 @@ class LLMClient:
                     if r:
                         thought.append(r)
                         seen += 1
-                        if seen % 40 == 0 and looping("".join(thought[-400:])):
+                        if seen % 40 == 0 and looping("".join(thought[-1500:])):
                             raise ReasoningLoop("".join(thought)[-4000:])
                     if d.content:
                         parts.append(d.content)
                     finish = ch.finish_reason or finish
                 if time.time() - start > self.request_timeout:
-                    raise StreamTimeout(f"no complete answer after {self.request_timeout:.0f} s")
+                    raise StreamTimeout(f"no complete answer after {self.request_timeout:.0f} s", "".join(thought)[-6000:])
         finally:
             close = getattr(chunks, "close", None)
             if close:

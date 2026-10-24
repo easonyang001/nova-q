@@ -1177,3 +1177,12 @@ def test_reasoning_loop_detector():
     block = "    *   `S0` at pos 0.\n    *   `S1` at pos 1.\n    *   `S2` at pos 2.\n    *   This is a closed loop.\n\n"
     assert looping("Plan: positions x[i,t].\n" + block * 6)
     assert not looping("Plan: positions x[i,t].\n" + block * 2 + "Now the distance terms between t and t+1.\n")
+
+
+def test_reasoning_loop_detector_catches_long_passages():
+    import random
+    from qubo_auto.llm_client import looping
+    random.seed(1)
+    words = "station tour distance check position closed loop verify sum each once node edge order".split()
+    long = " ".join(random.choice(words) + str(random.randint(0, 99)) for _ in range(250))    # ~2,000 characters
+    assert looping("start " + long * 3) and not looping("start " + long * 2)
