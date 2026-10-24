@@ -220,26 +220,28 @@ def fig_energy_rep(recs, out, floor=5e-4):
         if k // ncol or k + ncol >= len(CASES):          # bottom of its column
             sub.set_xlabel("qubits", fontsize=10.5)
     if len(CASES) < 2 * ncol:
-        # the free cell: median gap of every solver over all instances, the numbers the caption quotes
+        # the free cell: median gap per problem and solver (the pooled plot on the left already shows all instances)
+        from matplotlib.colors import LogNorm
         sub = fig.add_subplot(gs[1, 2 + ncol - 1])
-        med = []
-        for key, label, color, marker in SOLVERS:
-            g = [r["gap"] for r in rows if r["solver"] == key]
-            if g:
-                short = {"D-Wave QPU": "QPU"}.get(label, label.split(" ")[0].replace("$p$=3", ""))
-                med.append((short, float(np.median(g)), color))
-        med.sort(key=lambda m: m[1])
-        y = np.arange(len(med))[::-1]
-        sub.barh(y, [max(m[1], floor) for m in med], color=[m[2] for m in med], height=0.6)
-        for yi, (lab, v, c) in zip(y, med):
-            sub.text(max(v, floor) * 1.3, yi, f"{v:.3f}", va="center", fontsize=9)
-        sub.set_yticks(y, [m[0] for m in med], fontsize=9.5)
-        sub.set_xscale("log")
-        sub.set_xlim(floor * 0.8, 3.0)
-        sub.set_xticks([floor, 1e-2, 1.0], ["≈0", "0.01", "random"])
-        sub.minorticks_off()
-        sub.set_title(f"All {len(set((r['case'], r['points'], r['seed']) for r in rows))} instances: median gap", loc="left", fontsize=10.5)
-        sub.tick_params(labelsize=9.5)
+        short = {"sa": "SA", "sqa": "SQA", "dwave_qpu": "QPU", "cga": "CGA", "qaoa_p3": "QAOA"}
+        rows_lab = {"ev_chargers_s": "EV", "youbike_tour": "Tour", "london_ambulance_s": "Amb.", "aed_groups": "AED",
+                    "nyc_pb_budget": "Budget"}
+        keys = [k for k, *_ in SOLVERS]
+        M = np.array([[np.median([r["gap"] for r in rows if r["case"] == c and r["solver"] == k] or [np.nan])
+                       for k in keys] for c, _ in CASES])
+        sub.imshow(np.maximum(M, floor), cmap="Blues", norm=LogNorm(vmin=floor, vmax=1.0), aspect="auto")
+        for i in range(M.shape[0]):
+            for j in range(M.shape[1]):
+                v = M[i, j]
+                txt = "≈0" if v < floor else (f"{v:.3f}" if v < 0.1 else f"{v:.2f}")
+                sub.text(j, i, txt, ha="center", va="center", fontsize=8,
+                         color="white" if v >= 0.05 else "#222222")
+        sub.set_xticks(range(len(keys)), [short[k] for k in keys], fontsize=8.5)
+        sub.set_yticks(range(len(CASES)), [rows_lab.get(c, c) for c, _ in CASES], fontsize=9)
+        sub.tick_params(length=0)
+        for side in ("left", "bottom"):
+            sub.spines[side].set_visible(False)
+        sub.set_title("Median gap per problem", loc="left", fontsize=10.5)
     fig.savefig(out, dpi=300)
     fig.savefig(out.with_suffix(".pdf"))
     plt.close(fig)

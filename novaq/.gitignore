@@ -66,8 +66,8 @@ results/**
 !results/*_SETTINGS.md
 
 # Poster source and PDF stay local (author list not published here)
-poster/gtc2027/poster*.tex
-poster/gtc2027/poster*.pdf
-poster/gtc2027/poster*.png
-poster/gtc2027/poster.aux
-poster/gtc2027/poster.log
+poster/gtc2027/*.tex
+poster/gtc2027/*.pdf
+poster/gtc2027/*.png
+poster/gtc2027/*.aux
+poster/gtc2027/*.log
