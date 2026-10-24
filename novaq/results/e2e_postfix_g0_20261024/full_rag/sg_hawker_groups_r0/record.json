@@ -1,0 +1,38 @@
+{
+ "case": "sg_hawker_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 342.5
+  },
+  "model": {
+   "ok": false,
+   "seconds": 976.4,
+   "error": "ValueError: model validation failed: make_example_data does not follow DATA_SCHEMA: set 'teams' is missing | variable_keys[0] uses id '0', which is not in set 'teams' (its ids look like []): use the set's ids, not positions (data['teams'][j], not j). If variable 0 is a helper that follows from the decisions (an assignment of a point to its nearest open site, a covered indicator), give it {}"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "cost": {
+  "llm_tokens": 58130,
+  "solver_calls": null
+ },
+ "seconds": 1318.9
+}

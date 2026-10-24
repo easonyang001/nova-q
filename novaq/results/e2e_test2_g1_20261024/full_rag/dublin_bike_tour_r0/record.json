@@ -1,0 +1,331 @@
+{
+ "case": "dublin_bike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 779.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 783.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 212.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 3337.3
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 2.1
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based encoding (N*N variables). For N=20, 400 vars. Fits SA backend.",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "Dublinbikes stations within 600m of Connolly",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "The sequence order in the tour",
+    "source": "model",
+    "size_of": "stations"
+   }
+  },
+  "params": {
+   "depot_lat": {
+    "meaning": "Latitude of Connolly Station",
+    "index": [],
+    "type": "number",
+    "unit": "deg_lat",
+    "source": "user",
+    "value": 53.3509
+   },
+   "depot_lon": {
+    "meaning": "Longitude of Connolly Station",
+    "index": [],
+    "type": "number",
+    "unit": "deg_lon",
+    "source": "user",
+    "value": -6.25
+   },
+   "station_lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "unit": "deg_lat",
+    "source": "public"
+   },
+   "station_lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "unit": "deg_lon",
+    "source": "public"
+   },
+   "station_name": {
+    "meaning": "Name of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "dist_depot_to_station": {
+    "meaning": "Distance from Connolly Station to the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "unit": "m",
+    "source": "public",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "depot_lat",
+      "depot_lon",
+      "station_lat",
+      "station_lon"
+     ],
+     "how": "dist from fixed point"
+    }
+   },
+   "dist_station_to_station": {
+    "meaning": "Distance between two stations",
+    "index": [
+     "stations",
+     "stations"
+    ],
+    "type": "number",
+    "unit": "m",
+    "source": "public",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "station_lat",
+      "station_lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Bike_Parking_Stands_DCC_Dublin_Bike_Parking_DCC.csv",
+  "Dublinbikes_Stations_GPS_Co-ords.csv",
+  "FEATURED_Dublinbikes_API_DCC.geojson",
+  "FEATURED_Dublinbikes_API_DCC.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "distance_to",
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "\n- Used 'FEATURED_Dublinbikes_API_DCC' as the primary source for Dublinbikes station data (IDs, names, and coordinates).\n- Filtered stations to include only those within 600 meters of Connolly Station (53.3509, -6.2500) using prep.within_radius.\n- Computed distances from the depot to stations using prep.distance_to.\n- Computed pairwise distances between stations using prep.haversine_matrix and converted the result into a sparse format.\n- Handled the SyntaxError from previous attempt by ensuring positional arguments in toolkit functions precede keyword arguments.\n",
+  "prep_log": "**資料來源**\n\n- Bike Parking Stands DCC — Dublin Bike Parking DCC（catalogue data.gov.ie） <https://data.gov.ie/dataset/bike-parking-stands-dcc>，授權：待確認，取得 2026-10-24T08:18:32.600772+00:00\n- Dublinbikes Stations GPS Co-ords（data.smartdublin.ie） <https://data.smartdublin.ie/dataset/dublinbikes-api/resource/2dec86ed-76ed-47a3-ae28-646db5c5b965?view_id=b39fcab2-6574-4ebf-8b2c-ba61ca365958>，授權：待確認，取得 2026-10-24T08:18:30.108826+00:00\n- FEATURED Dublinbikes API DCC（data.smartdublin.ie） <https://data.smartdublin.ie/dataset/33ec9fe2-4957-4e9a-ab55-c5e917c7a9ab>，授權：待確認，取得 2026-10-24T08:18:29.257830+00:00\n- FEATURED Dublinbikes API DCC（data.smartdublin.ie） <https://data.smartdublin.ie/dataset/33ec9fe2-4957-4e9a-ab55-c5e917c7a9ab>，授權：待確認，取得 2026-10-24T08:18:31.001811+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (53.3509, -6.25) 600 公尺內的資料 | 113 | 9 |  |\n| Filter stations within 600m of Connolly Station | 113 | 9 | Used prep.within_radius |",
+  "flags": [],
+  "review_required": [
+   "stations: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "station_lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "station_lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "station_name: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist_depot_to_station: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist_depot_to_station: ['Calculated via Haversine distance']",
+   "dist_station_to_station: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist_station_to_station: ['Calculated via Haversine distance']",
+   "adapter 沒有聲明這些欄位的來源與單位：positions"
+  ],
+  "sources": [
+   {
+    "title": "Bike Parking Stands DCC — Dublin Bike Parking DCC",
+    "url": "https://data.gov.ie/dataset/bike-parking-stands-dcc",
+    "resource_url": "https://data.smartdublin.ie/dataset/3d3f8721-3b1f-450e-a273-ee750b80dd4c/resource/aee9e89a-e868-417c-b341-7305945702b6/download/dublin-bike-parking.csv",
+    "publisher": "catalogue data.gov.ie",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T08:18:32.600772+00:00",
+    "sha256": "7e54b2df8abbd2528fd18850eadb44d4721736da3ef4c51d5f269a7670cd0ff4",
+    "bytes": 124667
+   },
+   {
+    "title": "Dublinbikes Stations GPS Co-ords",
+    "url": "https://data.smartdublin.ie/dataset/dublinbikes-api/resource/2dec86ed-76ed-47a3-ae28-646db5c5b965?view_id=b39fcab2-6574-4ebf-8b2c-ba61ca365958",
+    "resource_url": "https://data.smartdublin.ie/dataset/33ec9fe2-4957-4e9a-ab55-c5e917c7a9ab/resource/2dec86ed-76ed-47a3-ae28-646db5c5b965/download/dublin.csv",
+    "publisher": "data.smartdublin.ie",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T08:18:30.108826+00:00",
+    "sha256": "80dcc0bcf92b0a0747d214f372532a74aa7302ae63c73f16dad5d20da72ba936",
+    "bytes": 6438
+   },
+   {
+    "title": "FEATURED Dublinbikes API DCC",
+    "url": "https://data.smartdublin.ie/dataset/33ec9fe2-4957-4e9a-ab55-c5e917c7a9ab",
+    "resource_url": "https://data.smartdublin.ie/dublinbikes-api/bikes/dublin_bikes/current/stations.geojson",
+    "publisher": "data.smartdublin.ie",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T08:18:29.257830+00:00",
+    "sha256": "cff9ed0b966d95b2ec2969a77bab57cf5d612ec4df1f65740ab6a29411414d2b",
+    "bytes": 52266
+   },
+   {
+    "title": "FEATURED Dublinbikes API DCC",
+    "url": "https://data.smartdublin.ie/dataset/33ec9fe2-4957-4e9a-ab55-c5e917c7a9ab",
+    "resource_url": "https://api.cyclocity.fr/contracts/dublin/gbfs/station_status.json",
+    "publisher": "data.smartdublin.ie",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T08:18:31.001811+00:00",
+    "sha256": "01acb493af979cf2819f118fc9ffd404d9dc3c5c5abe92d07e3d046a1872f08b",
+    "bytes": 36289
+   }
+  ],
+  "substitution": null,
+  "n_variables": 81,
+  "n_constraints": 18,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "stations": 9
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "6ef930f98ecdbba9ff907862",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 58,
+    "invalid": 58,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "6ef930f98ecdbba9ff907862",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:solve",
+  "delivery:limited",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": 2880.6093478214248,
+  "baseline_objective": 2880.6093478214248,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 3333.941948089847,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 9,
+    "mapped": 9,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": false,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 0.892,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 9,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 2713.44574904041,
+    "reference_quality": 2713.4457490404106,
+    "gap_vs_reference": -0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 309776,
+  "solver_calls": 3
+ },
+ "seconds": 5115.2
+}

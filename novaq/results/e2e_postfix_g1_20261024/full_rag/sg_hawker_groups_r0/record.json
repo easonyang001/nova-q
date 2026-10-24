@@ -1,0 +1,38 @@
+{
+ "case": "sg_hawker_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 312.4
+  },
+  "model": {
+   "ok": false,
+   "seconds": 968.9,
+   "error": "ValueError: model validation failed: set 'teams': a 'model' set (an index the formulation defines: tour positions, group labels, time slots) needs \"size_of\": the set with one id per member, or a user parameter giving the count"
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "cost": {
+  "llm_tokens": 57049,
+  "solver_calls": null
+ },
+ "seconds": 1281.3
+}

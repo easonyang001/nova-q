@@ -1,0 +1,294 @@
+{
+ "case": "dublin_bike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 273.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 569.1
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 178.4
+  },
+  "data": {
+   "ok": true,
+   "seconds": 833.5
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1.8
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP formulation. N^2 variables (e.g., 400 for 20 sites). Fits SA backend.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Dublinbikes stations within 600m of Connolly Station",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "The sequence order in the inspection tour",
+    "source": "model",
+    "size_of": "sites"
+   }
+  },
+  "params": {
+   "dist": {
+    "meaning": "Euclidean distance between two stations",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Euclidean distance matrix"
+    }
+   },
+   "site_name": {
+    "meaning": "Name of the bike station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   }
+  }
+ },
+ "data_found": [
+  "Bike_Parking_Stands_DCC_Dublin_Bike_Parking_DCC.csv",
+  "Dublinbikes_API_DCC.geojson",
+  "Dublinbikes_API_DCC.json",
+  "TOA08_-_Bicycle_sharing_scheme_data_for_Dublin_Bicycle_shari.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "",
+  "prep_log": "**資料來源**\n\n- Bike Parking Stands DCC — Dublin Bike Parking DCC（catalogue data.gov.ie） <https://data.gov.ie/dataset/bike-parking-stands-dcc>，授權：待確認，取得 2026-10-24T07:54:19.528700+00:00\n- Dublinbikes API DCC（data.gov.ie） <https://data.gov.ie/dataset/dublinbikes-api/resource/18df84de-b8af-4647-9f04-ad76c9cbcefd>，授權：CC BY 4.0，取得 2026-10-24T07:54:16.984350+00:00\n- Dublinbikes API DCC（data.gov.ie） <https://data.gov.ie/dataset/dublinbikes-api>，授權：CC BY 4.0，取得 2026-10-24T07:54:17.974139+00:00\n- TOA08 - Bicycle sharing scheme data for Dublin — Bicycle sharing scheme data for Dublin（catalogue data.gov.ie） <https://data.gov.ie/dataset/toa08-bicycle-sharing-scheme-data-for-dublin>，授權：待確認，取得 2026-10-24T07:54:20.585175+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (53.3509, -6.25) 600 公尺內的資料 | 113 | 9 |  |\n| drop_missing {\"columns\": [\"lat\", \"lon\"]} | 9 | 9 |  |",
+  "flags": [],
+  "review_required": [
+   "sites: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "site_name: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, positions, site_name, sites"
+  ],
+  "sources": [
+   {
+    "title": "Bike Parking Stands DCC — Dublin Bike Parking DCC",
+    "url": "https://data.gov.ie/dataset/bike-parking-stands-dcc",
+    "resource_url": "https://data.smartdublin.ie/dataset/3d3f8721-3b1f-450e-a273-ee750b80dd4c/resource/aee9e89a-e868-417c-b341-7305945702b6/download/dublin-bike-parking.csv",
+    "publisher": "catalogue data.gov.ie",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T07:54:19.528700+00:00",
+    "sha256": "7e54b2df8abbd2528fd18850eadb44d4721736da3ef4c51d5f269a7670cd0ff4",
+    "bytes": 124667
+   },
+   {
+    "title": "Dublinbikes API DCC",
+    "url": "https://data.gov.ie/dataset/dublinbikes-api/resource/18df84de-b8af-4647-9f04-ad76c9cbcefd",
+    "resource_url": "https://data.smartdublin.ie/dublinbikes-api/bikes/dublin_bikes/current/stations.geojson",
+    "publisher": "data.gov.ie",
+    "license": "CC BY 4.0",
+    "license_evidence": "https://data.gov.ie/dataset/dublinbikes-api/resource/18df84de-b8af-4647-9f04-ad76c9cbcefd",
+    "retrieved": "2026-10-24T07:54:16.984350+00:00",
+    "sha256": "a64abf259b535fa3a2735cb89d4d810ab48c5861242e14e442cd0358c2be2ff4",
+    "bytes": 52261
+   },
+   {
+    "title": "Dublinbikes API DCC",
+    "url": "https://data.gov.ie/dataset/dublinbikes-api",
+    "resource_url": "https://api.cyclocity.fr/contracts/dublin/gbfs/station_status.json",
+    "publisher": "data.gov.ie",
+    "license": "CC BY 4.0",
+    "license_evidence": "https://data.gov.ie/dataset/dublinbikes-api",
+    "retrieved": "2026-10-24T07:54:17.974139+00:00",
+    "sha256": "274617b1b9919c0a85a48c14d3b4577444cf4285ae2380e16972a6525afea735",
+    "bytes": 36286
+   },
+   {
+    "title": "TOA08 - Bicycle sharing scheme data for Dublin — Bicycle sharing scheme data for Dublin",
+    "url": "https://data.gov.ie/dataset/toa08-bicycle-sharing-scheme-data-for-dublin",
+    "resource_url": "https://ws.cso.ie/public/api.restful/PxStat.Data.Cube_API.ReadDataset/TOA08/CSV/1.0/en",
+    "publisher": "catalogue data.gov.ie",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T07:54:20.585175+00:00",
+    "sha256": "1f5f1b1cb4abd6352809fb324ef2dcd336afac52c005a3dda95a4d6da925c8f3",
+    "bytes": 27514
+   }
+  ],
+  "substitution": null,
+  "n_variables": 81,
+  "n_constraints": 18,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 9
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "c3582b1c28f4a3edc2470dd9",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 58,
+    "invalid": 58,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "c3582b1c28f4a3edc2470dd9",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 2713.6,
+  "baseline_objective": 2713.6,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 3014.9,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 9,
+    "mapped": 9,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 9,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 2713.4457490404106,
+    "reference_quality": 2713.4457490404106,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 113901,
+  "solver_calls": 3
+ },
+ "seconds": 1856.3
+}

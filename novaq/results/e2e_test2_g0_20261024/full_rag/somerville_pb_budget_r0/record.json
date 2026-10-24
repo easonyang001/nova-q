@@ -1,0 +1,253 @@
+{
+ "case": "somerville_pb_budget",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 246.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 168.6
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 95.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 632.8
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1.8
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-capacity"
+ ],
+ "model_choice": "0/1 Knapsack formulation. Variables = number of proposals. With < 500 proposals, the variable count is small enough for SA.",
+ "schema": {
+  "sets": {
+   "proposals": {
+    "meaning": "Proposal ID for the 2023 Participatory Budgeting",
+    "source": "public",
+    "reducible": {
+     "method": "reduce_points",
+     "weight": "score"
+    }
+   }
+  },
+  "params": {
+   "score": {
+    "meaning": "The weighted total score (Total.Score) of the proposal",
+    "index": [
+     "proposals"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "points"
+   },
+   "cost": {
+    "meaning": "The estimated budget required for the proposal",
+    "index": [
+     "proposals"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "USD"
+   },
+   "budget_limit": {
+    "meaning": "Maximum total budget available for all selected proposals",
+    "index": [],
+    "type": "number",
+    "source": "user",
+    "unit": "USD",
+    "value": 1000000
+   }
+  }
+ },
+ "data_found": [
+  "Participatory_Budgeting_Voting_Results.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "normalize_text",
+   "to_number"
+  ],
+  "notes": "The plan filters the dataset for the 2023 budget cycle and converts the 'cost' and 'total_score' columns to numeric types. It uses the unique ':id' as the identifier for each proposal to ensure a 1:1 mapping for the optimization model.",
+  "prep_log": "**資料來源**\n\n- Participatory Budgeting Voting Results（catalog.data.gov） <https://catalog.data.gov/dataset/participatory-budgeting-voting-results>，授權：待確認，取得 2026-10-24T08:13:34.163104+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| keep {\"column\": \"year\", \"values\": [\"2023\"]} | 20 | 20 |  |\n| 數字清理 cost | 20 | 20 |  |\n| 數字清理 total_score | 20 | 20 |  |",
+  "flags": [],
+  "review_required": [
+   "使用者指定的資料來源 data.somervillema.gov 沒有找到，改用 catalog.data.gov（替代資料，需使用者確認）"
+  ],
+  "sources": [
+   {
+    "title": "Participatory Budgeting Voting Results",
+    "url": "https://catalog.data.gov/dataset/participatory-budgeting-voting-results",
+    "resource_url": "https://data.somervillema.gov/api/v3/views/2tt6-zua8/query.json?accessType=DOWNLOAD",
+    "publisher": "catalog.data.gov",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T08:13:34.163104+00:00",
+    "sha256": "cb02acb77ab94657021e51614b745f356fd9b1c7c68a267395a7df6bc6777ff7",
+    "bytes": 10850
+   }
+  ],
+  "substitution": {
+   "requested": [
+    "data.somervillema.gov"
+   ],
+   "used": "catalog.data.gov"
+  },
+  "n_variables": 20,
+  "n_constraints": 1,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "proposals": 20
+    },
+    "totals": {
+     "score": 183831.0,
+     "cost": 2680000.0
+    }
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "595ae04c345207f8fe5a8573",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 13,
+    "invalid": 13,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "595ae04c345207f8fe5a8573",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:solve",
+  "delivery:limited",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": 103058.0,
+  "baseline_objective": 103058.0,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 95093.0,
+   "polished": false
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "proposals",
+    "mapping": "",
+    "entity_set_declared": true,
+    "instance_entities": 20,
+    "mapped": 0,
+    "duplicates": [],
+    "missing_real_entities": 20,
+    "missing_examples": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "unmapped_ids": [
+     "row-3j4m~khmq.utc9",
+     "row-xr6z-p99n~csiy",
+     "row-n869.9m98_s68j",
+     "row-ym8k~7fd6-4i3p",
+     "row-8hmr_tzze~q9ja",
+     "row-wz79~hrzc.engu",
+     "row-7cg9.met5.8t3t",
+     "row-43cj~qnu4_hgyj",
+     "row-kagr.35t9_qy7e",
+     "row-t2dw~a4wy-t7jw"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "votes_param": null,
+    "cost_param": null,
+    "budget_value_found": false
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "proposals"
+     ]
+    ],
+    "structure": "decision variables not recognised for this request (see decision_sets); model unverifiable"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 11,
+    "error": "ValueError: decision variables do not name the real entities"
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 63307,
+  "solver_calls": 3
+ },
+ "seconds": 1145.7
+}

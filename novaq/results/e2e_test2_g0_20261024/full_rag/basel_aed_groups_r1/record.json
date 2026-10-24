@@ -1,0 +1,38 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 275.0
+  },
+  "model": {
+   "ok": false,
+   "seconds": 765.7,
+   "error": "ValueError: model validation failed: hard requirement 'single_assignment' maps to missing constraints ['single_assignment_*']; actual IR names: ['balanced_count_high_0', 'balanced_count_high_1', 'balanced_count_high_2', 'balanced_count_high_3', 'balanced_count_high_4', 'balanced_count_low_0', 'balanced_count_low_1', 'balanced_count_low_2', 'balanced_count_low_3', 'balanced_count_low_4']."
+  }
+ },
+ "failed_stage": "model",
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "cost": {
+  "llm_tokens": 52442,
+  "solver_calls": null
+ },
+ "seconds": 1040.7
+}

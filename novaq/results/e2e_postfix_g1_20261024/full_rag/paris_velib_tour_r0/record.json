@@ -1,0 +1,252 @@
+{
+ "case": "paris_velib_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 327.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 968.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 197.9
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1405.0
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 2.2
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP formulation. For N stations, it uses N^2 binary variables. For a realistic instance of 30 stations, this is 900 variables, which fits well within the SA backend's capacity.",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "Vélib' stations within 600m of Gare de Lyon",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "The sequence index in the inspection tour",
+    "source": "model",
+    "size_of": "stations"
+   }
+  },
+  "params": {
+   "station_name": {
+    "meaning": "Name of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "stations",
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "haversine"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Vélib_-_Localisation_et_caractéristique_des_stations.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "merge_same_place",
+   "within_radius"
+  ],
+  "notes": "\n1. Filtered Vélib' stations to keep only those within 600m of Gare de Lyon (48.8443, 2.3744) using prep.within_radius.\n2. Merged stations that share the same name and are very close to ensure each physical station is counted once using prep.merge_same_place.\n3. Computed the straight-line distance matrix between all filtered stations using prep.haversine_matrix.\n4. Mapped 'stationcode' to 'stations' and 'name' to 'station_name'.\n",
+  "prep_log": "**資料來源**\n\n- Vélib' - Localisation et caractéristique des stations（Opendatasoft opendata.paris.fr） <https://opendata.paris.fr/explore/dataset/velib-emplacement-des-stations/>，授權：待確認，取得 2026-10-24T06:34:15.794242+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Drop missing coordinates | 1519 | 1519 | Removed rows missing lat, lon, or stationcode |\n| 只保留距離 (48.8443, 2.3744) 600 公尺內的資料 | 1519 | 10 |  |\n| Filter radius 600m | 1519 | 10 | Kept stations within 600m of Gare de Lyon |\n| 合併同名且相距 150 m 內的同一地點 | 10 | 10 | 合併 0 筆 |\n| Merge same place | 1519 | 10 | Merged stations with same name and close proximity |",
+  "flags": [],
+  "review_required": [
+   "dist: ['Distances are calculated as straight-line Haversine distances.']",
+   "adapter 沒有聲明這些欄位的來源與單位：positions"
+  ],
+  "sources": [
+   {
+    "title": "Vélib' - Localisation et caractéristique des stations",
+    "url": "https://opendata.paris.fr/explore/dataset/velib-emplacement-des-stations/",
+    "resource_url": "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/velib-emplacement-des-stations/exports/geojson",
+    "publisher": "Opendatasoft opendata.paris.fr",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T06:34:15.794242+00:00",
+    "sha256": "5a31bd3f8aa111ecbc66b9ef37d2b5bc68e94e7152cec01cf47cc96a515b3460",
+    "bytes": 320246
+   }
+  ],
+  "substitution": null,
+  "n_variables": 100,
+  "n_constraints": 20,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "stations": 10
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "33a7377fdfc094acf7ed1ce1",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 57,
+    "invalid": 57,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "33a7377fdfc094acf7ed1ce1",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "requirement_check:solution_ok",
+  "diagnosis:solve",
+  "delivery:limited",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "limited",
+  "message": "退火結果未達簡單基準，交付已驗證可行的基準方案",
+  "solution_source": "baseline",
+  "quality_gap": 0.0,
+  "objective": 3103.127997011923,
+  "baseline_objective": 3103.127997011923,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 3723.775512485238,
+   "polished": false
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 10,
+    "mapped": 10,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 10,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 3103.127997030121,
+    "reference_quality": 3103.1279970301207,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 117178,
+  "solver_calls": 3
+ },
+ "seconds": 2901.0
+}

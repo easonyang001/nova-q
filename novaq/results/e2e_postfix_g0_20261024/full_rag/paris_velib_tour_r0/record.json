@@ -1,0 +1,106 @@
+{
+ "case": "paris_velib_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 296.1
+  },
+  "model": {
+   "ok": true,
+   "seconds": 1764.5
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 289.0
+  },
+  "data": {
+   "ok": false,
+   "seconds": 707.4,
+   "error": "ValueError: data preparation failed: 沒有可讀的真實資料；需要搜尋其他來源或上傳檔案"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP encoding. For 30 sites, 900 binary variables. Fits SA backend easily.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Vélib' stations within 600m of Gare de Lyon",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "The sequence index in the tour",
+    "source": "model",
+    "size_of": "sites"
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [],
+ "cost": {
+  "llm_tokens": 71738,
+  "solver_calls": null
+ },
+ "seconds": 3057.0
+}
