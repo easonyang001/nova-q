@@ -27,7 +27,7 @@ def main(run_dirs):
     truth = {}
     for t in TRUTHS:
         truth.update(json.loads(t.read_text()))
-    cases = {c["id"]: c for c in json.loads((ROOT / "acceptance/cases.json").read_text())["cases"]}
+    cases = {c["id"]: c for c in __import__("caselist").load()["cases"]}
     for d in map(Path, run_dirs):
         rec = json.loads((d / "record.json").read_text())
         code = (d / "model_repaired.py").read_text() if (d / "model_repaired.py").exists() else (d / "model.py").read_text()

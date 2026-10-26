@@ -35,8 +35,8 @@ USER NOTES ON THE DATA (may be empty):
 PREPROCESSING TOOLKIT (module `prep`, tested; PREFER these over hand-written pandas, and pass log=log to each):
 - prep.keep_category(df, col, "計", log=log)            rows split by gender/category: keep the total row
 - prep.latest_period(df, ["年份", "月份"], log=log)       several periods stacked: keep the newest
-- prep.attach_parent(df, name_col, new="區", log=log)    hierarchical tables: give each village its district
-- prep.keep_level(df, name_col, "里", log=log)           drop city/district total rows mixed with villages
+- prep.attach_parent(df, column, new="區", log=log)    hierarchical tables: give each village its district
+- prep.keep_level(df, column, "里", log=log)           drop city/district total rows mixed with villages
 - prep.drop_total_rows(df, log=log)                      drop 總計/合計/小計 rows
 - prep.find_header_row(raw) / prep.apply_header(raw, row)  title/notes above the real header
 - prep.to_number(series, log=log)                       '1,234', 'NT$300', '12%', '-' -> numbers
@@ -50,14 +50,14 @@ PREPROCESSING TOOLKIT (module `prep`, tested; PREFER these over hand-written pan
 - prep.sample_rows(df, n, seed=0, log=log)              ONLY when the confirmed spec explicitly requests fixed-seed sampling; preserves original row indices
 - prep.haversine_matrix(lat, lon)                       straight-line distances (m)
 - prep.distance_to(lat, lon, lat0, lon0)                 distance (m) from every point to ONE point
-- prep.within_radius(df, lat_col, lon_col, (lat0, lon0), radius_m, log=log)   keep rows within a radius
-- prep.in_area(df, lat_col, lon_col, ["大安區, 臺北市", ...], country="tw", log=log)   keep rows inside named areas
+- prep.within_radius(df, lat, lon, (lat0, lon0), radius_m, log=log)   keep rows within a radius
+- prep.in_area(df, lat, lon, ["大安區, 臺北市", ...], country="tw", log=log)   keep rows inside named areas
   (real boundaries; use it instead of guessing which area code is which; when the table has an area-code
   column pass code_column="<column>" so the publisher's own codes decide membership)
 - prep.points_in_polygon(lat, lon, geojson)   which points lie inside a polygon
-- prep.merge_same_place(df, name_col, lat_col, lon_col, max_m=150, log=log)   one row per real place (same name, close);
+- prep.merge_same_place(df, name, lat, lon, max_m=150, log=log)   one row per real place (same name, close);
   max_m=None merges by name alone (mean coordinates) when the specification says one name is one place
-- prep.drop_stray_points(df, lat_col, lon_col, log=log)   drop the few rows with impossible coordinates, logged
+- prep.drop_stray_points(df, lat, lon, log=log)   drop the few rows with impossible coordinates, logged
 - prep.road_matrix(lat, lon, log=log)                   real road distance (m) / time (s) via OSRM (cached)
 - prep.geocode(addresses, country="tw", log=log)        addresses -> lat/lon with a precision label
 - log.step(what, rows_before, rows_after, note)         record any step you do by hand

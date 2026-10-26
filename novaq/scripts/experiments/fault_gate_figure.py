@@ -71,7 +71,7 @@ def main():
     ax.tick_params(length=0)
     fig.tight_layout()
     out = ROOT / a.out
-    fig.savefig(out)
+    fig.savefig(out, dpi=400)                     # hatching and the heat map are raster parts: print quality
     fig.savefig(out.with_suffix(".png"), dpi=300)
     tot = {g: (sum(agg[k]["any"] for k in rows if k[0] == g), sum(agg[k]["n"] for k in rows if k[0] == g)) for g in "DM"}
     print(out, tot)

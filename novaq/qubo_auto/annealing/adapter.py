@@ -128,6 +128,26 @@ def check_output(model_ns: dict[str, Any], data: Any, example: dict, metadata=No
     return [], report
 
 
+def _alias_kwargs(fn, kw: dict) -> dict:
+    """Map the documentation's argument names (name_col, lat_col, lon_col, column_name ...) to the tool's own
+    parameters: the tool list wrote merge_same_place(df, name_col, lat_col, lon_col) while the function takes
+    name / lat / lon, and agents that passed them by keyword failed (Singapore and Basel, 2026-10-24/25)."""
+    import inspect
+    try:
+        params = set(inspect.signature(fn).parameters)
+    except (TypeError, ValueError):
+        return kw
+    out = {}
+    for k, v in kw.items():
+        base = k[:-4] if k.endswith("_col") else k[:-7] if k.endswith("_column") else k
+        if k not in params and base in params:
+            k = base
+        elif k not in params and base == "name" and "column" in params:
+            k = "column"
+        out[k] = v
+    return out
+
+
 class _Recorder:
     """The `prep` module as the agent sees it: every tool call is recorded, so required tools are checked at run
     time (writing `prep.x` in a comment does not count)."""
@@ -139,7 +159,7 @@ class _Recorder:
         if callable(obj) and not isinstance(obj, type):
             def wrapped(*a, **kw):
                 self.called.add(name)
-                return obj(*a, **kw)
+                return obj(*a, **_alias_kwargs(obj, kw))
             return wrapped
         return obj
 

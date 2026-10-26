@@ -131,3 +131,32 @@ def test_exchange_polish_swaps_groups_when_sizes_are_inequalities():
     x = [1, 0, 0, 1, 1, 0, 0, 1]                     # {0, 10} and {1, 11}: cost 20
     y = _exchange_improve(ir, x, lambda v: all(c.satisfied(v) for c in cons), 1)
     assert ir.objective(y) == 2.0                    # {0, 1} and {10, 11}
+
+
+def test_decimal_commas_and_edge_spaces_are_cleaned_at_load(tmp_path):
+    from qubo_auto.annealing.datakit import load_tables
+    from qubo_auto.annealing.prep import to_number
+    p = tmp_path / "toilets.csv"
+    p.write_text("Bezirk;Y\nNord;\"52,5368\"\nNord ;52.4451\n", encoding="utf-8")
+    (name, df), = load_tables([p]).items()
+    assert df["Bezirk"].tolist() == ["Nord", "Nord"] and df["Y"].tolist() == [52.5368, 52.4451]
+    assert to_number(pd.Series(["1,234", "12,500"])).tolist() == [1234.0, 12500.0]      # thousands stay thousands
+    assert to_number(pd.Series(["1.234,5", "2,25"])).tolist() == [1234.5, 2.25]
+
+
+def test_feed_index_links_are_found(tmp_path):
+    from qubo_auto.annealing.opendata import feed_links
+    p = tmp_path / "gbfs.json"
+    p.write_text(json.dumps({"data": {"en": {"feeds": [{"name": "station_information", "url": "https://x/si"},
+                                                       {"name": "station_status", "url": "https://x/ss"}]}}}))
+    assert feed_links(p) == [("station_information", "https://x/si"), ("station_status", "https://x/ss")]
+    q = tmp_path / "rows.json"
+    q.write_text(json.dumps([{"name": "a", "url": "https://x/a", "lat": 1, "lon": 2, "cap": 3, "z": 4, "w": 5}] * 2))
+    assert feed_links(q) == []                        # records that carry a link are not an index
+
+
+def test_documented_argument_names_reach_the_tool():
+    from qubo_auto.annealing.adapter import _Recorder
+    df = pd.DataFrame({"n": ["A", "A"], "la": [47.55, 47.5501], "lo": [7.59, 7.59]})
+    out = _Recorder().merge_same_place(df, name_col="n", lat_col="la", lon_col="lo")
+    assert len(out) == 1

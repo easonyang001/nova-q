@@ -70,8 +70,8 @@ def _wfs_candidates(link: str, title: str, source: str, detail: str, page: str) 
         return []
 
 
-def ckan(portal: str, query: str, limit: int = 6) -> list[dict]:
-    base = CKAN.get(portal)
+def ckan(portal: str, query: str, limit: int = 6, base: str | None = None) -> list[dict]:
+    base = base or CKAN.get(portal)
     if not base:
         return []
     res = _get(f"{base}/action/package_search?q={quote(query)}&rows={limit}").json()["result"]["results"]
@@ -229,12 +229,81 @@ def nomis(portal: str, query: str, limit: int = 6) -> list[dict]:
 PLATFORMS = {"ckan": ckan, "socrata": socrata, "opendatasoft": opendatasoft, "arcgis": arcgis, "europa": europa, "nomis": nomis}
 
 
-def search(platform: str, portal: str, query: str, limit: int = 6) -> list[dict]:
-    """Candidates from one platform; [] on any failure (a failed portal must not stop the other searches)."""
-    fn = PLATFORMS.get(str(platform).lower())
-    if fn is None:
-        return []
+_DISCOVERED: dict[str, tuple[str, str] | None] = {}
+
+
+def _json(url: str):
     try:
-        return fn(str(portal or ""), str(query), limit)
+        return _get(url, timeout=20).json()
     except Exception:
-        return []
+        return None
+
+
+def discover_api(portal: str) -> tuple[str, str] | None:
+    """The data API behind a portal domain: ("ckan", api base) / ("socrata", domain) / ("opendatasoft", domain), or
+    None. A portal's front end can hide its API on another host: a city portal built as a WordPress site named its
+    CKAN API host only in a script, and three runs found no data (2026-10-25). Probes the standard API paths, then API hosts named in the home page and its own scripts."""
+    portal = re.sub(r"^https?://", "", str(portal or "")).strip("/").split("/")[0].lower()
+    if not portal:
+        return None
+    if portal in _DISCOVERED:
+        return _DISCOVERED[portal]
+    found = None
+
+    def is_ckan(host):
+        d = _json(f"https://{host}/api/3/action/package_search?rows=0")
+        return isinstance(d, dict) and isinstance(d.get("result"), dict)
+
+    if is_ckan(portal):
+        found = ("ckan", f"https://{portal}/api/3")
+    elif isinstance(_json(f"https://{portal}/api/catalog/v1?limit=1"), dict) and \
+            "results" in (_json(f"https://{portal}/api/catalog/v1?limit=1") or {}):
+        found = ("socrata", portal)
+    elif "total_count" in (_json(f"https://{portal}/api/explore/v2.1/catalog/datasets?limit=1") or {}):
+        found = ("opendatasoft", portal)
+    else:
+        try:
+            html = _get(f"https://{portal}/", timeout=20).text
+        except Exception:
+            html = ""
+        texts = [html]
+        for src in re.findall(r'src=["\']([^"\']+\.js[^"\']*)', html)[:12]:
+            if src.startswith("/"):
+                src = f"https://{portal}{src}"
+            if portal.split(".", 1)[-1] in src:            # the site's own scripts only
+                try:
+                    texts.append(_get(src, timeout=20).text)
+                except Exception:
+                    pass
+        hosts = []
+        for t in texts:
+            hosts += re.findall(r"https?://([a-z0-9.-]+)/api/3/action", t)
+            hosts += re.findall(r"[\"']([a-z0-9-]*ckan[a-z0-9.-]*\.[a-z]{2,})[\"']", t)
+        for h in dict.fromkeys(hosts):
+            if is_ckan(h):
+                found = ("ckan", f"https://{h}/api/3")
+                break
+    _DISCOVERED[portal] = found
+    return found
+
+
+def search(platform: str, portal: str, query: str, limit: int = 6) -> list[dict]:
+    """Candidates from one platform; [] on any failure (a failed portal must not stop the other searches).
+    A portal that answers nothing under the named platform (or platform "auto") is probed for its real API."""
+    fn = PLATFORMS.get(str(platform).lower())
+    out = []
+    try:
+        out = fn(str(portal or ""), str(query), limit) if fn else []
+    except Exception:
+        out = []
+    if out or not portal:
+        return out
+    try:
+        api = discover_api(portal)
+        if api and api[0] == "ckan":
+            return ckan(re.sub(r"^https?://", "", portal).split("/")[0], str(query), limit, base=api[1])
+        if api and api[0] != str(platform).lower():
+            return PLATFORMS[api[0]](api[1], str(query), limit)
+    except Exception:
+        pass
+    return []

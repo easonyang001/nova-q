@@ -1,0 +1,267 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 702.3
+  },
+  "model": {
+   "ok": true,
+   "seconds": 533.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 333.3
+  },
+  "data": {
+   "ok": true,
+   "seconds": 888.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 5.7
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment variables x[site, team]. For a realistic instance of N=100 sites, there are 100 * 5 = 500 binary variables. The objective is quadratic (clustering), and the constraints are linear. This fits the SA backend easily.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Unique AED locations in PLZ 4051",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": 5
+   }
+  },
+  "params": {
+   "site_name": {
+    "meaning": "Name of the AED location",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Basel_Info_Detaillinien_geojson.geojson",
+  "Defibrillatoren.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "merge_same_place",
+   "normalize_text"
+  ],
+  "notes": "The plan filters the AED locations to only those within postal code 4051. It then merges locations with the same name into a single unique site by averaging their coordinates, as requested. Finally, it calculates the pairwise straight-line distance matrix using the Haversine formula.",
+  "prep_log": "**資料來源**\n\n- Basel Info Detaillinien — geojson（catalogue opendata.swiss） <https://opendata.swiss/en/dataset/basel-info-detaillinien>，授權：待確認，取得 2026-10-24T17:02:54.973684+00:00\n- Defibrillatoren（opendata.swiss） <https://opendata.swiss/de/dataset/defibrillatoren>，授權：待確認，取得 2026-10-24T17:02:34.207210+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| keep {\"column\": \"plz\", \"values\": [4051]} | 235 | 44 |  |\n| 合併同名的同一地點（只看名稱，座標取平均） | 44 | 35 | 合併 9 筆 |",
+  "flags": [],
+  "review_required": [
+   "sites: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "site_name: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "adapter 沒有聲明這些欄位的來源與單位：teams"
+  ],
+  "sources": [
+   {
+    "title": "Basel Info Detaillinien — geojson",
+    "url": "https://opendata.swiss/en/dataset/basel-info-detaillinien",
+    "resource_url": "https://api.geo.bs.ch/stac/v1/download/BIFO/latest/geojson",
+    "publisher": "catalogue opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T17:02:54.973684+00:00",
+    "sha256": "668207b9aeb386b0abdd9b7197c33ab0e05cbdab4d250997845404fea2a15179",
+    "bytes": 56730828
+   },
+   {
+    "title": "Defibrillatoren",
+    "url": "https://opendata.swiss/de/dataset/defibrillatoren",
+    "resource_url": "https://data-bs.ch/stata/fgi/stac/DEFI_Defibrillatoren.geojson",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T17:02:34.207210+00:00",
+    "sha256": "d24860618fbad67d0ea58a646a72c43013300fe8dd4f6392767a0306cc667e4c",
+    "bytes": 116986
+   }
+  ],
+  "substitution": null,
+  "n_variables": 175,
+  "n_constraints": 40,
+  "data_check": {
+   "expected": {
+    "counts": {},
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "8164c7b44a1e5c0a37b4fb6d",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 52,
+    "invalid": 52,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "8164c7b44a1e5c0a37b4fb6d",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.0570263606380064,
+  "objective": 26503.5,
+  "baseline_objective": 28106.3,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 51698.0,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 35,
+    "mapped": 35,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 35,
+    "meets_original_requirements": true,
+    "true_quality": 26503.034781062066,
+    "reference_quality": 26503.03478106207,
+    "gap_vs_reference": -0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 134683,
+  "solver_calls": 3
+ },
+ "seconds": 2465.5
+}

@@ -193,7 +193,7 @@ def main(tags, checker_model=None, builds=0):
     truth = {}
     for t in TRUTHS:
         truth.update(json.loads(t.read_text()))
-    cases = {c["id"]: c for c in json.loads((ROOT / "acceptance/cases.json").read_text())["cases"]}
+    cases = {c["id"]: c for c in __import__("caselist").load()["cases"]}
     rows = []
     for tag in tags:
         for rj in json.loads((ROOT / "results" / tag / "rejudged.json").read_text()):

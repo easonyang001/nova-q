@@ -29,7 +29,9 @@ def passed(run: Path) -> bool:
     """Judged pass: the batch's rejudged.json when it has one (the published verdict), else record.json."""
     rejudged = run.parent.parent / "rejudged.json"
     if rejudged.exists():
-        for r in json.loads(rejudged.read_text()):
+        rows = json.loads(rejudged.read_text())
+        rows = rows if isinstance(rows, list) else rows.get("runs", [])
+        for r in rows:
             if r.get("run") == run.name:
                 return bool(r.get("joint"))
     v = json.loads((run / "record.json").read_text()).get("verdict") or {}

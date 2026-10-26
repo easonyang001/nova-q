@@ -27,7 +27,7 @@ Write:
   the kept entities). Leave out parameters you cannot compute directly (distances, settings).
 - Include only what you can compute with confidence; an empty dict is allowed. pandas is `pd`, numpy is `np`.
 - Use the tested toolkit `prep` instead of your own formulas: prep.distance_to(lat, lon, lat0, lon0) (metres to one
-  point), prep.within_radius(df, lat_col, lon_col, (lat0, lon0), metres), prep.in_area(df, lat_col, lon_col, ["<area>, <city>"]), prep.to_wgs84(df, x, y) for projected
+  point), prep.within_radius(df, lat, lon, (lat0, lon0), metres), prep.in_area(df, lat, lon, ["<area>, <city>"]), prep.to_wgs84(df, x, y) for projected
   coordinates, prep.normalize_text(s) for names.
 - Do not write long comments.
 {previous_feedback}

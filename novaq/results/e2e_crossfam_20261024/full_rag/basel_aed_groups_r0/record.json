@@ -1,0 +1,284 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 705.6
+  },
+  "model": {
+   "ok": true,
+   "seconds": 462.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 67.2
+  },
+  "data": {
+   "ok": true,
+   "seconds": 923.2
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 9.4
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment model. Binary variable x[i, g] = 1 if location i is assigned to team g. For a realistic instance of 100 locations and 5 teams, there are 500 binary variables. The objective is a quadratic sum of distances within groups. This size fits the SA backend comfortably.",
+ "schema": {
+  "sets": {
+   "locations": {
+    "meaning": "Unique AED locations in zip code 4051",
+    "source": "private"
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": "num_teams"
+   }
+  },
+  "params": {
+   "lat": {
+    "meaning": "Latitude of the location",
+    "index": [
+     "locations"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the location",
+    "index": [
+     "locations"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two locations",
+    "index": [
+     "locations",
+     "locations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "Euclidean distance"
+    }
+   },
+   "num_teams": {
+    "meaning": "Number of inspection teams",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   }
+  }
+ },
+ "data_found": [
+  "Defibrillatoren.geojson",
+  "Fischereistatistik_Basel-Stadt_csv.csv",
+  "Open_Data_Basel-Stadt_Mastodon-Posts_csv.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "dedupe",
+   "haversine_matrix",
+   "normalize_text"
+  ],
+  "notes": "",
+  "prep_log": "**資料來源**\n\n- Defibrillatoren（opendata.swiss） <https://opendata.swiss/en/dataset/defibrillatoren>，授權：待確認，取得 2026-10-25T00:59:07.285113+00:00\n- Fischereistatistik Basel-Stadt — csv（catalogue opendata.swiss） <https://opendata.swiss/en/dataset/fischereistatistik-basel-stadt>，授權：待確認，取得 2026-10-25T00:59:16.007387+00:00\n- Open Data Basel-Stadt Mastodon-Posts — csv（catalogue opendata.swiss） <https://opendata.swiss/en/dataset/open-data-basel-stadt-mastodon-posts>，授權：待確認，取得 2026-10-25T00:59:09.862634+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| keep {\"column\": \"plz\", \"values\": [4051]} | 235 | 44 |  |\n| drop_missing {\"columns\": [\"lat\", \"lon\"]} | 44 | 44 |  |\n| 依 ['lat', 'lon'] 去除重複 | 44 | 40 |  |",
+  "flags": [],
+  "review_required": [
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, locations, lon, num_teams, teams"
+  ],
+  "sources": [
+   {
+    "title": "Defibrillatoren",
+    "url": "https://opendata.swiss/en/dataset/defibrillatoren",
+    "resource_url": "https://data-bs.ch/stata/fgi/stac/DEFI_Defibrillatoren.geojson",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-25T00:59:07.285113+00:00",
+    "sha256": "d24860618fbad67d0ea58a646a72c43013300fe8dd4f6392767a0306cc667e4c",
+    "bytes": 116986
+   },
+   {
+    "title": "Fischereistatistik Basel-Stadt — csv",
+    "url": "https://opendata.swiss/en/dataset/fischereistatistik-basel-stadt",
+    "resource_url": "https://data.bs.ch/api/v2/catalog/datasets/100193/exports/csv?use_labels=true",
+    "publisher": "catalogue opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-25T00:59:16.007387+00:00",
+    "sha256": "382a3e6fb51d671df95d182668663eebe7052eb06af77ac99c704ed404739b2c",
+    "bytes": 37384542
+   },
+   {
+    "title": "Open Data Basel-Stadt Mastodon-Posts — csv",
+    "url": "https://opendata.swiss/en/dataset/open-data-basel-stadt-mastodon-posts",
+    "resource_url": "https://data.bs.ch/api/v2/catalog/datasets/100468/exports/csv?use_labels=true",
+    "publisher": "catalogue opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-25T00:59:09.862634+00:00",
+    "sha256": "558ea9c4262620542bcc3c2d0fc8380c89622e952830b4b13da78d331a360efe",
+    "bytes": 23262
+   }
+  ],
+  "substitution": null,
+  "n_variables": 200,
+  "n_constraints": 45,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "locations": 40
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "74af223a96d19e00382431ee",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 52,
+    "invalid": 52,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "74af223a96d19e00382431ee",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 35558.1,
+  "baseline_objective": 35558.1,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 66087.2,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": false,
+   "checks": {
+    "entity_set": "locations",
+    "mapping": "coordinates within 60 m",
+    "entity_set_declared": true,
+    "instance_entities": 40,
+    "mapped": 33,
+    "duplicates": [],
+    "missing_real_entities": 2,
+    "missing_examples": [
+     "Departement Geschichte",
+     "Theologische Fakultät"
+    ],
+    "unmapped_ids": [
+     "43",
+     "44",
+     "46",
+     "160",
+     "161",
+     "194",
+     "195"
+    ],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": null,
+   "checks": {
+    "decision_sets": [
+     [
+      "locations",
+      "teams"
+     ]
+    ],
+    "structure": "40 decision entities but only 33 map to real ones: model unverifiable because the data is wrong"
+   }
+  },
+  "delivery": {
+   "ok": false,
+   "checks": {
+    "decisions": 40,
+    "meets_original_requirements": false,
+    "true_quality": null,
+    "reference_quality": 26503.03478106207
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 135026,
+  "solver_calls": 3
+ },
+ "seconds": 2168.6
+}

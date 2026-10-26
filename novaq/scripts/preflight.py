@@ -44,7 +44,7 @@ def judge_selftests():
 
 def cases_have_truth_and_judge():
     from judge import CASES
-    cases = json.loads((ROOT / "acceptance/cases.json").read_text())["cases"]
+    cases = __import__("caselist").load()["cases"]
     truth = {}
     for t in TRUTHS:
         truth.update(json.loads(t.read_text()))

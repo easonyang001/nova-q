@@ -1,0 +1,270 @@
+{
+ "case": "paris_velib_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 404.9
+  },
+  "model": {
+   "ok": true,
+   "seconds": 596.2
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 52.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 415.8
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1.9
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "Vélib' stations within 600m of Gare de Lyon",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "The order position in the inspection tour",
+    "source": "model",
+    "size_of": "stations"
+   }
+  },
+  "params": {
+   "dist": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "stations",
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "name": {
+    "meaning": "Name of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "text",
+    "source": "public"
+   }
+  }
+ },
+ "data_found": [
+  "Vélib_-_Localisation_et_caractéristique_des_stations.geojson",
+  "Vélib_-_Vélos_et_bornes_-_Disponibilité_temps_réel.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "",
+  "prep_log": "**資料來源**\n\n- Vélib' - Localisation et caractéristique des stations（Opendatasoft opendata.paris.fr） <https://opendata.paris.fr/explore/dataset/velib-emplacement-des-stations/>，授權：待確認，取得 2026-10-25T02:42:25.487203+00:00\n- Vélib - Vélos et bornes - Disponibilité temps réel（Opendatasoft opendata.paris.fr） <https://opendata.paris.fr/explore/dataset/velib-disponibilite-en-temps-reel/>，授權：待確認，取得 2026-10-25T02:42:26.793696+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (48.8443, 2.3744) 600 公尺內的資料 | 1519 | 10 |  |",
+  "flags": [],
+  "review_required": [
+   "stations: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "name: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, name, positions, stations"
+  ],
+  "sources": [
+   {
+    "title": "Vélib' - Localisation et caractéristique des stations",
+    "url": "https://opendata.paris.fr/explore/dataset/velib-emplacement-des-stations/",
+    "resource_url": "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/velib-emplacement-des-stations/exports/geojson",
+    "publisher": "Opendatasoft opendata.paris.fr",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-25T02:42:25.487203+00:00",
+    "sha256": "07986cb1533ffe4c505a50fa090fec461cd5dcd5334ce66906691de66c353e69",
+    "bytes": 320234
+   },
+   {
+    "title": "Vélib - Vélos et bornes - Disponibilité temps réel",
+    "url": "https://opendata.paris.fr/explore/dataset/velib-disponibilite-en-temps-reel/",
+    "resource_url": "https://opendata.paris.fr/api/explore/v2.1/catalog/datasets/velib-disponibilite-en-temps-reel/exports/geojson",
+    "publisher": "Opendatasoft opendata.paris.fr",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-25T02:42:26.793696+00:00",
+    "sha256": "367d53df812dea5313c1504d7ba7cda891cdef087f6e9866fe399a50acb5db81",
+    "bytes": 683638
+   }
+  ],
+  "substitution": null,
+  "n_variables": 100,
+  "n_constraints": 20,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "stations": 10
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "c96c6e37ea4fbbd7c4b962f5",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 57,
+    "invalid": 57,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "c96c6e37ea4fbbd7c4b962f5",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 3103.1,
+  "baseline_objective": 3103.1,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 3646.9,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 10,
+    "mapped": 10,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 10,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 3103.127997030121,
+    "reference_quality": 3103.1279970301207,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 87308,
+  "solver_calls": 3
+ },
+ "seconds": 1471.6
+}

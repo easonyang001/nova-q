@@ -26,12 +26,25 @@ def is_missing(v) -> bool:
     return v is None or (isinstance(v, float) and pd.isna(v)) or normalize_text(v).lower() in MISSING_MARKERS
 
 
+_COMMA_NUM = re.compile(r"^[-+]?\d+,(\d+)$")
+
+
+def decimal_comma(values) -> bool:
+    """True when the comma in these numbers is a decimal comma: some value has a comma not followed by exactly three
+    digits ('52,5368', '0,5'). Thousands groups ('1,234') alone keep the comma as a separator. Berlin's toilet file
+    mixes '52,5368' and '52.4451' in one column (2026-10-25)."""
+    tails = [m.group(1) for v in values if isinstance(v, str)
+             for m in [_COMMA_NUM.match(unicodedata.normalize("NFKC", v).strip())] if m]
+    return any(len(t) != 3 for t in tails)
+
+
 def to_number(series: pd.Series, log=None, name: str | None = None) -> pd.Series:
     """'1,234' / 'NT$300' / '12.5%' / '（123）' / missing markers -> float. Percent strings become 12.5 (not 0.125);
     the column name in the log says so. Values that still fail become NaN and are counted."""
     if pd.api.types.is_numeric_dtype(series):
         return series.astype(float)
     pct = False
+    dec_comma = decimal_comma(series.dropna().tolist())
 
     def conv(v):
         nonlocal pct
@@ -40,6 +53,8 @@ def to_number(series: pd.Series, log=None, name: str | None = None) -> pd.Series
         t = unicodedata.normalize("NFKC", str(v)).strip()
         if t.endswith("%"):
             pct, t = True, t[:-1]
+        if dec_comma and "," in t:
+            t = t.replace(".", "").replace(",", ".") if "." in t and t.rfind(",") > t.rfind(".") else t.replace(",", ".")
         neg = t.startswith("(") and t.endswith(")")            # accounting negatives: (123)
         t = _NUM_JUNK.sub("", t.strip("()"))
         try:

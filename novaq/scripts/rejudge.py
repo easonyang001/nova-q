@@ -19,13 +19,14 @@ TRUTHS = [ROOT / "results/acceptance_truth/truth_20261011.json", ROOT / "results
           ROOT / "results/acceptance_truth/truth_nyc_pb_20261022.json",
           ROOT / "results/acceptance_truth/truth_test_20261022.json",
           ROOT / "results/acceptance_truth/truth_test2_20261024.json"]
+TRUTHS += sorted(p for p in (ROOT / "results/acceptance_truth").glob("**/truth_*.json") if p not in TRUTHS)   # local sets
 
 
 def main(tag: str):
     truth = {}
     for t in TRUTHS:
         truth.update(json.loads(t.read_text()))
-    cases = {c["id"]: c for c in json.loads((ROOT / "acceptance/cases.json").read_text())["cases"]}
+    cases = {c["id"]: c for c in __import__("caselist").load()["cases"]}
     out = []
     for rec_path in sorted((ROOT / "results" / tag).glob("*/*_r*/record.json")):
         d = rec_path.parent

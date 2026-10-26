@@ -9,7 +9,8 @@
 ![CUDA-Q 0.14](https://img.shields.io/badge/CUDA--Q-0.14-76B900.svg)
 ![NVIDIA L40S](https://img.shields.io/badge/GPU-2%C3%97%20NVIDIA%20L40S-76B900.svg)
 
-Chia-Chen Yang · National Pingtung University, Taiwan
+Chia-Chen Yang<sup>1</sup>, Chia-Ho Ou<sup>1,2</sup><br>
+<sup>1</sup>National Pingtung University, Taiwan · <sup>2</sup>Tohoku University, Japan
 
 [Agent guide (繁體中文)](novaq/docs/agents_overview_zh.md)
 
@@ -50,10 +51,9 @@ acceptance judge scores each delivery against ground truth built directly from t
 - **End to end on real cities.** 15 of 18 runs across Taipei, London, Melbourne and New York pass the independent
   judge, using official open data and local models only (no cloud LLM). On a held-out test set built after freezing
   the code (Singapore, Paris, Cambridge MA), 8 of 9 pass; on a second one run as independent samples (Basel, Dublin,
-  Somerville), 4 of 9 pass. Its failures are documented run by run and fixed afterwards.
-- **Verification that catches real faults.** Injected harmful faults are caught 97/99 (data) and 66/78 (model); a
-  checker from a second LLM family catches 98% of data faults versus 73% for the doer's own family. No valid plan was
-  wrongly rejected (300/300).
+  Somerville), 4 of 9 pass. Every failure is documented run by run and fixed afterwards.
+- **Verification that catches real faults.** Blind checker agents catch injected harmful faults 97/99 (data) and
+  66/78 (model); no valid plan was wrongly rejected (300/300).
 - **Same budget, a different rule.** On New York's 2017 participatory budget (Council District 3), the plan that
   maximises total votes funds 7,103 votes for the $1 M budget; the city's own rule, which funds projects in vote
   order, funds 5,381. The two rules pursue different goals; the point is that the delivered plan is the exact optimum
@@ -62,7 +62,7 @@ acceptance judge scores each delivery against ground truth built directly from t
   with QAOA's own optimal sample; Cambridge's (26 qubits): 3 of 3 pass, 2.7% below the optimum; Somerville's
   (28 qubits): 2 of 2 pass, 4.7% below.
 - **One verified model, six solvers.** On its QUBO: simulated annealing, simulated quantum annealing, the D-Wave
-  Advantage QPU, a GPU annealer and QAOA on CUDA-Q, compared on 48 instances with known optima. On its MILP form:
+  Advantage QPU, a GPU annealer and QAOA on CUDA-Q, compared on 57 instances with known optima. On its MILP form:
   NVIDIA cuOpt, which proves the optimum of the agents' own models on 9 of 11 tasks.
 
 ## Motivation
@@ -141,8 +141,8 @@ the problem the user asked for.
 
 ### Why QAOA, when the annealers do better
 
-At these sizes simulated and simulated-quantum annealing reach lower energies than QAOA (median gap 0.008 and 0.001
-against 0.16 over 48 instances), and the end-to-end benchmark runs deliver with SA. QAOA is not presented as the
+At these sizes simulated and simulated-quantum annealing reach lower energies than QAOA (median gap 0.007 and 0.001
+against 0.16 over 57 instances), and the end-to-end benchmark runs deliver with SA. QAOA is not presented as the
 faster solver. It is the gate-model path: the pipeline produces real-data, agent-built instances with known optima on
 which QAOA can be tracked as circuit depth and qubit counts grow, and the New York budget shows that a verified model
 runs end to end on QAOA at 25 qubits.
@@ -172,8 +172,8 @@ Three principles guide the gates:
   from the specification alone; the data checker recomputes the expected data from the raw tables alone.
 - **Agreement, not authority.** A disagreement is evidence, not a verdict: the checker can be wrong too. The evidence
   is returned to the stage that can fix it, and the repaired version must pass all gates again.
-- **Diversity.** A checker from a different model family catches more faults than one from the same family, because
-  the two make different mistakes (98% versus 73% on injected data faults).
+- **Diversity, measured.** On injected data faults a checker from a different model family catches more (98% versus
+  73%); in full end-to-end runs it did not raise the pass rate (see the gate ablation), so one family is used.
 
 The fault-injection study inserts harmful faults one at a time into otherwise correct runs: missing or duplicated
 entities, swapped coordinates, values off by a factor of 10, total rows mixed in, points outside the area, dropped
@@ -200,7 +200,9 @@ constraints, flipped objectives, dropped pairwise terms, counts off by one and b
 
 ### Real cities, official open data
 
-Three runs per task; Gemma-4-31B-it as doer and checker; simulated annealing as the solver.
+Three runs per task; Gemma-4-31B-it as doer and checker; simulated annealing as the solver. One end-to-end run takes a
+median of 44 min (17–85 min) and about 110k LLM tokens, all on the two local L40S GPUs. Pass rates with 95% Wilson
+intervals: 15/18 (61–94%), test set 1 8/9 (56–98%), test set 2 4/9 (19–73%).
 
 | City and task | Problem type | Official source | Instance | Passed |
 |---|---|---|---|:---:|
@@ -251,8 +253,26 @@ validation shrank its example to an empty instance and reported correct constrai
 internal row id became the proposal name (Somerville); and the Clarifier turned the landmark that only defines the
 area into the tour's start, against the user's answer (Dublin). Each is fixed generically after the test (name-only
 merging, validation on the full example, no portal row ids, a check of the draft against the user's answers, and the
-data cross-check now also covers data the model labels private). Post-fix runs are reported apart
+data cross-check now also covers data the model labels private). Post-fix runs, reported apart and not counted:
+Dublin 2/2, Somerville 2/2, and Basel 3/3 on the latest code, after three more generic fixes found on the way
+(GeoJSON inside zip archives, the user's own words passed to the data agents, exchange moves through inequality rows)
 (`novaq/results/e2e_postfix2_SETTINGS.md`). Run-by-run notes: [results/e2e_test2_RESULTS.md](novaq/results/e2e_test2_RESULTS.md).
+
+### Gate ablation and a second-family checker
+
+On the six tasks of test sets 1 and 2, with the code frozen before the runs (hash in each run's manifest.json; one run per task and arm,
+`novaq/results/e2e_ablation_SETTINGS.md`):
+
+| Arm | Passed | Wrong deliveries |
+|---|:---:|:---:|
+| All gates and repair (Gemma doer and checker) | 6/6 | 0 |
+| No checker agent, no repair | 6/6 | 0 |
+| All gates, checker from a second family (Qwen3.6-27B) | 4/6 | 0 |
+
+On the fixed code these tasks no longer produce wrong data or models, so the gates had nothing to stop: they cost
+nothing in pass rate or time, but this ablation cannot show their benefit, which rests on the injected-fault study
+below. A second-family checker did not help in full runs (one failure was a tool-argument bug, fixed since; in the
+other the Qwen checker counted the same wrong 40 places as the doer), so the pipeline keeps one family.
 
 ### Verification gates
 
@@ -266,17 +286,22 @@ No false rejections in 15 verified runs (300/300 valid decisions accepted).
 
 ### Solvers on the same verified QUBOs
 
-48 instances from five agent-built models (3 instances per size, k-means on random 80% subsets of the real points;
+57 instances from six agent-built models on real city data (five development tasks and Singapore's hawker zones
+from test set 1; 3 instances per size, k-means on random 80% subsets of the real points;
 budget: random subsets with the budget kept at the same share of total cost), 9–27 qubits, optimum known by full enumeration. The energy gap is
 (E − E<sub>opt</sub>) / (Ē<sub>random</sub> − E<sub>opt</sub>): 0 is the optimum and 1 a random guess.
 
 | Solver | SQA | SA | D-Wave QPU | QAOA p=3 (CUDA-Q) | GPU annealer |
 |---|:---:|:---:|:---:|:---:|:---:|
-| Median energy gap | 0.001 | 0.008 | 0.029 | 0.16 | 0.57 |
-| Instances where the optimum was sampled | 48/48 | 48/48 | 44/48 | 48/48 | 48/48 |
+| Median energy gap | 0.001 | 0.007 | 0.027 | 0.16 | 0.46 |
+| P(optimum) per sample over a random guess (median) | 1.7×10⁴ | 8.4×10³ | 4.2×10³ | 1.3×10³ | 2.0×10³ |
+| Instances where the optimum was sampled | 57/57 | 57/57 | 53/57 | 57/57 | 57/57 |
 
-QAOA samples the optimum on every instance but trails the annealers, because penalty terms reduce its feasible
-fraction.
+At these sizes a random guess with 10⁴ samples also hits the optimum of the smallest instances, so the second row says
+little; the ratio to a random guess is the fairer measure. Sample budgets: SA, SQA and the QPU 10³ reads, QAOA 10⁴
+shots, the GPU annealer 10 s; the gap is a mean over samples and does not reward a larger budget. QAOA here is a GPU
+state-vector simulation on CUDA-Q (`nvidia` target), not quantum hardware. It trails the annealers, mainly because
+penalty terms reduce its feasible fraction.
 
 <p align="center">
   <img src="novaq/results/experiments/qaoa_cudaq_20261020/figures/energy_rep.png" width="900"
@@ -380,6 +405,12 @@ constraint-preserving QAOA mixers.
   preparation.
 - **Repeats.** The development tasks and the first test set ran at temperature 0, so their three repeats often share
   the same specification and model; only the second test set (temperature 0.7) has independent repeats.
+- **Real-data reading is the weak point.** Each new country brought a new data-reading problem (portal APIs, number
+  formats, text variants); held-out pass rates fell from 8/9 to 4/9 as the tasks moved further from the
+  development cities.
+- **Post-fix runs** are on the same tasks that exposed the bugs; only the next fresh test set can show that the fixes
+  generalise.
+- **QAOA end to end** fits only the budget requests (25–28 qubits); the other task types need 57–756 qubits.
 - **Judge.** Ground truth and judge are written by the authors; they are frozen before the runs and published here for
   inspection.
 

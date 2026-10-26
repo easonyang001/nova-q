@@ -43,3 +43,11 @@ archive/our_runs/*/loops/
 
 # original logo file (copied to assets/nova-q-banner.png)
 /星海流光 NOVA-Q chrome logo.png
+
+# internal notes and LaTeX build output (kept locally, not published)
+novaq/poster/gtc2027/POSTER_REVIEW.md
+novaq/docs/REPORT_*.md
+paper/**/*.log
+paper/**/*.aux
+paper/**/*.out
+paper/**/*.blg

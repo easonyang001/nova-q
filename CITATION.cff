@@ -1,11 +1,14 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata below."
 type: software
-title: "NOVA-Q: Verified LLM Agents From Natural Language and Open Data to QAOA on CUDA-Q"
+title: "NOVA-Q: Verified LLM Agents From Natural Language and Open Data to QUBOs for Annealers and QAOA on CUDA-Q"
 authors:
   - family-names: Yang
     given-names: Chia-Chen
     affiliation: National Pingtung University
+  - family-names: Ou
+    given-names: Chia-Ho
+    affiliation: "National Pingtung University; Tohoku University"
 repository-code: "https://github.com/easonyang001/nova-q"
 license: MIT
 year: 2026

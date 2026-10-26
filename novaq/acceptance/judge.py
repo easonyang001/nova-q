@@ -262,6 +262,14 @@ class Tour(Case):
         return float(sum(d[tour[t], tour[(t + 1) % len(tour)]] for t in range(len(tour))))
 
 
+def _spans(sizes):
+    """[(start, end)] slices for consecutive groups of the given sizes."""
+    out, k = [], 0
+    for n in sizes:
+        out.append((k, k + n)); k += n
+    return out
+
+
 class Groups(Case):
     better = "min"
 
@@ -270,6 +278,10 @@ class Groups(Case):
         self.name = case_id
         t = truth[case_id]
         self.rows, self.groups, self.size = t["places"], t["groups"], t["group_size"]
+        # balanced sizes: when the places do not divide evenly, groups differ by at most one (13 into 3: 5, 4, 4).
+        # The judge first assumed equal groups and failed correct 13-place answers (2026-10-25).
+        n, g = len(self.rows), self.groups
+        self.sizes = sorted([n // g + 1] * (n % g) + [n // g] * (g - n % g), reverse=True)
         lat = np.array([r["lat"] for r in self.rows]); lon = np.array([r["lon"] for r in self.rows])
         self.d = haversine(lat[:, None], lon[:, None], lat[None, :], lon[None, :])
         self.id_fields = ["name"]
@@ -286,7 +298,7 @@ class Groups(Case):
         """Greedy balanced grouping + pairwise swaps: a simple reference, not an optimum."""
         n = len(self.rows)
         order = sorted(range(n), key=lambda i: (self.rows[i]["lat"], self.rows[i]["lon"]))
-        assign = {i: k // self.size for k, i in enumerate(order)}
+        assign = {i: g for g, (a, b) in enumerate(_spans(self.sizes)) for i in order[a:b]}
         best = self.metric(assign)
         improved = True
         while improved:
@@ -406,6 +418,12 @@ GROUP_PREFIXES = ("aed_groups", "basel_aed_groups", "sg_hawker_groups")
 BUDGET = ("nyc_pb_budget", "cambridge_pb_budget", "somerville_pb_budget")
 SELECT_K = ("ev_chargers", "ev_chargers_s", "london_ambulance_s", "london_ambulance_l", "berlin_playgrounds_s",
             "berlin_playgrounds_l")
+
+try:                                             # held-out sets kept out of the public repository (acceptance/local)
+    from local.judge_extra import register as _register_local
+    TOUR_PREFIXES, GROUP_PREFIXES = _register_local(CASES, TOUR_PREFIXES, GROUP_PREFIXES, Tour, Groups, Budget)
+except ImportError:
+    pass
 
 
 def make_case(case_id, truth):
@@ -623,8 +641,8 @@ def _judge(case_id: str, truth: dict, ds: dict, data: dict, raw_ir: dict | None,
                             case.metric([mapping[i] for i in order])))
         order = rng.sample(mapped_ids, len(mapped_ids)); order[1] = order[0]          # a station twice, one missing
         invalid = [[{E: i, pos_set: p} for i, p in zip(order, steps)]]
-    elif E and case_id.startswith(GROUP_PREFIXES) and len(mapped_ids) != case.groups * case.size:
-        mc["structure"] = (f"the instance has {len(mapped_ids)} mapped places instead of {case.groups * case.size}: "
+    elif E and case_id.startswith(GROUP_PREFIXES) and len(mapped_ids) != len(case.rows):
+        mc["structure"] = (f"the instance has {len(mapped_ids)} mapped places instead of {len(case.rows)}: "
                            f"model unverifiable because the data is wrong")
         out["model"]["ok"] = None
     elif E and case_id.startswith(GROUP_PREFIXES) and len(shapes) == 1 and len(others) == 1 and len(key_ids[others[0]]) == case.groups:
@@ -632,11 +650,11 @@ def _judge(case_id: str, truth: dict, ds: dict, data: dict, raw_ir: dict | None,
         d["group_set"] = d.get("group_set") or gname
         for _ in range(SAMPLES):
             perm = rng.sample(mapped_ids, len(mapped_ids))
-            assign = {i: labels[k // case.size] for k, i in enumerate(perm)}
+            assign = {i: labels[g] for g, (a, b) in enumerate(_spans(case.sizes)) for i in perm[a:b]}
             samples.append(([{E: i, gname: g} for i, g in assign.items()],
                             case.metric({mapping[i]: g for i, g in assign.items()})))
         perm = rng.sample(mapped_ids, len(mapped_ids))
-        sizes = [case.size + 1, case.size - 1] + [case.size] * (case.groups - 2)
+        sizes = [case.sizes[0] + 1] + case.sizes[1:-1] + [case.sizes[-1] - 1]     # two groups now differ by 2
         assign, k = {}, 0
         for g, n in zip(labels, sizes):
             for i in perm[k:k + n]:
@@ -731,7 +749,7 @@ def _judge(case_id: str, truth: dict, ds: dict, data: dict, raw_ir: dict | None,
             assign = {str(k.get(E)): str(k.get(others[0])) for k in chosen}
             sizes = {g: list(assign.values()).count(g) for g in set(assign.values())}
             ok_req = (len(chosen) == len(ids) and len(assign) == len(ids) and len(sizes) == case.groups
-                      and all(n == case.size for n in sizes.values())
+                      and sorted(sizes.values(), reverse=True) == case.sizes
                       and {mapping[i] for i in assign if i in mapping} == set(range(len(case.rows))))  # every real place
             value = case.metric({mapping[i]: g for i, g in assign.items()}) if ok_req else None
             ref = case.reference_value()

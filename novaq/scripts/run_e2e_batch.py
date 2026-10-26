@@ -382,7 +382,7 @@ def main():
     ap.add_argument("--truth", type=Path, nargs="*", default=[ROOT / "results/acceptance_truth/truth_20261011.json",
                                                               ROOT / "results/acceptance_truth/truth_intl_20261011.json"])
     args = ap.parse_args()
-    cases = json.loads((ROOT / "acceptance/cases.json").read_text(encoding="utf-8"))
+    cases = __import__("caselist").load()
     truth = {}
     for path in args.truth:                               # Taiwanese and international truths, one dict
         truth.update(json.loads(path.read_text(encoding="utf-8")))

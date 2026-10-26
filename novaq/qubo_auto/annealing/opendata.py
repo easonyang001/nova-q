@@ -244,6 +244,13 @@ def scout(spec_text: str, schema: dict, client, model: str) -> dict:
                         candidates += resources_from_page(item["url"])
                     except Exception:
                         continue
+        # and the portal's own data API, found even when it sits on another host (2026-10-25)
+        from .platforms import search as platform_search
+        queries = [str(i.get("query", "")) for i in (plan.get("platform_queries") or [])[:2] if isinstance(i, dict)]
+        queries += [" ".join(str(n).split(" / ")[0].split()[:5]) for n in (plan.get("needs") or [])[:2]]
+        for d in domains[:2]:
+            for q in dict.fromkeys(q for q in queries if q.strip()):
+                candidates += platform_search("auto", d, q)
     for c in candidates:
         if domains and from_requested(c, domains):
             c["requested_source"] = True
@@ -324,9 +331,57 @@ def resources_from_page(page):
     return candidates
 
 
+def feed_links(path: Path, limit: int = 6) -> list[tuple[str, str]]:
+    """(name, url) pairs when a downloaded JSON file is only an index of linked data feeds, e.g. a GBFS index
+    {"data": {"en": {"feeds": [{"name": "station_information", "url": ...}]}}}: a city portal publishes its bike
+    share as such an index, so the stations sit one link further (2026-10-25). [] for any other file."""
+    if path.suffix.lower() not in (".json", ".geojson"):
+        return []
+    try:
+        obj = json.loads(path.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return []
+    found: list[tuple[str, str]] = []
+
+    def walk(o, depth=0):
+        if depth > 5 or len(found) >= limit:
+            return
+        if isinstance(o, list) and o and all(isinstance(x, dict) for x in o):
+            links = [(str(x.get("name") or x.get("title") or ""), str(x["url"])) for x in o
+                     if isinstance(x.get("url"), str) and x["url"].startswith("http")]
+            if len(links) >= 2 and len(links) == len(o) and all(len(x) <= 4 for x in o):   # an index, not records
+                found.extend(links[:limit - len(found)])
+                return
+        if isinstance(o, dict):
+            for v in o.values():
+                walk(v, depth + 1)
+        elif isinstance(o, list):
+            for v in o[:3]:
+                walk(v, depth + 1)
+    walk(obj)
+    return found
+
+
+# OpenStreetMap's usual tag for a kind of place, for a scout tag that is valid-looking but unused
+# (2026-10-25: bike_share=yes found nothing; bike share docks are amenity=bicycle_rental)
+OSM_USUAL = {"bike_share": {"amenity": "bicycle_rental"}, "bicycle_rental": {"amenity": "bicycle_rental"},
+             "aed": {"emergency": "defibrillator"}, "defibrillator": {"emergency": "defibrillator"},
+             "toilet": {"amenity": "toilets"}, "toilets": {"amenity": "toilets"},
+             "charging": {"amenity": "charging_station"}, "ev_charging": {"amenity": "charging_station"},
+             "playground": {"leisure": "playground"}, "hawker": {"amenity": "food_court"}}
+
+
 def fetch_candidate(c: dict, dest: Path) -> Path:
     if "osm" in c:
-        return osm_points(c["osm"]["tags"], tuple(c["osm"]["bbox"]), dest, re.sub(r"\W+", "_", c["id"])[:60])
+        name = re.sub(r"\W+", "_", c["id"])[:60]
+        try:
+            return osm_points(c["osm"]["tags"], tuple(c["osm"]["bbox"]), dest, name)
+        except ValueError as e:
+            words = " ".join(f"{k} {v}" for k, v in c["osm"]["tags"].items()).lower()
+            usual = next((t for w, t in OSM_USUAL.items() if w in words and t != c["osm"]["tags"]), None)
+            if not usual or not str(e).startswith("OpenStreetMap has no"):
+                raise
+            return osm_points(usual, tuple(c["osm"]["bbox"]), dest, name)
     return download(c["url"], dest, c.get("format", ""), c["title"])
 
 

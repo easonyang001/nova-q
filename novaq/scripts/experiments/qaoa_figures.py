@@ -22,9 +22,10 @@ for _f in ("NimbusSans-Regular.otf", "NimbusSans-Bold.otf", "NimbusSans-Italic.o
         font_manager.fontManager.addfont(str(_p))
 
 ROOT = Path(__file__).resolve().parents[2]
-CASES = [("ev_chargers_s", "EV chargers (MCLP)"), ("youbike_tour", "Bike-station tour (TSP)"),
-         ("london_ambulance_s", "Ambulance sites (p-median)"), ("aed_groups", "AED zoning (balanced groups)"),
-         ("nyc_pb_budget", "Budget, New York (knapsack)")]
+CASES = [("ev_chargers_s", "EV chargers, Taipei (MCLP)"), ("youbike_tour", "Bike tour, Taipei (TSP)"),
+         ("london_ambulance_s", "Ambulances, London (p-median)"), ("aed_groups", "AED zones, Taipei (groups)"),
+         ("nyc_pb_budget", "Budget, New York (knapsack)"),
+         ("sg_hawker_groups", "Hawker zones, Singapore (groups)")]
 # Okabe-Ito palette
 SOLVERS = [("sa", "SA", "#E69F00", "o"), ("sqa", "SQA", "#D55E00", "s"), ("dwave_qpu", "D-Wave QPU", "#009E73", "D"),
            ("cga", "CGA", "#CC79A7", "v"), ("qaoa_p3", "QAOA $p$=3 (CUDA-Q)", "#0072B2", "^")]
@@ -191,7 +192,7 @@ def fig_energy_rep(recs, out, floor=5e-4):
     ax.minorticks_off()
     ax.set_xlabel("qubits")
     ax.set_ylabel("energy gap to optimum (log scale, lower is better)")
-    ax.set_title(f"{len(CASES)} agent-built models (development tasks) pooled, 3 instances per size", loc="left")
+    ax.set_title(f"{len(CASES)} agent-built models on real city data, pooled (3 instances per size)", loc="left")
     ax.grid(axis="y", color="#e5e5e5", lw=0.6, which="major")
     h, l = ax.get_legend_handles_labels()
     fig.legend(h, l, loc="lower center", bbox_to_anchor=(0.5, 0.93), ncol=6, fontsize=10.5, handlelength=2.0,
@@ -264,7 +265,7 @@ def latex_table(by, out):
     """P(optimal) per sample for every instance and solver, as LaTeX rows for the poster (\\input)."""
     lab = {"ev_chargers_s": "EV chargers", "youbike_tour": "Bike tour", "nyc_pb_budget": "NY budget",
            "london_ambulance_s": "Ambulance",
-           "aed_groups": "AED zoning"}
+           "aed_groups": "AED zoning", "sg_hawker_groups": "SG hawker zones"}
 
     def num(v):
         return f"{v:.2f}" if v >= 0.1 else f"{v:.3f}" if v >= 0.01 else f"{v:.4f}"

@@ -543,4 +543,8 @@ if __name__ == "__main__":
     elif sys.argv[1] == "melbourne":
         melbourne(*sys.argv[2:4])
     else:
-        main(*sys.argv[1:3])
+        try:                                     # held-out sets kept out of the public repository (acceptance/local)
+            from local import truth_extra
+            getattr(truth_extra, sys.argv[1])(*sys.argv[2:4])
+        except (ImportError, AttributeError):
+            main(*sys.argv[1:3])

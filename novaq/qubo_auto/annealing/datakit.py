@@ -177,7 +177,7 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
             tables.update(_json_tables(raw, stem))
         else:                                      # delimited text
             tables[stem] = _delimited(raw, suf)
-    return {k: _flat_cells(v) for k, v in tables.items()}
+    return {k: _clean_cells(_flat_cells(v)) for k, v in tables.items()}
 
 
 def _json_tables(raw: bytes, stem: str) -> dict[str, pd.DataFrame]:
@@ -208,6 +208,24 @@ def _record_lists(obj, path: str = "", depth: int = 0) -> dict[str, list]:
         elif isinstance(v, dict):
             found.update(_record_lists(v, key, depth + 1))
     return found
+
+
+def _clean_cells(df: pd.DataFrame) -> pd.DataFrame:
+    """Text cells without edge spaces (a district name with a trailing space missed an exact filter, 2026-10-25), and a column of numbers written
+    with decimal commas, alone or mixed with points ('52,5368' and '52.4451'), as numbers."""
+    import re as _re
+    from .prep.text import decimal_comma
+    df = df.copy()
+    num = _re.compile(r"^[-+]?\d+([.,]\d+)?$")
+    for c in df.columns:
+        if not (df[c].dtype == object or pd.api.types.is_string_dtype(df[c])):
+            continue                                    # pandas 3 reads text as the "str" dtype, not object
+        col = df[c].map(lambda v: v.strip() if isinstance(v, str) else v)
+        df[c] = col
+        texts = [v for v in col.dropna().tolist() if isinstance(v, str) and v != ""]
+        if texts and all(num.match(v) for v in texts) and decimal_comma(texts):
+            df[c] = pd.to_numeric(col.map(lambda v: v.replace(",", ".") if isinstance(v, str) else v), errors="coerce")
+    return df
 
 
 def _flat_cells(df: pd.DataFrame) -> pd.DataFrame:

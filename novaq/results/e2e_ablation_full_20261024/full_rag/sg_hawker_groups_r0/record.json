@@ -1,0 +1,290 @@
+{
+ "case": "sg_hawker_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 621.3
+  },
+  "model": {
+   "ok": true,
+   "seconds": 546.9
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 117.3
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1961.8
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1.6
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment: Each site is assigned to one of 3 groups using binary variables x[i, g]. For 30 sites, this results in 90 variables, which easily fits the simulated annealing backend.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Hawker centres within 2.5km of Toa Payoh MRT",
+    "source": "public"
+   },
+   "groups": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": 3
+   }
+  },
+  "params": {
+   "site_names": {
+    "meaning": "Name of the hawker centre",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Dates_of_Hawker_Centres_Closure.csv",
+  "List_of_Government_Markets_Hawker_Centres.csv",
+  "Location_of_Speed_Cameras_in_Singapore.csv",
+  "Total_Land_Area_of_Singapore.csv"
+ ],
+ "prep": {
+  "tools_used": [
+   "drop_stray_points",
+   "haversine_matrix",
+   "merge_same_place",
+   "within_radius"
+  ],
+  "notes": "\n1. Used 'Dates_of_Hawker_Centres_Closure' as the primary source because it provides the most comprehensive list of Hawker Centres with coordinates.\n2. Filtered for sites within a 2.5km radius of Toa Payoh MRT (Latitude: 1.3327, Longitude: 103.8474) using prep.within_radius.\n3. Consolidated entries with the same name using prep.merge_same_place (max_m=None) to ensure each physical location is treated as a single entity.\n4. Removed any rows with invalid coordinates using prep.drop_stray_points.\n5. Calculated the pairwise straight-line distance matrix in meters using prep.haversine_matrix and converted it to the required sparse format.\n6. Skipped the join with 'List_of_Government_Markets_Hawker_Centres' as the naming conventions between the two datasets are inconsistent (causing excessive data loss), and the primary table is already specifically for Hawker Centres.\n",
+  "prep_log": "**資料來源**\n\n- Dates of Hawker Centres Closure（catalogue data.gov.sg） <https://data.gov.sg/datasets/d_bda4baa634dd1cc7a6c7cad5f19e2d68/view>，授權：待確認，取得 2026-10-24T18:50:39.060920+00:00\n- List of Government Markets Hawker Centres（catalogue data.gov.sg） <https://data.gov.sg/datasets/d_68a42f09f350881996d83f9cd73ab02f/view>，授權：待確認，取得 2026-10-24T18:50:38.492921+00:00\n- Location of Speed Cameras in Singapore（catalogue data.gov.sg） <https://data.gov.sg/datasets/d_983804de2bc016f53e44031d85d1ec8a/view>，授權：待確認，取得 2026-10-24T18:50:40.155620+00:00\n- Total Land Area of Singapore（catalogue data.gov.sg） <https://data.gov.sg/datasets/d_f74e5ee9575e98ba439bee67e8f9b097/view>，授權：待確認，取得 2026-10-24T18:50:39.611130+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 只保留距離 (1.3327, 103.8474) 2500 公尺內的資料 | 123 | 12 |  |\n| Filter within 2.5km of Toa Payoh MRT | 123 | 12 |  |\n| 合併同名的同一地點（只看名稱，座標取平均） | 12 | 12 | 合併 0 筆 |\n| Merge duplicate site names | 12 | 12 |  |\n| 移除離群座標（距中心 > 21 km） | 12 | 12 | 移除 0 筆，例：[] |\n| Drop stray points | 12 | 12 |  |",
+  "flags": [],
+  "review_required": [
+   "adapter 沒有聲明這些欄位的來源與單位：groups"
+  ],
+  "sources": [
+   {
+    "title": "Dates of Hawker Centres Closure",
+    "url": "https://data.gov.sg/datasets/d_bda4baa634dd1cc7a6c7cad5f19e2d68/view",
+    "resource_url": "https://api-open.data.gov.sg/v1/public/api/datasets/d_bda4baa634dd1cc7a6c7cad5f19e2d68/poll-download",
+    "publisher": "catalogue data.gov.sg",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T18:50:39.060920+00:00",
+    "sha256": "63ee163b11ee1837aa87e7b9872d33cfecc9d63e3b4af4e3abc081d109bb38ee",
+    "bytes": 79399
+   },
+   {
+    "title": "List of Government Markets Hawker Centres",
+    "url": "https://data.gov.sg/datasets/d_68a42f09f350881996d83f9cd73ab02f/view",
+    "resource_url": "https://api-open.data.gov.sg/v1/public/api/datasets/d_68a42f09f350881996d83f9cd73ab02f/poll-download",
+    "publisher": "catalogue data.gov.sg",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T18:50:38.492921+00:00",
+    "sha256": "12e9eb62bff4869f5e9aa93c99a859d9eeb22bb55086a8c546e17e2128effcd6",
+    "bytes": 9067
+   },
+   {
+    "title": "Location of Speed Cameras in Singapore",
+    "url": "https://data.gov.sg/datasets/d_983804de2bc016f53e44031d85d1ec8a/view",
+    "resource_url": "https://api-open.data.gov.sg/v1/public/api/datasets/d_983804de2bc016f53e44031d85d1ec8a/poll-download",
+    "publisher": "catalogue data.gov.sg",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T18:50:40.155620+00:00",
+    "sha256": "bcc437f91f7c1bf10630afd1542a03dadc1363767de5e1b31e79f8ab3f76083b",
+    "bytes": 8227
+   },
+   {
+    "title": "Total Land Area of Singapore",
+    "url": "https://data.gov.sg/datasets/d_f74e5ee9575e98ba439bee67e8f9b097/view",
+    "resource_url": "https://api-open.data.gov.sg/v1/public/api/datasets/d_f74e5ee9575e98ba439bee67e8f9b097/poll-download",
+    "publisher": "catalogue data.gov.sg",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T18:50:39.611130+00:00",
+    "sha256": "6ccc03b84b864875fb718e93ddf359fb3360f2332c0dc4a9ef37ec1d260aa7ae",
+    "bytes": 739
+   }
+  ],
+  "substitution": null,
+  "n_variables": 36,
+  "n_constraints": 15,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 12
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "cf9a81aabe018c155985e83f",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 51,
+    "invalid": 51,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "cf9a81aabe018c155985e83f",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 22997.293789953128,
+  "baseline_objective": 22997.293789953128,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 24023.466795237357,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 12,
+    "mapped": 12,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "groups"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "groups",
+      "sites"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 12,
+    "meets_original_requirements": true,
+    "true_quality": 23129.972894580413,
+    "reference_quality": 23129.972894580413,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 175984,
+  "solver_calls": 3
+ },
+ "seconds": 3249.0
+}

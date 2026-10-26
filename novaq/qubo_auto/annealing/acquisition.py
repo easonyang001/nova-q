@@ -130,6 +130,14 @@ def prepare_real_data(code: str, spec: str, client, model: str, directory: Path,
                 sources[path.name] = source_record(candidate, path)
                 atomic_write(src_path, json.dumps(sources, ensure_ascii=False))
                 log(f"[下載] {path.name}")
+                for name, url in opendata.feed_links(path):   # an index of feeds: fetch what it points to
+                    try:
+                        linked = opendata.download(url, directory, "JSON", f"{path.stem} {name}")
+                        sources[linked.name] = source_record(dict(candidate, url=url, title=f"{candidate.get('title', '')} — {name}"), linked)
+                        atomic_write(src_path, json.dumps(sources, ensure_ascii=False))
+                        log(f"[下載] {linked.name}（索引連結）")
+                    except Exception as e:
+                        log(f"[下載失敗] {name}：{e}")
             except Exception as e:
                 log(f"[下載失敗] {candidate['title']}：{e}；改試下一個來源")
             if downloads >= max_downloads:

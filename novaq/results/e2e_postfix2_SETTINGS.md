@@ -28,3 +28,4 @@
   very delivery. g0 r1 stopped (old code); e2e_postfix7_g0_20261024 runs Basel 2x on de85c44. g1 r0 finishes on a67d9a1.
 - RESULT postfix6 g1 r0 Basel (a67d9a1): PASS. g1 r1 stopped; e2e_postfix7_g1_20261024 runs Basel 1x on de85c44.
 - RESULT postfix7 (de85c44): g0 r0 PASS (polish 52370.5 -> 26503.5 = reference), g1 r0 PASS.
+- RESULT postfix7 g0 r1 (de85c44): PASS. Basel on the latest code: 3/3.

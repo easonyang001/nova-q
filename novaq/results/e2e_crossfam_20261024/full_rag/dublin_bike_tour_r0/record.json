@@ -1,0 +1,293 @@
+{
+ "case": "dublin_bike_tour",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 645.4
+  },
+  "model": {
+   "ok": true,
+   "seconds": 698.0
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 56.6
+  },
+  "data": {
+   "ok": true,
+   "seconds": 665.7
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 1.9
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-position-tour"
+ ],
+ "model_choice": "Position-based TSP encoding. Variables: N^2 (approx 100-400 for N=10-20). Fits SA backend.",
+ "schema": {
+  "sets": {
+   "stations": {
+    "meaning": "Dublinbikes stations within 600m of Connolly Station",
+    "source": "public"
+   },
+   "positions": {
+    "meaning": "Order of visit in the inspection route",
+    "source": "model",
+    "size_of": "stations"
+   }
+  },
+  "params": {
+   "station_name": {
+    "meaning": "Name of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the station",
+    "index": [
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two stations",
+    "index": [
+     "stations",
+     "stations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Dublin_Fire_Brigade_Stations_Dublin_Fire_Brigade_Stations_20.csv",
+  "Dublin_Public_Cycle_Parking_Facilities_dublin-public-cycle-p.csv",
+  "Dublinbikes_API_DCC.geojson",
+  "Dublinbikes_API_DCC.json"
+ ],
+ "prep": {
+  "tools_used": [
+   "dedupe",
+   "haversine_matrix",
+   "within_radius"
+  ],
+  "notes": "",
+  "prep_log": "**資料來源**\n\n- Dublin Fire Brigade Stations — Dublin Fire Brigade Stations 2021（catalogue data.gov.ie） <https://data.gov.ie/dataset/dublin-fire-brigade-stations-dublin-region>，授權：待確認，取得 2026-10-25T03:31:00.610418+00:00\n- Dublin Public Cycle Parking Facilities — dublin-public-cycle-parking-facilities（catalogue data.gov.ie） <https://data.gov.ie/dataset/dublin-public-cycle-parking-facilities>，授權：待確認，取得 2026-10-25T03:31:01.961741+00:00\n- Dublinbikes API DCC（data.gov.ie） <https://data.gov.ie/dataset/dublinbikes-api>，授權：CC BY 4.0，取得 2026-10-25T03:30:58.867922+00:00\n- Dublinbikes API DCC（data.gov.ie） <https://data.gov.ie/dataset/dublinbikes-api>，授權：CC BY 4.0，取得 2026-10-25T03:30:59.794828+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| 依 ['station_id'] 去除重複 | 113 | 113 |  |\n| 只保留距離 (53.3509, -6.25) 600 公尺內的資料 | 113 | 9 |  |",
+  "flags": [],
+  "review_required": [
+   "stations: 缺少實際來源對應，不能確認為公開真實資料",
+   "station_name: 缺少實際來源對應，不能確認為公開真實資料",
+   "lat: 尚未聲明 unit，需求為 deg_lat",
+   "lat: 缺少實際來源對應，不能確認為公開真實資料",
+   "lon: 尚未聲明 unit，需求為 deg_lon",
+   "lon: 缺少實際來源對應，不能確認為公開真實資料",
+   "dist: 尚未聲明 unit，需求為 m",
+   "dist: 缺少實際來源對應，不能確認為公開真實資料",
+   "adapter 沒有聲明這些欄位的來源與單位：dist, lat, lon, positions, station_name, stations"
+  ],
+  "sources": [
+   {
+    "title": "Dublin Fire Brigade Stations — Dublin Fire Brigade Stations 2021",
+    "url": "https://data.gov.ie/dataset/dublin-fire-brigade-stations-dublin-region",
+    "resource_url": "https://data.smartdublin.ie/dataset/32c58199-d1da-4676-b9c5-35c01d4748a3/resource/d628b6be-eab0-4717-ad74-91b6efb67ec0/download/dublin-fire-brigade-stations-2021.csv",
+    "publisher": "catalogue data.gov.ie",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-25T03:31:00.610418+00:00",
+    "sha256": "b32c85732981bec95b131284ba6fd25e4dc12c621c3babd50aa1f31b8c3c8656",
+    "bytes": 1132
+   },
+   {
+    "title": "Dublin Public Cycle Parking Facilities — dublin-public-cycle-parking-facilities",
+    "url": "https://data.gov.ie/dataset/dublin-public-cycle-parking-facilities",
+    "resource_url": "https://data.smartdublin.ie/dataset/eb3c5fcb-5df4-4993-bf3a-c07afea32397/resource/0777c3a7-19ed-4e5b-a498-fd891334dbcf/download/dublin-bike-sheffield-cargo.csv",
+    "publisher": "catalogue data.gov.ie",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-25T03:31:01.961741+00:00",
+    "sha256": "9cca4ef150fbc0da635c2a9044ddd34dce84c6ac8e15a53d97d80b7b42cd0852",
+    "bytes": 70146
+   },
+   {
+    "title": "Dublinbikes API DCC",
+    "url": "https://data.gov.ie/dataset/dublinbikes-api",
+    "resource_url": "https://data.smartdublin.ie/dublinbikes-api/bikes/dublin_bikes/current/stations.geojson",
+    "publisher": "data.gov.ie",
+    "license": "CC BY 4.0",
+    "license_evidence": "https://data.gov.ie/dataset/dublinbikes-api",
+    "retrieved": "2026-10-25T03:30:58.867922+00:00",
+    "sha256": "f0f96e672e10ff14273820ae65f4a34ec453ffe6abf8d16e69404dcd5d75ed70",
+    "bytes": 52265
+   },
+   {
+    "title": "Dublinbikes API DCC",
+    "url": "https://data.gov.ie/dataset/dublinbikes-api",
+    "resource_url": "https://api.cyclocity.fr/contracts/dublin/gbfs/station_status.json",
+    "publisher": "data.gov.ie",
+    "license": "CC BY 4.0",
+    "license_evidence": "https://data.gov.ie/dataset/dublinbikes-api",
+    "retrieved": "2026-10-25T03:30:59.794828+00:00",
+    "sha256": "82ef410201cc1c65c7db0e97385a1dddc4e6478ead3b02b4124bdbd4ab4ac962",
+    "bytes": 36399
+   }
+  ],
+  "substitution": null,
+  "n_variables": 81,
+  "n_constraints": 18,
+  "data_check": {
+   "expected": {},
+   "issues": [],
+   "checker_errors": [
+    "RuntimeError: TypeError: Boolean array expected for the condition, not object\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/novaq/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/novaq/qubo_auto/annealing/datacheck.py\", line 34, in _expected\n    out = ns[\"expected\"]({k: v.copy() for k, v in tables.items()})\n  File \"<data_checker>\", line 27, in expected\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/frame.py\", line 4365, in __getitem__\n    return self.where(key)\n           ~~~~~~~~~~^^^^^\n  File \"/home/var/miniconda3/lib/python3.13/site-packages/pandas/core/generic.py\", line 10321, in where\n    return self._where(cond, other, inplace=inplace, axis=axis, level=level)\n           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: Boolean array expected for the condition, not object\n"
+   ]
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "77364299087791185f586f72",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 58,
+    "invalid": 58,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "77364299087791185f586f72",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": 0.0,
+  "objective": 2713.6,
+  "baseline_objective": 2713.6,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 3014.9,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "stations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 9,
+    "mapped": 9,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "positions",
+      "stations"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 9,
+    "required_stations_missing": 0,
+    "meets_original_requirements": true,
+    "true_quality": 2713.4457490404106,
+    "reference_quality": 2713.4457490404106,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 117652,
+  "solver_calls": 3
+ },
+ "seconds": 2067.8
+}

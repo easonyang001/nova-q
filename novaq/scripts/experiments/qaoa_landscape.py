@@ -71,7 +71,7 @@ def plot(a):
     ax.legend(loc="lower right", fontsize=12, frameon=True, facecolor="white", edgecolor="#888888", framealpha=0.95,
               borderpad=0.6, handlelength=2.2)
     fig.tight_layout()
-    fig.savefig(a.out)
+    fig.savefig(a.out, dpi=400)                   # the energy map is a raster part: print quality
     fig.savefig(Path(a.out).with_suffix(".png"), dpi=300)
 
 

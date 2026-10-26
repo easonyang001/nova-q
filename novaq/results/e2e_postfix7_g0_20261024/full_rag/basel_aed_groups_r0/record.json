@@ -1,0 +1,284 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 563.8
+  },
+  "model": {
+   "ok": true,
+   "seconds": 665.4
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 107.1
+  },
+  "data": {
+   "ok": true,
+   "seconds": 892.4
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 6.2
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.0
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment of sites to teams. Variable count for N=150 is 750. Fits SA backend.",
+ "schema": {
+  "sets": {
+   "sites": {
+    "meaning": "Unique AED locations in PLZ 4051",
+    "source": "private"
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": "num_teams"
+   }
+  },
+  "params": {
+   "num_teams": {
+    "meaning": "Number of teams to divide sites among",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "site_name": {
+    "meaning": "Name or ID of the AED site",
+    "index": [
+     "sites"
+    ],
+    "type": "text",
+    "source": "private"
+   },
+   "lat": {
+    "meaning": "Latitude of site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of site",
+    "index": [
+     "sites"
+    ],
+    "type": "number",
+    "source": "private",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between sites",
+    "index": [
+     "sites",
+     "sites"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance matrix"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "AED-Standorte.json",
+  "AED-Standorte.zip",
+  "Defibrillatoren.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "drop_stray_points",
+   "haversine_matrix",
+   "merge_same_place",
+   "normalize_text"
+  ],
+  "notes": "The plan filters the Defibrillatoren table for postal code 4051, merges locations with the same name into a single site as requested, cleans coordinate data, and prepares the distance matrix for the optimization model.",
+  "prep_log": "**資料來源**\n\n- AED-Standorte（opendata.swiss） <https://opendata.swiss/de/dataset/aed-standorte>，授權：待確認，取得 2026-10-24T16:22:39.180021+00:00\n- AED-Standorte（opendata.swiss） <https://opendata.swiss/de/dataset/aed-standorte>，授權：待確認，取得 2026-10-24T16:22:38.485787+00:00\n- Defibrillatoren（opendata.swiss） <https://opendata.swiss/en/dataset/defibrillatoren>，授權：待確認，取得 2026-10-24T16:22:35.056372+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| keep {\"column\": \"plz\", \"values\": [4051]} | 235 | 44 |  |\n| 合併同名的同一地點（只看名稱，座標取平均） | 44 | 35 | 合併 9 筆 |\n| drop_missing {\"columns\": [\"lat\", \"lon\"]} | 35 | 35 |  |\n| 移除離群座標（距中心 > 20 km） | 35 | 35 | 移除 0 筆，例：[] |\n| rename {\"columns\": {\"standort\": \"site_name\"}} | 35 | 35 |  |",
+  "flags": [],
+  "review_required": [
+   "adapter 沒有聲明這些欄位的來源與單位：num_teams, sites, teams"
+  ],
+  "sources": [
+   {
+    "title": "AED-Standorte",
+    "url": "https://opendata.swiss/de/dataset/aed-standorte",
+    "resource_url": "https://geofiles.be.ch/geoportal/pub/stac/de/AEDSTO/collection.json?.language=de-CH",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T16:22:39.180021+00:00",
+    "sha256": "7a268fa65da224fc7c67bdeb767bc51e81255d599f4c603f4f067fbb45457f97",
+    "bytes": 2318
+   },
+   {
+    "title": "AED-Standorte",
+    "url": "https://opendata.swiss/de/dataset/aed-standorte",
+    "resource_url": "https://geofiles.be.ch/geoportal/pub/download/AEDSTO/aedsto.zip",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T16:22:38.485787+00:00",
+    "sha256": "126fe1840e3f9aba153209e7dfcfc99e156b22d39343a44115e94a28a88bd7eb",
+    "bytes": 8884436
+   },
+   {
+    "title": "Defibrillatoren",
+    "url": "https://opendata.swiss/en/dataset/defibrillatoren",
+    "resource_url": "https://data-bs.ch/stata/fgi/stac/DEFI_Defibrillatoren.geojson",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T16:22:35.056372+00:00",
+    "sha256": "d24860618fbad67d0ea58a646a72c43013300fe8dd4f6392767a0306cc667e4c",
+    "bytes": 116986
+   }
+  ],
+  "substitution": null,
+  "n_variables": 175,
+  "n_constraints": 45,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "sites": 35
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "aa291d0ddf955764fd62b51f",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 52,
+    "invalid": 52,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "aa291d0ddf955764fd62b51f",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.0570263606380064,
+  "objective": 26503.5,
+  "baseline_objective": 28106.3,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 52370.5,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "sites",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 35,
+    "mapped": 35,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "sites",
+      "teams"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 35,
+    "meets_original_requirements": true,
+    "true_quality": 26503.03478106207,
+    "reference_quality": 26503.03478106207,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 138813,
+  "solver_calls": 3
+ },
+ "seconds": 2235.7
+}

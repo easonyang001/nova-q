@@ -31,6 +31,8 @@ CASES = {   # case -> judged-passing run (rejudged.json: joint=true)
     "melbourne_bike_tour": R / "e2e_melb7_g1_20261021/full_rag/melbourne_bike_tour_r0",
     # knapsack (budget inequality -> slack bits): the first problem type with an inequality constraint
     "nyc_pb_budget": R / "e2e_nycpb2_g1_20261022/full_rag/nyc_pb_budget_r0",
+    # held-out test set 1 (judge-passing, 2026-10-22): hawker centres in three zones, a sixth model in the study
+    "sg_hawker_groups": R / "e2e_test_g1_20261022/full_rag/sg_hawker_groups_r0",
 }
 
 

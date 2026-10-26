@@ -1,0 +1,112 @@
+{
+ "case": "sg_hawker_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 542.5
+  },
+  "model": {
+   "ok": true,
+   "seconds": 734.3
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 59.3
+  },
+  "data": {
+   "ok": false,
+   "seconds": 2989.7,
+   "error": "ValueError: data preparation failed: RuntimeError: TypeError: merge_same_place() got an unexpected keyword argument 'name_col'\nTraceback (most recent call last):\n  File \"/research/projects/QuantumQUBOAgent/novaq/qubo_auto/annealing/runtime.py\", line 26, in _worker\n    return True, fn(*args, **kwargs)\n                 ~~^^^^^^^^^^^^^^^^^\n  File \"/research/projects/QuantumQUBOAgent/novaq/qubo_auto/annealing/adapter.py\", line 211, in _execute_adapter\n    data = fn(copies, log) if len(inspect.signature(fn).parameters) >= 2 else fn(copies)\n           ~~^^^^^^^^^^^^^\n  File \"<model>\", line 91, in load_data\n  File \"/research/projects/QuantumQUBOAgent/novaq/qubo_auto/annealing/adapter.py\", line 142, in wrapped\n    return obj(*a, **kw)\nTypeError: merge_same_place() got an unexpected keyword argument 'name_col'\n"
+  }
+ },
+ "failed_stage": "data",
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "One-hot assignment of Hawker Centres to 3 teams. For N=30, 90 binary variables. Fits SA backend easily.",
+ "schema": {
+  "sets": {
+   "hawker_centres": {
+    "meaning": "The set of Hawker Centres within 2.5km of Toa Payoh MRT",
+    "source": "public"
+   },
+   "teams": {
+    "meaning": "The inspection teams",
+    "source": "model",
+    "size_of": 3
+   }
+  },
+  "params": {
+   "hc_name": {
+    "meaning": "Name of the Hawker Centre",
+    "index": [
+     "hawker_centres"
+    ],
+    "type": "text",
+    "source": "public"
+   },
+   "lat": {
+    "meaning": "Latitude of the Hawker Centre",
+    "index": [
+     "hawker_centres"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the Hawker Centre",
+    "index": [
+     "hawker_centres"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Straight-line distance between two Hawker Centres",
+    "index": [
+     "hawker_centres",
+     "hawker_centres"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ],
+     "how": "pairwise distance"
+    }
+   }
+  }
+ },
+ "data_found": [
+  "Dates_of_Hawker_Centres_Closure.csv",
+  "List_of_Government_Markets_Hawker_Centres.csv",
+  "Number_of_Licensed_Hawkers_Under_Government_Market_and_Hawke.csv",
+  "Total_Land_Area_of_Singapore.csv"
+ ],
+ "cost": {
+  "llm_tokens": 274583,
+  "solver_calls": null
+ },
+ "seconds": 4325.8
+}

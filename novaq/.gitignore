@@ -71,3 +71,8 @@ poster/gtc2027/*.pdf
 poster/gtc2027/*.png
 poster/gtc2027/*.aux
 poster/gtc2027/*.log
+
+
+# local-only material (not published); last rule, so it wins over the exceptions above
+**/local/
+results/experiments/*/energy_v3.before_*.jsonl

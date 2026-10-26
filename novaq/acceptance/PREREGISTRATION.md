@@ -115,3 +115,6 @@ manifest 記錄下列項目的 SHA256，任何一項改變就拒絕繼續：程�
 - **中止並重新開跑**（同日 06:54）：第二組測試集自動開跑 10 秒、尚無任何 LLM 輸出時，驗證執行發現資料搜尋的錯誤（Opendatasoft 查詢含撇號時回傳 0 筆；沒有該國目錄時改搜其他國家）。立即中止（資料夾移至 results/_aborted/），修正後重新凍結，雜湊 `e9f33f6315f8db90`（commit 27d40bb），重新開跑。
 
 - 2026-10-24 09:36 UTC: g1 stopped during an uncounted 4th Basel run (Basel already had 3 finished runs; stop rule = first 3 finished). g0 runs the 3rd Somerville run.
+
+## 評審程式修正（2026-10-25）
+- 分組題的評審原本假設場所數能被組數整除，會把「各組差 1」的正確答案判錯；改為「各組數量差不超過 1」。可整除的既有題目（Taipei AED、Basel、Singapore）判法與參考值逐一核對不變，既有成績不受影響。

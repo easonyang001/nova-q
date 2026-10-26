@@ -1,0 +1,262 @@
+{
+ "case": "basel_aed_groups",
+ "arm": "full_rag",
+ "stages": {
+  "clarify": {
+   "ok": true,
+   "seconds": 596.0
+  },
+  "model": {
+   "ok": true,
+   "seconds": 712.8
+  },
+  "checker": {
+   "ok": true,
+   "seconds": 109.8
+  },
+  "data": {
+   "ok": true,
+   "seconds": 1099.6
+  },
+  "build_ir": {
+   "ok": true,
+   "seconds": 0.1
+  },
+  "solve": {
+   "ok": true,
+   "seconds": 5.6
+  },
+  "judge": {
+   "ok": true,
+   "seconds": 0.1
+  }
+ },
+ "failed_stage": null,
+ "repairs": [],
+ "backend": "sa",
+ "mechanisms": {
+  "checker": true,
+  "repair": true,
+  "patterns": true,
+  "web": true
+ },
+ "human": {
+  "answers_given": 1,
+  "spec_confirmed": 1,
+  "data_approved": 1
+ },
+ "patterns": [
+  "mp-one-hot-assignment",
+  "mp-group-size"
+ ],
+ "model_choice": "",
+ "schema": {
+  "sets": {
+   "locations": {
+    "meaning": "Unique AED locations in PLZ 4051",
+    "source": "private"
+   },
+   "teams": {
+    "meaning": "Inspection teams",
+    "source": "model",
+    "size_of": "num_teams"
+   }
+  },
+  "params": {
+   "num_teams": {
+    "meaning": "Number of inspection teams",
+    "index": [],
+    "type": "int",
+    "source": "user",
+    "value": 5
+   },
+   "lat": {
+    "meaning": "Latitude of the location",
+    "index": [
+     "locations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lat"
+   },
+   "lon": {
+    "meaning": "Longitude of the location",
+    "index": [
+     "locations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "deg_lon"
+   },
+   "dist": {
+    "meaning": "Euclidean distance between two locations",
+    "index": [
+     "locations",
+     "locations"
+    ],
+    "type": "number",
+    "source": "public",
+    "unit": "m",
+    "sparse": true,
+    "derived": {
+     "tool": "haversine_matrix",
+     "from": [
+      "lat",
+      "lon"
+     ]
+    }
+   },
+   "location_name": {
+    "meaning": "Name of the AED location",
+    "index": [
+     "locations"
+    ],
+    "type": "text",
+    "source": "public"
+   }
+  }
+ },
+ "data_found": [
+  "Defibrillatoren.geojson"
+ ],
+ "prep": {
+  "tools_used": [
+   "haversine_matrix",
+   "merge_same_place"
+  ],
+  "notes": "Filtered for postal code (PLZ) 4051. Merged locations with the same name into a single entity using mean coordinates (max_m=None). Computed straight-line Haversine distances between all resulting locations.",
+  "prep_log": "**資料來源**\n\n- Defibrillatoren（opendata.swiss） <https://opendata.swiss/en/dataset/defibrillatoren>，授權：待確認，取得 2026-10-24T18:12:25.136731+00:00\n\n**前處理紀錄**\n\n| 步驟 | 前 | 後 | 說明 |\n|---|---|---|---|\n| Filter PLZ 4051 | 235 | 44 | Keeping only locations in Basel 4051 |\n| 合併同名的同一地點（只看名稱，座標取平均） | 44 | 35 | 合併 9 筆 |\n| Merge same name locations | 44 | 35 | Merging locations with identical names using mean coordinates |\n| Drop missing coordinates | 35 | 35 | Removing rows without lat/lon |",
+  "flags": [],
+  "review_required": [
+   "lat: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "lon: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "dist: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "location_name: 引用的來源網址不在下載紀錄中（可能是資料集頁面而非下載連結）",
+   "adapter 沒有聲明這些欄位的來源與單位：teams"
+  ],
+  "sources": [
+   {
+    "title": "Defibrillatoren",
+    "url": "https://opendata.swiss/en/dataset/defibrillatoren",
+    "resource_url": "https://data-bs.ch/stata/fgi/stac/DEFI_Defibrillatoren.geojson",
+    "publisher": "opendata.swiss",
+    "license": "待確認",
+    "license_evidence": "",
+    "retrieved": "2026-10-24T18:12:25.136731+00:00",
+    "sha256": "d24860618fbad67d0ea58a646a72c43013300fe8dd4f6392767a0306cc667e4c",
+    "bytes": 116986
+   }
+  ],
+  "substitution": null,
+  "n_variables": 175,
+  "n_constraints": 40,
+  "data_check": {
+   "expected": {
+    "counts": {
+     "locations": 35
+    },
+    "totals": {}
+   },
+   "issues": []
+  }
+ },
+ "requirement_checks": [
+  {
+   "status": "ok",
+   "version": "119baba41d5d89b23a203c3b",
+   "issues": [],
+   "report": {
+    "valid_feasible_in_model": 20,
+    "valid": 20,
+    "invalid_rejected": 52,
+    "invalid": 52,
+    "not_comparable": 0,
+    "rank_agreement": 1.0
+   }
+  },
+  {
+   "status": "solution_ok",
+   "version": "119baba41d5d89b23a203c3b",
+   "issues": [],
+   "report": null
+  }
+ ],
+ "workflow_events": [
+  "requirement_check:ok",
+  "preflight:feasible",
+  "solve:running",
+  "solve:polished",
+  "requirement_check:solution_ok",
+  "diagnosis:deliver",
+  "delivery:usable",
+  "delivery:complete"
+ ],
+ "delivery": {
+  "status": "usable",
+  "message": "已有可行方案，達到簡單基準的品質",
+  "solution_source": "annealer",
+  "quality_gap": -0.05703801218945155,
+  "objective": 26503.3888476787,
+  "baseline_objective": 28106.529415057954,
+  "review_required": null,
+  "formula_changes": null,
+  "solver_raw": {
+   "feasible": true,
+   "objective": 51697.93270146039,
+   "polished": true
+  }
+ },
+ "truth_used": "static truth",
+ "verdict": {
+  "data": {
+   "ok": true,
+   "checks": {
+    "entity_set": "locations",
+    "mapping": "id / name match",
+    "entity_set_declared": true,
+    "instance_entities": 35,
+    "mapped": 35,
+    "duplicates": [],
+    "missing_real_entities": 0,
+    "missing_examples": [],
+    "unmapped_ids": [],
+    "coordinates_outside_area": 0,
+    "coordinates_far_from_own_entity": [],
+    "identical_coordinates": 0,
+    "group_set": "teams"
+   }
+  },
+  "model": {
+   "ok": true,
+   "checks": {
+    "decision_sets": [
+     [
+      "locations",
+      "teams"
+     ]
+    ],
+    "valid_decisions_feasible": "30/30",
+    "rank_agreement": 1.0,
+    "invalid_decisions_rejected": "1/1",
+    "notes": [
+     "no helper variables"
+    ]
+   }
+  },
+  "delivery": {
+   "ok": true,
+   "checks": {
+    "decisions": 35,
+    "meets_original_requirements": true,
+    "true_quality": 26503.034781062073,
+    "reference_quality": 26503.03478106207,
+    "gap_vs_reference": 0.0
+   }
+  }
+ },
+ "cost": {
+  "llm_tokens": 131779,
+  "solver_calls": 3
+ },
+ "seconds": 2524.0
+}
