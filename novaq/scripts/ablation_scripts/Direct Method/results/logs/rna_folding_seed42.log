@@ -1,8 +1,0 @@
-[11:41:13] === Zero-Shot START | run_id=zs_rna_folding_42_337fef77 ===
-[11:41:13]   Model : qwen/qwen3-coder-next
-[11:41:14]   Sending zero-shot prompt (3 cases available) ...
-[11:41:17]   Code extracted and compiled OK
-[11:41:17]   Running 3 test cases ...
-[11:41:17]   Tests: 3/3 passed (100%)  failure_class=success
-[11:41:17] === Zero-Shot SUCCESS ===
-[11:41:17] Finalizing | status=success | tokens=1107 | cost=$0.0006 | wall=3.9s

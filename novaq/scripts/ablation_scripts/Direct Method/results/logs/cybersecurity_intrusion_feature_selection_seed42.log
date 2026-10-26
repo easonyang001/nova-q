@@ -1,9 +1,0 @@
-[10:49:38] === Zero-Shot START | run_id=zs_cybersecurity_intrusion_feature_selection_42_8e0d56ce ===
-[10:49:38]   Model : qwen/qwen3-coder-next
-[10:49:38]   Sending zero-shot prompt (2 cases available) ...
-[10:49:44]   Code extracted and compiled OK
-[10:49:44]   Running 2 test cases ...
-[10:49:44]   Tests: 0/2 passed (0%)  failure_class=formulation_error
-[10:49:44]   Instance 0 error: [n4_case1] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check penal
-[10:49:44]   Instance 1 error: [n5_case2] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check penal
-[10:49:44] Finalizing | status=failed | tokens=1316 | cost=$0.0005 | wall=6.4s

@@ -1,9 +1,0 @@
-[11:42:45] === Zero-Shot START | run_id=zs_social_influence_maximization_42_e5da8c8e ===
-[11:42:46]   Model : qwen/qwen3-coder-next
-[11:42:46]   Sending zero-shot prompt (2 cases available) ...
-[11:42:51]   Code extracted and compiled OK
-[11:42:51]   Running 2 test cases ...
-[11:42:51]   Tests: 0/2 passed (0%)  failure_class=formulation_error
-[11:42:51]   Instance 0 error: [n4_k2_case1] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check pe
-[11:42:51]   Instance 1 error: [n5_k2_case2] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 4 correct optimal bitstring(s). Check pe
-[11:42:51] Finalizing | status=failed | tokens=1428 | cost=$0.0006 | wall=5.1s

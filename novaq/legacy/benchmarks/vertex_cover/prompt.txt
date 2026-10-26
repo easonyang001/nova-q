@@ -1,1 +1,0 @@
-Given an undirected graph with N nodes and a set of edges, find a minimum vertex cover: the smallest subset S of nodes such that every edge has at least one endpoint in S.

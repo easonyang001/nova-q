@@ -1,5 +1,0 @@
-[11:25:31] === Zero-Shot START | run_id=zs_k_sat_42_b30d569d ===
-[11:25:31]   Model : qwen/qwen3-coder-next
-[11:25:31]   Sending zero-shot prompt (2 cases available) ...
-[11:34:56]   Code extraction/compile FAILED: expected an indented block after 'for' statement on line 16 (<build_qubo>, line 2487)
-[11:34:56] Finalizing | status=failed | tokens=66050 | cost=$0.0525 | wall=565.7s

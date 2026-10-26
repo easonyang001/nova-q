@@ -1,8 +1,0 @@
-[10:49:56] === Zero-Shot START | run_id=zs_distribution_network_reconfiguration_42_fb97bdf8 ===
-[10:49:56]   Model : qwen/qwen3-coder-next
-[10:49:56]   Sending zero-shot prompt (2 cases available) ...
-[10:50:05]   Code extracted and compiled OK
-[10:50:05]   Running 2 test cases ...
-[10:50:05]   Tests: 2/2 passed (100%)  failure_class=success
-[10:50:05] === Zero-Shot SUCCESS ===
-[10:50:05] Finalizing | status=success | tokens=851 | cost=$0.0004 | wall=9.3s

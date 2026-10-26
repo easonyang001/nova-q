@@ -1,3 +1,0 @@
-[12:12:25] === Zero-Shot START | run_id=zs_alkane_isomer_search_42_dafc82f7 ===
-[12:12:25]   Model : qwen/qwen3.6-35b-a3b
-[12:12:25]   Sending zero-shot prompt (2 cases available) ...

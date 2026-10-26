@@ -1,8 +1,0 @@
-[11:37:27] === Zero-Shot START | run_id=zs_molecular_conformation_selection_42_0afe3273 ===
-[11:37:27]   Model : qwen/qwen3-coder-next
-[11:37:27]   Sending zero-shot prompt (2 cases available) ...
-[11:37:31]   Code extracted and compiled OK
-[11:37:31]   Running 2 test cases ...
-[11:37:31]   Tests: 2/2 passed (100%)  failure_class=success
-[11:37:31] === Zero-Shot SUCCESS ===
-[11:37:31] Finalizing | status=success | tokens=1404 | cost=$0.0005 | wall=4.1s

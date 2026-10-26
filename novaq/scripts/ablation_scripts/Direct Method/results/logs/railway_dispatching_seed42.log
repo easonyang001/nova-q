@@ -1,8 +1,0 @@
-[11:40:13] === Zero-Shot START | run_id=zs_railway_dispatching_42_a696065b ===
-[11:40:13]   Model : qwen/qwen3-coder-next
-[11:40:13]   Sending zero-shot prompt (2 cases available) ...
-[11:40:21]   Code extracted and compiled OK
-[11:40:21]   Running 2 test cases ...
-[11:40:21]   Tests: 2/2 passed (100%)  failure_class=success
-[11:40:21] === Zero-Shot SUCCESS ===
-[11:40:21] Finalizing | status=success | tokens=1722 | cost=$0.0009 | wall=8.2s

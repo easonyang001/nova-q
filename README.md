@@ -457,7 +457,6 @@ python -m pytest -q tests
 | `docs/` | agent guide and experiment notes |
 | `results/` | run settings, reference answers, per-run judge records, solver-comparison data |
 | `tests/` | unit tests |
-| `legacy/` | benchmark suite and reports of the earlier text-to-QUBO front end (not used by NOVA-Q) |
 
 Raw downloads, LLM transcripts and caches are not versioned.
 
@@ -465,8 +464,8 @@ Raw downloads, LLM transcripts and caches are not versioned.
 
 ```bibtex
 @misc{yang2027novaq,
-  title        = {{NOVA-Q}: Verified {LLM} Agents From Natural Language and Open Data to {QAOA} on {CUDA-Q}},
-  author       = {Yang, Chia-Chen},
+  title        = {{NOVA-Q}: Verified {LLM} Agents From Natural Language and Open Data to {QUBOs} for Annealers and {QAOA} on {CUDA-Q}},
+  author       = {Yang, Chia-Chen and Ou, Chia-Ho},
   year         = {2027},
   howpublished = {NVIDIA GTC 2027 poster},
   url          = {https://github.com/easonyang001/nova-q}
@@ -480,7 +479,5 @@ Released under the [MIT License](LICENSE).
 ## Acknowledgements
 
 NOVA-Q extends the formulation agents of QuantumQUBO Agent (N. K. Mondal and M. R. Parvez, ICML 2026 Workshop,
-arXiv:2609.10629; MIT License). Benchmark instances from [QOBLIB](https://github.com/ZIB-AOPT/QOBLIB) (CC BY 4.0) are
-used unmodified. Open data are provided by Taipei City Government, the UK Office for National Statistics, the City of
-Melbourne, NYC Open Data, data.gov.sg, Ville de Paris and the City of Cambridge under their respective licences. The
-project history is kept in [docs/README_development_log.md](docs/README_development_log.md).
+arXiv:2609.10629; MIT License). Open data are provided by Taipei City Government, the UK Office for National Statistics, the City of
+Melbourne, NYC Open Data, data.gov.sg, Ville de Paris and the City of Cambridge under their respective licences.

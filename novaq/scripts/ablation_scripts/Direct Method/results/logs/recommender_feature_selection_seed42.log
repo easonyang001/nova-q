@@ -1,8 +1,0 @@
-[11:40:21] === Zero-Shot START | run_id=zs_recommender_feature_selection_42_d180097b ===
-[11:40:21]   Model : qwen/qwen3-coder-next
-[11:40:21]   Sending zero-shot prompt (2 cases available) ...
-[11:40:28]   Code extracted and compiled OK
-[11:40:28]   Running 2 test cases ...
-[11:40:28]   Tests: 2/2 passed (100%)  failure_class=success
-[11:40:28] === Zero-Shot SUCCESS ===
-[11:40:28] Finalizing | status=success | tokens=1365 | cost=$0.0006 | wall=6.6s

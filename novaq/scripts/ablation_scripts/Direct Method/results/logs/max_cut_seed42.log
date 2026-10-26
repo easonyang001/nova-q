@@ -1,8 +1,0 @@
-[15:48:03] === Direct Method START | run_id=zs_max_cut_42_d4dd8744 ===
-[15:48:03]   Model : qwen/qwen3.6-35b-a3b
-[15:48:03]   Sending direct-method prompt (8 cases available) ...
-[15:48:42]   Code extracted and compiled OK
-[15:48:42]   Running 8 test cases ...
-[15:48:42]   Tests: 8/8 passed (100%)  failure_class=success
-[15:48:42] === Direct Method SUCCESS ===
-[15:48:42] Finalizing | status=success | tokens=6430 | cost=$0.0000 | wall=39.0s

@@ -1,8 +1,0 @@
-[10:49:44] === Zero-Shot START | run_id=zs_database_serializability_verification_42_2227e68c ===
-[10:49:44]   Model : qwen/qwen3-coder-next
-[10:49:44]   Sending zero-shot prompt (3 cases available) ...
-[10:49:51]   Code extracted and compiled OK
-[10:49:51]   Running 3 test cases ...
-[10:49:51]   Tests: 3/3 passed (100%)  failure_class=success
-[10:49:51] === Zero-Shot SUCCESS ===
-[10:49:51] Finalizing | status=success | tokens=2343 | cost=$0.0023 | wall=7.2s

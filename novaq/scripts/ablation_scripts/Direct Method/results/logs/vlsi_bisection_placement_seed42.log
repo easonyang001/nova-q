@@ -1,8 +1,0 @@
-[11:46:29] === Zero-Shot START | run_id=zs_vlsi_bisection_placement_42_4b26d7f1 ===
-[11:46:29]   Model : qwen/qwen3-coder-next
-[11:46:29]   Sending zero-shot prompt (2 cases available) ...
-[11:46:38]   Code extracted and compiled OK
-[11:46:38]   Running 2 test cases ...
-[11:46:38]   Tests: 1/2 passed (50%)  failure_class=formulation_error
-[11:46:38]   Instance 0 error: [n4_bisection] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check p
-[11:46:38] Finalizing | status=failed | tokens=1691 | cost=$0.0014 | wall=8.6s

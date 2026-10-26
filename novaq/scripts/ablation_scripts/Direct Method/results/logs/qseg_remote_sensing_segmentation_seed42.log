@@ -1,8 +1,0 @@
-[11:39:10] === Zero-Shot START | run_id=zs_qseg_remote_sensing_segmentation_42_2d112fa2 ===
-[11:39:10]   Model : qwen/qwen3-coder-next
-[11:39:10]   Sending zero-shot prompt (2 cases available) ...
-[11:39:15]   Code extracted and compiled OK
-[11:39:15]   Running 2 test cases ...
-[11:39:15]   Tests: 2/2 passed (100%)  failure_class=success
-[11:39:15] === Zero-Shot SUCCESS ===
-[11:39:15] Finalizing | status=success | tokens=826 | cost=$0.0003 | wall=4.2s

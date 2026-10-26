@@ -1,9 +1,0 @@
-[11:20:03] === Zero-Shot START | run_id=zs_hamiltonian_path_42_d8003466 ===
-[11:20:03]   Model : qwen/qwen3-coder-next
-[11:20:03]   Sending zero-shot prompt (2 cases available) ...
-[11:20:38]   Code extracted and compiled OK
-[11:20:38]   Running 2 test cases ...
-[11:20:38]   Tests: 0/2 passed (0%)  failure_class=coding_error
-[11:20:38]   Instance 0 error: [n4_path] Q is not upper triangular: write off-diagonal coefficients to Q[min(i,j), max(i,j)] only
-[11:20:38]   Instance 1 error: [n4_square] Q is not upper triangular: write off-diagonal coefficients to Q[min(i,j), max(i,j)] only
-[11:20:38] Finalizing | status=failed | tokens=1085 | cost=$0.0005 | wall=35.1s

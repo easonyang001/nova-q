@@ -1,8 +1,0 @@
-[10:49:06] === Zero-Shot START | run_id=zs_core_periphery_partitioning_42_bb8dc704 ===
-[10:49:06]   Model : qwen/qwen3-coder-next
-[10:49:06]   Sending zero-shot prompt (2 cases available) ...
-[10:49:11]   Code extracted and compiled OK
-[10:49:11]   Running 2 test cases ...
-[10:49:11]   Tests: 2/2 passed (100%)  failure_class=success
-[10:49:11] === Zero-Shot SUCCESS ===
-[10:49:11] Finalizing | status=success | tokens=1169 | cost=$0.0009 | wall=4.2s

@@ -1,8 +1,0 @@
-[11:35:56] === Zero-Shot START | run_id=zs_llm_cascade_routing_42_edcc604f ===
-[11:35:56]   Model : qwen/qwen3-coder-next
-[11:35:56]   Sending zero-shot prompt (2 cases available) ...
-[11:36:00]   Code extracted and compiled OK
-[11:36:00]   Running 2 test cases ...
-[11:36:00]   Tests: 2/2 passed (100%)  failure_class=success
-[11:36:00] === Zero-Shot SUCCESS ===
-[11:36:00] Finalizing | status=success | tokens=1398 | cost=$0.0011 | wall=4.9s

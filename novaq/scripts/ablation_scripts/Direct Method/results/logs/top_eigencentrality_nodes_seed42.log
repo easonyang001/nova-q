@@ -1,9 +1,0 @@
-[11:44:58] === Zero-Shot START | run_id=zs_top_eigencentrality_nodes_42_e52f79b0 ===
-[11:44:58]   Model : qwen/qwen3-coder-next
-[11:44:58]   Sending zero-shot prompt (2 cases available) ...
-[11:45:04]   Code extracted and compiled OK
-[11:45:04]   Running 2 test cases ...
-[11:45:04]   Tests: 0/2 passed (0%)  failure_class=formulation_error
-[11:45:04]   Instance 0 error: [star_graph_tau1] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 4 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Chec
-[11:45:04]   Instance 1 error: [two_hubs_tau2] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check 
-[11:45:04] Finalizing | status=failed | tokens=1220 | cost=$0.0005 | wall=5.8s

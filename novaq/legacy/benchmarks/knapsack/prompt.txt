@@ -1,8 +1,0 @@
-0/1 Knapsack Problem
-
-You are given N items, each with a weight and a value, and a knapsack with a maximum weight capacity W.
-
-You may select any subset of items to place in the knapsack. Each item can be taken at most once (0/1 choice).
-
-The goal is to maximize the total value of selected items without exceeding the weight capacity W.
-

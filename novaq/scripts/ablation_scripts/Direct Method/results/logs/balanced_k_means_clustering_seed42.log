@@ -1,8 +1,0 @@
-[10:46:25] === Zero-Shot START | run_id=zs_balanced_k_means_clustering_42_f2337d91 ===
-[10:46:25]   Model : qwen/qwen3-coder-next
-[10:46:25]   Sending zero-shot prompt (2 cases available) ...
-[10:46:36]   Code extracted and compiled OK
-[10:46:36]   Running 2 test cases ...
-[10:46:38]   Tests: 2/2 passed (100%)  failure_class=success
-[10:46:38] === Zero-Shot SUCCESS ===
-[10:46:38] Finalizing | status=success | tokens=2069 | cost=$0.0011 | wall=12.9s

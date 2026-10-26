@@ -1,8 +1,0 @@
-[11:45:11] === Zero-Shot START | run_id=zs_travelling_salesman_42_ea843034 ===
-[11:45:11]   Model : qwen/qwen3-coder-next
-[11:45:11]   Sending zero-shot prompt (2 cases available) ...
-[11:45:18]   Code extracted and compiled OK
-[11:45:18]   Running 2 test cases ...
-[11:45:19]   Tests: 1/2 passed (50%)  failure_class=formulation_error
-[11:45:19]   Instance 0 error: [n4_geeksforgeeks] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 84 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Ch
-[11:45:19] Finalizing | status=failed | tokens=1314 | cost=$0.0007 | wall=8.1s

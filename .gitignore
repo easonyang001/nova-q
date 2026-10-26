@@ -54,3 +54,22 @@ paper/**/*.blg
 
 # unpublished manuscripts (kept locally)
 paper/
+
+# earlier project material, internal notes and smoke runs (kept locally, not published)
+archive/
+docs/
+novaq/legacy/
+novaq/scripts/ablation_scripts/
+novaq/results/benchmark_suite_logs/
+novaq/scripts/run_e2e.py
+novaq/scripts/run_single.py
+novaq/scripts/run_benchmark_suite.py
+novaq/scripts/experiments/run_suite_parallel.py
+novaq/scripts/experiments/augment_paper_report.py
+novaq/scripts/experiments/summarize_paper_results.py
+novaq/scripts/experiments/update_paper_evidence.py
+novaq/docs/EXPERIMENT_PLAN.md
+novaq/docs/acceptance_cases.md
+novaq/docs/dwave_hybrid_experiment.md
+novaq/docs/penalty_integration.md
+novaq/docs/real_acceptance_results.md

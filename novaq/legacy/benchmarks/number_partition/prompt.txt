@@ -1,4 +1,0 @@
-Task :
-Given a list of N positive integers, divide them into two subsets such
-that the absolute difference between the sums of the two subsets is minimized.
-

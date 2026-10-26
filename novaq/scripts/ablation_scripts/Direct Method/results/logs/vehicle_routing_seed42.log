@@ -1,8 +1,0 @@
-[11:46:07] === Zero-Shot START | run_id=zs_vehicle_routing_42_3b8c5cd5 ===
-[11:46:07]   Model : qwen/qwen3-coder-next
-[11:46:07]   Sending zero-shot prompt (2 cases available) ...
-[11:46:20]   Code extracted and compiled OK
-[11:46:20]   Running 2 test cases ...
-[11:46:20]   Tests: 2/2 passed (100%)  failure_class=success
-[11:46:20] === Zero-Shot SUCCESS ===
-[11:46:20] Finalizing | status=success | tokens=2151 | cost=$0.0013 | wall=12.8s

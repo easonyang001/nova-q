@@ -1,8 +1,0 @@
-[11:37:08] === Zero-Shot START | run_id=zs_minimum_multicut_tree_42_9d499366 ===
-[11:37:08]   Model : qwen/qwen3-coder-next
-[11:37:08]   Sending zero-shot prompt (2 cases available) ...
-[11:37:27]   Code extracted and compiled OK
-[11:37:27]   Running 2 test cases ...
-[11:37:27]   Tests: 2/2 passed (100%)  failure_class=success
-[11:37:27] === Zero-Shot SUCCESS ===
-[11:37:27] Finalizing | status=success | tokens=1581 | cost=$0.0009 | wall=18.8s

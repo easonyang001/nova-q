@@ -1,9 +1,0 @@
-[10:47:33] === Zero-Shot START | run_id=zs_clique_cover_42_df6d65d5 ===
-[10:47:33]   Model : qwen/qwen3-coder-next
-[10:47:33]   Sending zero-shot prompt (2 cases available) ...
-[10:48:18]   Code extracted and compiled OK
-[10:48:18]   Running 2 test cases ...
-[10:48:18]   Tests: 0/2 passed (0%)  failure_class=coding_error
-[10:48:18]   Instance 0 error: [edge_isolated_two_cliques] Q shape (9, 9) does not match expected (8,8)
-[10:48:18]   Instance 1 error: [triangle_single_clique] Q shape (9, 9) does not match expected (8,8)
-[10:48:18] Finalizing | status=failed | tokens=1293 | cost=$0.0007 | wall=44.9s

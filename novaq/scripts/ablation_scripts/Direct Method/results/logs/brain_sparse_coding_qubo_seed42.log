@@ -1,8 +1,0 @@
-[10:46:59] === Zero-Shot START | run_id=zs_brain_sparse_coding_qubo_42_688c40be ===
-[10:46:59]   Model : qwen/qwen3-coder-next
-[10:47:00]   Sending zero-shot prompt (2 cases available) ...
-[10:47:19]   Code extracted and compiled OK
-[10:47:19]   Running 2 test cases ...
-[10:47:19]   Tests: 2/2 passed (100%)  failure_class=success
-[10:47:19] === Zero-Shot SUCCESS ===
-[10:47:19] Finalizing | status=success | tokens=1063 | cost=$0.0004 | wall=19.4s

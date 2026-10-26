@@ -1,8 +1,0 @@
-[11:42:51] === Zero-Shot START | run_id=zs_steiner_tree_42_535d150e ===
-[11:42:51]   Model : qwen/qwen3-coder-next
-[11:42:51]   Sending zero-shot prompt (1 cases available) ...
-[11:43:25]   Code extracted and compiled OK
-[11:43:25]   Running 1 test cases ...
-[11:43:25]   Tests: 0/1 passed (0%)  failure_class=formulation_error
-[11:43:25]   Instance 0 error: [steiner_3terminals_1steiner] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 3 optimal bitstring(s); none overlap with the 1 correct optimal bitstr
-[11:43:25] Finalizing | status=failed | tokens=2115 | cost=$0.0013 | wall=34.6s

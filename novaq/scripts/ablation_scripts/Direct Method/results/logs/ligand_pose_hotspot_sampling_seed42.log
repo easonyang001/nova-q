@@ -1,8 +1,0 @@
-[11:35:51] === Zero-Shot START | run_id=zs_ligand_pose_hotspot_sampling_42_26223ce7 ===
-[11:35:51]   Model : qwen/qwen3-coder-next
-[11:35:51]   Sending zero-shot prompt (3 cases available) ...
-[11:35:55]   Code extracted and compiled OK
-[11:35:55]   Running 3 test cases ...
-[11:35:55]   Tests: 3/3 passed (100%)  failure_class=success
-[11:35:55] === Zero-Shot SUCCESS ===
-[11:35:55] Finalizing | status=success | tokens=1714 | cost=$0.0005 | wall=4.2s

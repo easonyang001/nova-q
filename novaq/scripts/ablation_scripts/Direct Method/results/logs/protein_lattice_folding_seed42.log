@@ -1,9 +1,0 @@
-[11:38:19] === Zero-Shot START | run_id=zs_protein_lattice_folding_42_d972752e ===
-[11:38:19]   Model : qwen/qwen3-coder-next
-[11:38:19]   Sending zero-shot prompt (2 cases available) ...
-[11:39:10]   Code extracted and compiled OK
-[11:39:10]   Running 2 test cases ...
-[11:39:10]   Tests: 0/2 passed (0%)  failure_class=formulation_error
-[11:39:10]   Instance 0 error: [n6_hp_seq1] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check pen
-[11:39:10]   Instance 1 error: [n8_hp_seq2] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 2 correct optimal bitstring(s). Check pen
-[11:39:10] Finalizing | status=failed | tokens=1598 | cost=$0.0010 | wall=50.8s

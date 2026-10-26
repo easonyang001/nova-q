@@ -1,9 +1,0 @@
-[11:45:19] === Zero-Shot START | run_id=zs_unit_commitment_42_bd4f945b ===
-[11:45:19]   Model : qwen/qwen3-coder-next
-[11:45:19]   Sending zero-shot prompt (2 cases available) ...
-[11:46:07]   Code extracted and compiled OK
-[11:46:07]   Running 2 test cases ...
-[11:46:07]   Tests: 0/2 passed (0%)  failure_class=coding_error
-[11:46:07]   Instance 0 error: [uc_2gen_1per] Q shape (8, 8) does not match expected (4,4)
-[11:46:07]   Instance 1 error: [uc_2gen_2per] Q shape (16, 16) does not match expected (8,8)
-[11:46:07] Finalizing | status=failed | tokens=6697 | cost=$0.0049 | wall=47.5s

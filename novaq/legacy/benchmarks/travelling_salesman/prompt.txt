@@ -1,1 +1,0 @@
-Given N cities and the pairwise travel distance between every pair of cities, find a tour that visits every city exactly once and returns to the starting city, minimising the total travel distance.

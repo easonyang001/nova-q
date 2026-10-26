@@ -1,4 +1,0 @@
-[11:17:17] === Zero-Shot START | run_id=zs_feedback_vertex_set_42_7bcc716b ===
-[11:17:17]   Model : qwen/qwen3-coder-next
-[11:17:17]   No test cases found — skipping
-[11:17:17] Finalizing | status=failed | tokens=0 | cost=$0.0000 | wall=0.1s

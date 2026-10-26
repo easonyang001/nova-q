@@ -1,9 +1,0 @@
-[10:48:54] === Zero-Shot START | run_id=zs_connectome_community_detection_42_e4ba2a78 ===
-[10:48:54]   Model : qwen/qwen3-coder-next
-[10:48:54]   Sending zero-shot prompt (2 cases available) ...
-[10:49:06]   Code extracted and compiled OK
-[10:49:06]   Running 2 test cases ...
-[10:49:06]   Tests: 0/2 passed (0%)  failure_class=coding_error
-[10:49:06]   Instance 0 error: [n4_two_hemispheric] Q shape (4, 4) does not match expected (8,8)
-[10:49:06]   Instance 1 error: [n6_three_systems] Q shape (6, 6) does not match expected (18,18)
-[10:49:06] Finalizing | status=failed | tokens=2353 | cost=$0.0012 | wall=12.0s

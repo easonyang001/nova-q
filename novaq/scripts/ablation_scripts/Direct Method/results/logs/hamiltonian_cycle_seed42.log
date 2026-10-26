@@ -1,8 +1,0 @@
-[11:19:55] === Zero-Shot START | run_id=zs_hamiltonian_cycle_42_ff858615 ===
-[11:19:55]   Model : qwen/qwen3-coder-next
-[11:19:55]   Sending zero-shot prompt (1 cases available) ...
-[11:20:03]   Code extracted and compiled OK
-[11:20:03]   Running 1 test cases ...
-[11:20:03]   Tests: 0/1 passed (0%)  failure_class=coding_error
-[11:20:03]   Instance 0 error: [n4_square] Q shape (16, 16) does not match expected (6,6)
-[11:20:03] Finalizing | status=failed | tokens=1298 | cost=$0.0007 | wall=8.0s

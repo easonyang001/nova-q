@@ -1,8 +1,0 @@
-[10:46:16] === Zero-Shot START | run_id=zs_aqora_energy_storage_microgrid_siting_42_89f96863 ===
-[10:46:16]   Model : qwen/qwen3-coder-next
-[10:46:16]   Sending zero-shot prompt (2 cases available) ...
-[10:46:23]   Code extracted and compiled OK
-[10:46:23]   Running 2 test cases ...
-[10:46:23]   Tests: 2/2 passed (100%)  failure_class=success
-[10:46:23] === Zero-Shot SUCCESS ===
-[10:46:23] Finalizing | status=success | tokens=1554 | cost=$0.0007 | wall=7.0s

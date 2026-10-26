@@ -76,3 +76,5 @@ poster/gtc2027/*.log
 # local-only material (not published); last rule, so it wins over the exceptions above
 **/local/
 results/experiments/*/energy_v3.before_*.jsonl
+results/e2e_smoke*/
+.gradio/

@@ -1,8 +1,0 @@
-[11:43:57] === Zero-Shot START | run_id=zs_supply_chain_allocation_42_1022f71c ===
-[11:43:57]   Model : qwen/qwen3-coder-next
-[11:43:57]   Sending zero-shot prompt (2 cases available) ...
-[11:44:42]   Code extracted and compiled OK
-[11:44:42]   Running 2 test cases ...
-[11:44:42]   Tests: 1/2 passed (50%)  failure_class=formulation_error
-[11:44:42]   Instance 1 error: [n2_p3_case2] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check pe
-[11:44:42] Finalizing | status=failed | tokens=2024 | cost=$0.0020 | wall=44.6s

@@ -1,9 +1,0 @@
-[11:20:55] === Zero-Shot START | run_id=zs_image_segmentation_graph_cut_42_e56be4e1 ===
-[11:20:55]   Model : qwen/qwen3-coder-next
-[11:20:55]   Sending zero-shot prompt (2 cases available) ...
-[11:22:13]   Code extracted and compiled OK
-[11:22:13]   Running 2 test cases ...
-[11:22:13]   Tests: 0/2 passed (0%)  failure_class=formulation_error
-[11:22:13]   Instance 0 error: [n3_line] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check penalt
-[11:22:13]   Instance 1 error: [n4_grid] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check penalt
-[11:22:13] Finalizing | status=failed | tokens=1735 | cost=$0.0010 | wall=78.2s

@@ -1,9 +1,0 @@
-[10:46:38] === Zero-Shot START | run_id=zs_bayesian_network_learning_42_0dd09dd0 ===
-[10:46:38]   Model : qwen/qwen3-coder-next
-[10:46:38]   Sending zero-shot prompt (2 cases available) ...
-[10:46:47]   Code extracted and compiled OK
-[10:46:47]   Running 2 test cases ...
-[10:46:47]   Tests: 0/2 passed (0%)  failure_class=formulation_error
-[10:46:47]   Instance 0 error: [n3_k2] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check penalty 
-[10:46:47]   Instance 1 error: [n4_k4] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check penalty 
-[10:46:47] Finalizing | status=failed | tokens=2165 | cost=$0.0021 | wall=8.5s

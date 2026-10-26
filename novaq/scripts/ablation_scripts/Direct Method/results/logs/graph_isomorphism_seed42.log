@@ -1,8 +1,0 @@
-[11:19:45] === Zero-Shot START | run_id=zs_graph_isomorphism_42_d36aa988 ===
-[11:19:45]   Model : qwen/qwen3-coder-next
-[11:19:45]   Sending zero-shot prompt (2 cases available) ...
-[11:19:52]   Code extracted and compiled OK
-[11:19:52]   Running 2 test cases ...
-[11:19:55]   Tests: 1/2 passed (50%)  failure_class=formulation_error
-[11:19:55]   Instance 1 error: [n4_path_vs_star] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 113 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Ch
-[11:19:55] Finalizing | status=failed | tokens=1911 | cost=$0.0020 | wall=9.9s

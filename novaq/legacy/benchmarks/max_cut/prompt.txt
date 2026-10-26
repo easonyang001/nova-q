@@ -1,6 +1,0 @@
-Given an undirected graph with N nodes and a set of weighted edges,
-partition the nodes into two groups (labeled 0 and 1) so that the total
-weight of edges crossing between the two groups is maximized.
-
-Each node i has a binary variable x_i ∈ {0, 1} indicating group membership.
-An edge (i, j) with weight w_ij contributes w_ij to the cut if x_i ≠ x_j.

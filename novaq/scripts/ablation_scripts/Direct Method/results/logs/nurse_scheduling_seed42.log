@@ -1,8 +1,0 @@
-[11:37:43] === Zero-Shot START | run_id=zs_nurse_scheduling_42_973aa56c ===
-[11:37:43]   Model : qwen/qwen3-coder-next
-[11:37:43]   Sending zero-shot prompt (2 cases available) ...
-[11:37:50]   Code extracted and compiled OK
-[11:37:50]   Running 2 test cases ...
-[11:37:50]   Tests: 2/2 passed (100%)  failure_class=success
-[11:37:50] === Zero-Shot SUCCESS ===
-[11:37:50] Finalizing | status=success | tokens=1440 | cost=$0.0008 | wall=7.3s

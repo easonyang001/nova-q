@@ -1,9 +1,0 @@
-[11:23:06] === Zero-Shot START | run_id=zs_iquhack_multi_vehicle_delivery_42_ead8d55a ===
-[11:23:06]   Model : qwen/qwen3-coder-next
-[11:23:06]   Sending zero-shot prompt (2 cases available) ...
-[11:23:22]   Code extracted and compiled OK
-[11:23:22]   Running 2 test cases ...
-[11:23:22]   Tests: 0/2 passed (0%)  failure_class=formulation_error
-[11:23:22]   Instance 0 error: [n2_v3_case1] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check pe
-[11:23:22]   Instance 1 error: [n3_v4_case2] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 1 optimal bitstring(s); none overlap with the 1 correct optimal bitstring(s). Check pe
-[11:23:22] Finalizing | status=failed | tokens=2637 | cost=$0.0017 | wall=16.1s

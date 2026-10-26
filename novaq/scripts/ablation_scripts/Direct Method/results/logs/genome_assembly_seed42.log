@@ -1,8 +1,0 @@
-[11:19:07] === Zero-Shot START | run_id=zs_genome_assembly_42_dbf2cbbd ===
-[11:19:07]   Model : qwen/qwen3-coder-next
-[11:19:07]   Sending zero-shot prompt (1 cases available) ...
-[11:19:13]   Code extracted and compiled OK
-[11:19:13]   Running 1 test cases ...
-[11:19:14]   Tests: 0/1 passed (0%)  failure_class=formulation_error
-[11:19:14]   Instance 0 error: [n4_dna_read_ordering] Formulation error: the QUBO minimum does not coincide with the correct optimal solution. QUBO found 2 optimal bitstring(s); none overlap with the 4 correct optimal bitstring(s).
-[11:19:14] Finalizing | status=failed | tokens=1621 | cost=$0.0012 | wall=6.5s

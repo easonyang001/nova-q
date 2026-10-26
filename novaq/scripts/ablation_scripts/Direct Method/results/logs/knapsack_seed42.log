@@ -1,6 +1,0 @@
-[15:48:42] === Direct Method START | run_id=zs_knapsack_42_9adc488c ===
-[15:48:42]   Model : qwen/qwen3.6-35b-a3b
-[15:48:42]   Sending direct-method prompt (3 cases available) ...
-[15:52:29]   Code extraction/compile FAILED: Could not extract build_qubo from response:
-
-[15:52:29] Finalizing | status=failed | tokens=32768 | cost=$0.0000 | wall=226.9s

@@ -1,8 +1,0 @@
-[11:43:25] === Zero-Shot START | run_id=zs_stereo_matching_42_8ffc925d ===
-[11:43:25]   Model : qwen/qwen3-coder-next
-[11:43:25]   Sending zero-shot prompt (2 cases available) ...
-[11:43:53]   Code extracted and compiled OK
-[11:43:53]   Running 2 test cases ...
-[11:43:53]   Tests: 2/2 passed (100%)  failure_class=success
-[11:43:53] === Zero-Shot SUCCESS ===
-[11:43:53] Finalizing | status=success | tokens=1762 | cost=$0.0010 | wall=27.4s

@@ -1,8 +1,0 @@
-[11:22:13] === Zero-Shot START | run_id=zs_inverse_kinematics_42_b3720e22 ===
-[11:22:13]   Model : qwen/qwen3-coder-next
-[11:22:13]   Sending zero-shot prompt (2 cases available) ...
-[11:22:48]   Code extracted and compiled OK
-[11:22:48]   Running 2 test cases ...
-[11:22:48]   Tests: 2/2 passed (100%)  failure_class=success
-[11:22:48] === Zero-Shot SUCCESS ===
-[11:22:48] Finalizing | status=success | tokens=1061 | cost=$0.0006 | wall=34.9s
