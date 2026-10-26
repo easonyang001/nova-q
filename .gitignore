@@ -51,3 +51,6 @@ paper/**/*.log
 paper/**/*.aux
 paper/**/*.out
 paper/**/*.blg
+
+# unpublished manuscripts (kept locally)
+paper/
