@@ -38,15 +38,22 @@ Roughly half of the catalogue's portals have no end-to-end task. A pass rate say
 | Delimiters `,` `;` tab `\|`; CRLF and CR line endings; quoted fields with commas and newlines | yes |
 | Title and note lines above the header; blank lines before it; empty trailing columns; truncated last line | yes |
 | Decimal commas, thousands groups, Swiss `1'234`, currency, percent, accounting negatives | yes |
-| HTML page saved as `.csv` | yes (refused) |
-| Zip containing CSV or GeoJSON | yes |
+| HTML page saved under any data name (`.csv`, `.json`, `.geojson`, `.zip`) | yes (refused) |
+| A file whose content differs from its name or the portal's label (CSV labelled GeoJSON, JSON or XLSX; JSON named `.csv`) | yes, read by content with a load warning |
+| Cells longer than 128 KB (WKT geometry) | yes |
+| Very large CSV whose column types would differ between chunks | yes |
+| Column names with edge spaces or no-break spaces | yes |
+| Double-encoded UTF-8 in the source file (`CafÃ©`) | yes, repaired; ordinary `Ã` text left alone |
+| Columns named latitude/longitude holding projected values or placeholders (99999) | yes, flagged in the profile |
+| Zip containing CSV, GeoJSON or Excel; zip with only PDFs or images (error names what it holds) | yes |
 | GML graph in a zip (README file ignored) | yes, in `test_contracts_recovery.py` |
 | GeoJSON points, polygons (centroid), null geometry | yes |
 | JSON records wrapped in API envelopes; nested list cells | yes |
 | XLSX: one sheet, several sheets, title and note rows above the header | yes |
 | Shapefile points in a zip (x/y plus the .prj, converted by `to_wgs84`) | yes |
+| Shapefile attributes in cp1252 or cp950, with or without a `.cpg` file | yes |
 | Total rows, swapped latitude/longitude, TWD97 and British National Grid coordinates, duplicates, same name far apart | yes |
-| Legacy `.xls`, WFS, XML | **no** |
+| Legacy `.xls`, WFS, XML, Esri file geodatabase (`.gdb`, needs GDAL) | **no** |
 | Paginated or rate-limited APIs, authentication, redirects, partial downloads | **no** |
 | Very large files (the 64 MB member limit) | **no** |
 | Table text that addresses a model | yes, `tests/test_data_safety.py` |

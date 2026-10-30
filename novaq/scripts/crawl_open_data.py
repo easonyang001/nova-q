@@ -42,7 +42,9 @@ SOCRATA = {"data.cityofnewyork.us", "data.cityofchicago.org", "data.sfgov.org", 
            "data.colorado.gov", "data.wa.gov", "data.oregon.gov", "data.maryland.gov"}
 FORMATS = {"CSV": "csv", "GEOJSON": "geojson", "JSON": "json", "XLSX": "xlsx", "ZIP": "zip", "TSV": "tsv"}
 QUERIES = ["stations", "population", "parks", "schools", "hospitals", "transport", "budget", "facilities", "locations",
-           "census", "bicycle", "public toilets", "libraries", "air quality", "buildings", "bus stops", "health", "trees"]
+           "census", "bicycle", "public toilets", "libraries", "air quality", "buildings", "bus stops", "health", "trees",
+           "fire stations", "police", "playgrounds", "electric vehicle charging", "defibrillator", "waste", "water",
+           "housing", "election", "traffic counts", "parking", "museums", "sports facilities", "pharmacies"]
 
 
 class Host:
@@ -124,6 +126,18 @@ def download(host: Host, cand: dict, dest: Path) -> dict | None:
     return {"bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest(), "content_type": r.headers.get("content-type", "")}
 
 
+def already(manifest: Path, portal: str) -> tuple[set[str], int]:
+    """URLs tried before (downloaded or failed) and how many files this portal already has: reruns extend the corpus."""
+    seen, have = set(), 0
+    if manifest.exists():
+        for line in manifest.read_text().splitlines():
+            rec = json.loads(line)
+            if rec.get("portal") == portal:
+                seen.add(rec.get("url"))
+                have += "error" not in rec
+    return seen, have
+
+
 def crawl(portal: str, n: int, lock: threading.Lock, manifest: Path):
     if portal in EXCLUDED:
         print(f"[{portal}] excluded (held-out city)")
@@ -133,12 +147,15 @@ def crawl(portal: str, n: int, lock: threading.Lock, manifest: Path):
     folder = OUT / portal
     folder.mkdir(parents=True, exist_ok=True)
     cands = candidates_socrata(host, portal) if portal in SOCRATA else candidates_ckan(host, base, portal)
+    seen, have = already(manifest, portal)
     got = 0
     for cand in cands:
         if got >= n:
             break
+        if cand["url"] in seen:
+            continue
         ext = FORMATS[cand["format"]]
-        name = f"{got:03d}_{hashlib.md5(cand['url'].encode()).hexdigest()[:8]}.{ext}"
+        name = f"{have + got:03d}_{hashlib.md5(cand['url'].encode()).hexdigest()[:8]}.{ext}"
         try:
             info = download(host, cand, folder / name)
         except Exception as e:
