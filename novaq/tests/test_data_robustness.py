@@ -463,3 +463,19 @@ def test_degree_named_columns_with_projected_values_are_flagged():
     assert len(warnings_) == 2 and "99999" in warnings_[0]
     assert "WARNING:" in profile("t", df)
     assert coordinate_name_warnings(clean(NAMES_ASCII)) == []
+
+
+def test_legacy_xls_with_a_title_row(tmp_path):
+    xlwt = pytest.importorskip("xlwt")                # test-only: writes the legacy format
+    df = clean(NAMES_CJK)
+    book = xlwt.Workbook(encoding="utf-8")
+    sheet = book.add_sheet("data")
+    sheet.write(0, 0, "臺北市各里人口統計")
+    for j, c in enumerate(df.columns):
+        sheet.write(2, j, c)
+    for i, row in enumerate(df.itertuples(index=False), start=3):
+        for j, v in enumerate(row):
+            sheet.write(i, j, v.item() if hasattr(v, "item") else v)
+    buf = io.BytesIO()
+    book.save(buf)
+    assert_same(read(tmp_path, "t.xls", buf.getvalue()), df)

@@ -53,7 +53,8 @@ Roughly half of the catalogue's portals have no end-to-end task. A pass rate say
 | Shapefile points in a zip (x/y plus the .prj, converted by `to_wgs84`) | yes |
 | Shapefile attributes in cp1252 or cp950, with or without a `.cpg` file | yes |
 | Total rows, swapped latitude/longitude, TWD97 and British National Grid coordinates, duplicates, same name far apart | yes |
-| Legacy `.xls`, WFS, XML, Esri file geodatabase (`.gdb`, needs GDAL) | **no** |
+| Legacy `.xls` with a title row | yes (test needs `xlwt`, skipped without it) |
+| WFS, XML, Esri file geodatabase (`.gdb`, needs GDAL) | **no** |
 | Paginated or rate-limited APIs, authentication, redirects, partial downloads | **no** |
 | Very large files (the 64 MB member limit) | **no** |
 | Table text that addresses a model | yes, `tests/test_data_safety.py` |
