@@ -89,7 +89,8 @@ def _decode(raw: bytes) -> str:
     from charset_normalizer import from_bytes
     best = from_bytes(raw).best()
     if best:
-        encoding = "cp950" if best.encoding == "big5" else best.encoding     # cp950 is Big5 plus the ETEN extensions
+        # cp950 is Big5 plus the ETEN extensions; cp1252 is Latin-1 with printable characters where Latin-1 has controls
+        encoding = "cp950" if best.encoding == "big5" else _windows_over_latin1(best.encoding)
         try:
             return raw.decode(encoding)
         except (UnicodeDecodeError, LookupError):
@@ -100,6 +101,12 @@ def _decode(raw: bytes) -> str:
         except UnicodeDecodeError:
             pass
     return raw.decode("utf-8", errors="replace")
+
+
+def _windows_over_latin1(encoding: str) -> str:
+    """A Latin-1 guess for Western text is nearly always Windows-1252: '\x96' is an en dash there and a control
+    character in Latin-1. A file that cp1252 cannot decode falls back to the next candidate."""
+    return "cp1252" if encoding.lower().replace("-", "_") in ("latin_1", "iso8859_1", "iso_8859_1") else encoding
 
 
 def _geojson_table(obj: dict) -> pd.DataFrame:
@@ -140,7 +147,7 @@ def _shapefile_tables(raw: bytes, stem: str) -> dict[str, pd.DataFrame]:
                 hit = next((n for n in names if n.lower() == (base + ext).lower()), None)
                 return io.BytesIO(z.read(hit)) if hit else None
             prj = part(".prj")
-            for enc in ("utf-8", "cp950"):
+            for enc in _dbf_encodings(part(".cpg"), part(".dbf")):
                 try:
                     r = shapefile.Reader(shp=part(".shp"), dbf=part(".dbf"), shx=part(".shx"), encoding=enc)
                     fields = [f[0] for f in r.fields[1:]]
@@ -156,9 +163,32 @@ def _shapefile_tables(raw: bytes, stem: str) -> dict[str, pd.DataFrame]:
                     df["crs_prj"] = prj.read().decode("utf-8", "replace")[:200] if prj else ""
                     out[f"{stem}.{Path(base).name}" if len(out) or shp.count("/") else stem] = df
                     break
-                except UnicodeDecodeError:
-                    continue
+                except Exception as e:                      # pyshp wraps decoding errors in its own exception
+                    if isinstance(e, UnicodeDecodeError) or "decode" in str(e).lower():
+                        continue
+                    raise
     return out
+
+
+def _dbf_encodings(cpg, dbf) -> list[str]:
+    """The .cpg file declares the attribute encoding; without one, UTF-8, then charset_normalizer's guess, then the
+    Taiwanese default, then Latin-1 (which reads anything). A fixed utf-8 -> cp950 order read a UK layer's cp1252 text
+    as Chinese characters or failed on it (corpus, 2026-10-30)."""
+    out = []
+    if cpg is not None:
+        declared = cpg.read().decode("ascii", "ignore").strip().lower()
+        out.append({"1252": "cp1252", "65001": "utf-8", "950": "cp950", "936": "gbk", "932": "cp932",
+                    "88591": "latin-1", "8859_1": "latin-1", "iso_8859_1": "latin-1"}.get(declared.replace("-", "_"), declared))
+    out.append("utf-8")
+    if dbf is not None:
+        from charset_normalizer import from_bytes
+        raw = dbf.read()
+        header = int.from_bytes(raw[8:10], "little") if len(raw) > 10 else 0
+        best = from_bytes(raw[header:]).best()          # the records only: the binary header hides the text encoding
+        if best:
+            out.append("cp950" if best.encoding == "big5" else _windows_over_latin1(best.encoding))
+    out += ["cp950", "latin-1"]
+    return list(dict.fromkeys(e for e in out if e))
 
 
 def _content_kind(raw: bytes) -> str:
@@ -178,6 +208,8 @@ def _content_kind(raw: bytes) -> str:
 
 # what each content kind is read as, when the file name or the portal's format label says something else
 _AS = {"json": ".json", "text": ".csv", "xls": ".xls"}
+_FAMILY = {".json": "json", ".geojson": "json", ".csv": "text", ".tsv": "text", ".txt": "text", ".xls": "xls",
+           ".xlsx": "zip", ".xlsm": "zip", ".zip": "zip"}
 
 
 def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
@@ -190,8 +222,7 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
         kind, relabelled = _content_kind(raw), None
         if kind == "html" and suf not in (".csv", ".tsv", ".txt"):
             raise ValueError(f"{p.name}: this file is a web page, not data; look for the download link on the page")
-        if kind in _AS and (suf in (".json", ".geojson", ".zip") or suf in (".csv", ".tsv", ".txt") and kind == "json") \
-                and _AS[kind] != {".geojson": ".json"}.get(suf, suf):
+        if kind in _AS and _FAMILY.get(suf, kind) != kind:
             what = {"json": "JSON", "text": "delimited text", "xls": "a legacy Excel workbook"}[kind]
             relabelled, suf = f"named {p.suffix or 'without extension'} but the content is {what}; read as {what}", _AS[kind]
         if suf in (".zip", ".shp") or raw[:2] == b"PK" and suf not in (".xlsx", ".xlsm"):
@@ -210,8 +241,16 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
                             # A graph README is not a data table.
                             if not (extension == ".txt" and any(n.lower().endswith(".gml") for n in archive.namelist())):
                                 tables[f"{stem}#{Path(info.filename).stem}"] = _delimited(archive.read(info), extension)
+                        if extension in (".xlsx", ".xlsm", ".xls") and info.file_size <= 64 * 1024 * 1024:
+                            sheets = _excel_sheets(archive.read(info))
+                            for sheet, df in sheets.items():
+                                key = f"{stem}#{Path(info.filename).stem}"
+                                tables[key if len(sheets) == 1 else f"{key}#{sheet}"] = df
                     if not any(k.startswith(stem + "#") for k in tables):
-                        raise ValueError(f"{p.name}: archive contains no readable CSV/TSV/text, JSON or Shapefile")
+                        held = sorted({Path(n).suffix.lower() or "(no extension)" for n in archive.namelist() if not n.endswith("/")})
+                        raise ValueError(f"{p.name}: archive contains no readable table (CSV/TSV/text, JSON, Excel, "
+                                         f"Shapefile); it holds {', '.join(held[:8])}" + (
+                                         " - an Esri file geodatabase, which needs GDAL" if ".gdbtable" in held else ""))
         elif suf in (".xlsx", ".xlsm", ".xls"):
             sheets = _excel_sheets(raw)
             for sheet, df in sheets.items():

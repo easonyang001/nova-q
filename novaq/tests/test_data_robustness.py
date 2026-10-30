@@ -364,7 +364,7 @@ def test_column_names_lose_edge_spaces_including_no_break_spaces(tmp_path):
     assert_same(read(tmp_path, "t.csv", csv_text(shown).encode()), df)
 
 
-@pytest.mark.parametrize("filename", ["t.geojson", "t.json", "t.zip"])
+@pytest.mark.parametrize("filename", ["t.geojson", "t.json", "t.zip", "t.xlsx", "t.xls"])
 def test_csv_under_a_wrong_name_is_read_by_content(tmp_path, filename):
     """Toronto labelled 32 CSV downloads GeoJSON (corpus, 2026-10-30)."""
     df = clean(NAMES_ASCII)
@@ -385,3 +385,56 @@ def test_web_page_under_any_data_name_is_refused(tmp_path, filename):
     p.write_bytes(b"<!DOCTYPE html><html><head><title>Not found</title></head></html>")
     with pytest.raises(ValueError, match="web page"):
         load_tables([p])
+
+
+def test_excel_inside_zip(tmp_path):
+    df = clean(NAMES_ASCII)
+    buf = io.BytesIO()
+    df.to_excel(buf, index=False)
+    assert_same(read(tmp_path, "t.zip", zipped(**{"stats.xlsx": buf.getvalue()})), df)
+
+
+def test_archive_without_tables_says_what_it_holds(tmp_path):
+    p = tmp_path / "docs.zip"
+    p.write_bytes(zipped(**{"report.pdf": b"%PDF-1.4", "map.jpg": b"\xff\xd8"}))
+    with pytest.raises(ValueError, match=r"holds \.jpg, \.pdf"):
+        load_tables([p])
+
+
+@pytest.mark.parametrize("with_cpg", [True, False])
+def test_shapefile_attributes_in_cp1252(tmp_path, with_cpg):
+    """A UK layer's dbf held cp1252 text ('Road\xa0\xa0', 'Café'); utf-8 then cp950 failed or garbled it."""
+    import shapefile
+    names = [f"Café {i} \u2013 Springdale Road\u00a0" for i in range(12)]
+    shp, shx, dbf = io.BytesIO(), io.BytesIO(), io.BytesIO()
+    w = shapefile.Writer(shp=shp, shx=shx, dbf=dbf, shapeType=shapefile.POINT, encoding="cp1252")
+    w.field("name", "C", size=60)
+    for i, n in enumerate(names):
+        w.point(-0.1 + i * 1e-3, 51.5)
+        w.record(n)
+    w.close()
+    members = {"p.shp": shp.getvalue(), "p.shx": shx.getvalue(), "p.dbf": dbf.getvalue()}
+    if with_cpg:
+        members["p.cpg"] = b"1252"
+    got = read(tmp_path, "s.zip", zipped(**members))
+    assert sorted(got["name"]) == sorted(n.strip() for n in names)
+
+
+def test_cp1252_dashes_and_curly_quotes_are_not_control_characters(tmp_path):
+    names = [f"Café ‘{i}’ – King’s Road" for i in range(24)]
+    df = clean(names)
+    assert_same(read(tmp_path, "t.csv", csv_text(df).encode("cp1252")), df)
+
+
+def test_taiwanese_shapefile_without_cpg_stays_chinese(tmp_path):
+    import shapefile
+    names = [f"臺北市大安區{c}里活動中心" for c in "仁愛信義光復敦化忠孝復興樂業建國"]
+    shp, shx, dbf = io.BytesIO(), io.BytesIO(), io.BytesIO()
+    w = shapefile.Writer(shp=shp, shx=shx, dbf=dbf, shapeType=shapefile.POINT, encoding="cp950")
+    w.field("name", "C", size=60)
+    for n in names:
+        w.point(121.5, 25.0)
+        w.record(n)
+    w.close()
+    got = read(tmp_path, "s.zip", zipped(**{"p.shp": shp.getvalue(), "p.shx": shx.getvalue(), "p.dbf": dbf.getvalue()}))
+    assert sorted(got["name"]) == sorted(names)
