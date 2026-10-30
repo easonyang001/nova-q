@@ -48,6 +48,7 @@ def check_table(name: str, df: pd.DataFrame) -> list[str]:
         bad.append("text_ok: replacement characters or mojibake in text cells")
     for col in text.columns:
         vals = text[col].dropna().astype(str).head(500)
+        vals = vals[~vals.map(prep.is_missing)]          # '-', '*', 'n/a' are missing values, not parse failures
         if len(vals) >= 5:
             parsed = prep.to_number(vals)
             share = parsed.notna().mean()
