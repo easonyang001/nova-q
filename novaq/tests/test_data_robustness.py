@@ -342,3 +342,10 @@ def test_shapefile_points_in_a_zip_keep_coordinates_and_projection(tmp_path):
     assert got["name"].tolist() == want["name"].tolist()
     lonlat = prep.to_wgs84(got, "x", "y", prj=str(got["crs_prj"].iloc[0]))
     assert np.allclose(lonlat["lat"], want["lat"]) and np.allclose(lonlat["lon"], want["lon"])
+
+
+def test_large_file_column_gets_one_type_not_mixed_chunks(tmp_path):
+    """pandas guesses types per chunk by default: numbers in early rows and text later gave a mixed column."""
+    rows = ["code,value"] + [f"{i},{i}" for i in range(300_000)] + ["X12,1"]
+    got = read(tmp_path, "big.csv", ("\n".join(rows) + "\n").encode())
+    assert len({type(v) for v in got["code"]}) == 1

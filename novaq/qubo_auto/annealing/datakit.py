@@ -30,7 +30,8 @@ def _delimited(raw, suffix=".csv"):
         separator = "\t" if suffix == ".tsv" else ","
     skip = _preamble_lines(text, separator)
     try:
-        return pd.read_csv(io.StringIO(text), sep=separator, skiprows=skip)
+        # low_memory=False: chunked type guessing gave one column numbers in some rows and text in others (corpus, 2026-10-30)
+        return pd.read_csv(io.StringIO(text), sep=separator, skiprows=skip, low_memory=False)
     except pd.errors.ParserError:
         # a few broken rows (a truncated last line, an unclosed quote) must not void the whole file
         rows = list(csv.reader(io.StringIO(text), delimiter=separator))[skip:]
