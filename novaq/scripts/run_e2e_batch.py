@@ -360,7 +360,17 @@ def found_files(directory: Path) -> list[str]:
     return names
 
 
+def data_snapshot(directory: Path) -> list[dict]:
+    """Name, size and SHA-256 of every downloaded file: live APIs change, so a rerun can only be compared with the
+    data this run actually saw."""
+    if not directory.is_dir():
+        return []
+    return [{"file": f.name, "bytes": f.stat().st_size, "sha256": hashlib.sha256(f.read_bytes()).hexdigest()}
+            for f in sorted(directory.rglob("*")) if f.is_file()]
+
+
 def finish(rec, out, client=None, result=None):
+    rec["data_snapshot"] = data_snapshot(out / "data_files")
     rec["cost"] = {"llm_tokens": getattr(client, "tokens_used", None),
                    "solver_calls": (result or {}).get("total_solver_calls", (result or {}).get("solver_calls"))}
     rec["seconds"] = round(time.time() - rec.pop("started"), 1)

@@ -180,7 +180,7 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
                     if not any(k.startswith(stem + "#") for k in tables):
                         raise ValueError(f"{p.name}: archive contains no readable CSV/TSV/text, JSON or Shapefile")
         elif suf in (".xlsx", ".xlsm", ".xls"):
-            sheets = pd.read_excel(io.BytesIO(raw), sheet_name=None)
+            sheets = _excel_sheets(raw)
             for sheet, df in sheets.items():
                 tables[stem if len(sheets) == 1 else f"{stem}#{sheet}"] = df
         elif suf == ".gml":
@@ -220,6 +220,20 @@ def _record_lists(obj, path: str = "", depth: int = 0) -> dict[str, list]:
         elif isinstance(v, dict):
             found.update(_record_lists(v, key, depth + 1))
     return found
+
+
+def _excel_sheets(raw: bytes) -> dict[str, pd.DataFrame]:
+    """Every sheet, with the header found below any title and note rows. Government workbooks put a title in the
+    first cell and the real header a few rows down; read as is, the title became the only column name (robustness
+    test, 2026-10-30). The header is searched only when the first row looks like a title (less than half filled),
+    so an ordinary sheet whose first row is the header is read unchanged."""
+    from .prep.table import find_header_row
+    out = {}
+    for sheet, grid in pd.read_excel(io.BytesIO(raw), sheet_name=None, header=None).items():
+        row = find_header_row(grid) if len(grid) > 2 and grid.iloc[0].notna().mean() < 0.5 else 0
+        df = pd.read_excel(io.BytesIO(raw), sheet_name=sheet, header=row)
+        out[sheet] = df.dropna(how="all").dropna(axis=1, how="all").reset_index(drop=True) if row else df
+    return out
 
 
 def _clean_cells(df: pd.DataFrame) -> pd.DataFrame:

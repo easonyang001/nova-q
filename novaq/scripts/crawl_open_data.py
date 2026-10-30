@@ -33,11 +33,13 @@ MAX_BYTES = 15 * 1024 * 1024
 EXCLUDED = {"data.gov.sg", "opendata.paris.fr", "data.cambridgema.gov", "opendata.swiss", "ckan.opendata.swiss",
             "data.gov.ie", "data.somervillema.gov"}
 
-CKAN = {"data.gov.uk": "https://data.gov.uk/api/action", "govdata.de": "https://ckan.govdata.de/api/3/action",
+CKAN = {"data.gov.uk": "https://www.data.gov.uk/api/action", "open.toronto.ca": "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action", "govdata.de": "https://ckan.govdata.de/api/3/action",
         "open.canada.ca": "https://open.canada.ca/data/api/action", "data.gov.au": "https://data.gov.au/data/api/3/action",
-        "data.go.jp": "https://www.data.go.jp/data/api/3/action", "data.overheid.nl": "https://data.overheid.nl/data/api/3/action",
+        "data.go.jp": "https://data.e-gov.go.jp/data/api/3/action", "data.overheid.nl": "https://data.overheid.nl/data/api/3/action",
         "datenregister.berlin.de": "https://datenregister.berlin.de/api/3/action"}
-SOCRATA = {"data.cityofnewyork.us"}
+SOCRATA = {"data.cityofnewyork.us", "data.cityofchicago.org", "data.sfgov.org", "data.lacity.org", "data.seattle.gov",
+           "data.austintexas.gov", "data.cityofboston.gov", "data.ct.gov", "data.ny.gov", "data.texas.gov",
+           "data.colorado.gov", "data.wa.gov", "data.oregon.gov", "data.maryland.gov"}
 FORMATS = {"CSV": "csv", "GEOJSON": "geojson", "JSON": "json", "XLSX": "xlsx", "ZIP": "zip", "TSV": "tsv"}
 QUERIES = ["stations", "population", "parks", "schools", "hospitals", "transport", "budget", "facilities", "locations",
            "census", "bicycle", "public toilets", "libraries", "air quality", "buildings", "bus stops", "health", "trees"]

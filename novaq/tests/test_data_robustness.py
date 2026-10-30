@@ -300,3 +300,45 @@ def test_currency_magnitude_suffixes_and_trailing_question_marks():
 
 def test_metres_are_not_millions():
     assert np.isnan(prep.to_number(pd.Series(["5m", "12 m", "3k"]))).all()
+
+
+def test_xlsx_title_and_note_rows_above_the_header(tmp_path):
+    df = clean(NAMES_ASCII)
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf) as w:
+        pd.DataFrame([["City statistics 2025"], ["Source: statistics office"], [None]]).to_excel(w, index=False, header=False)
+        df.to_excel(w, index=False, startrow=3)
+    assert_same(read(tmp_path, "t.xlsx", buf.getvalue()), df)
+
+
+def test_xlsx_every_sheet_is_a_table(tmp_path):
+    df = clean(NAMES_CJK)
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf) as w:
+        pd.DataFrame({"note": ["read me"]}).to_excel(w, sheet_name="README", index=False)
+        df.to_excel(w, sheet_name="data", index=False)
+    p = tmp_path / "m.xlsx"
+    p.write_bytes(buf.getvalue())
+    tables = load_tables([p])
+    assert set(tables) == {"m#README", "m#data"}
+    assert_same(tables["m#data"], df)
+
+
+def test_shapefile_points_in_a_zip_keep_coordinates_and_projection(tmp_path):
+    import shapefile
+    df = clean(NAMES_ASCII)
+    shp, shx, dbf = io.BytesIO(), io.BytesIO(), io.BytesIO()
+    w = shapefile.Writer(shp=shp, shx=shx, dbf=dbf, shapeType=shapefile.POINT)
+    w.field("name", "C")
+    w.field("pop", "N")
+    for _, r in df.iterrows():
+        w.point(r["lon"], r["lat"])
+        w.record(r["name"], int(r["pop"]))
+    w.close()
+    prj = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+    got = read(tmp_path, "s.zip", zipped(**{"p.shp": shp.getvalue(), "p.shx": shx.getvalue(), "p.dbf": dbf.getvalue(), "p.prj": prj}))
+    got = got.sort_values("name").reset_index(drop=True)
+    want = df.sort_values("name").reset_index(drop=True)
+    assert got["name"].tolist() == want["name"].tolist()
+    lonlat = prep.to_wgs84(got, "x", "y", prj=str(got["crs_prj"].iloc[0]))
+    assert np.allclose(lonlat["lat"], want["lat"]) and np.allclose(lonlat["lon"], want["lon"])

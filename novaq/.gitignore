@@ -59,6 +59,8 @@ results/**
 !results/*.md
 !results/acceptance_truth/truth_*.json
 !results/e2e_*/full_rag/*/record.json
+!results/e2e_*/manifest.json
+!results/e2e_*/*/*/record.json
 !results/experiments/qaoa_cudaq_20261020/*.jsonl
 !results/experiments/qaoa_cudaq_20261020/summary.json
 !results/experiments/qaoa_cudaq_20261020/figures/*

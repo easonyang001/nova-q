@@ -57,7 +57,7 @@ paper/
 
 # earlier project material, internal notes and smoke runs (kept locally, not published)
 archive/
-docs/
+/docs/
 novaq/legacy/
 novaq/scripts/ablation_scripts/
 novaq/results/benchmark_suite_logs/
