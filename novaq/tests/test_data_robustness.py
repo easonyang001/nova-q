@@ -479,3 +479,34 @@ def test_legacy_xls_with_a_title_row(tmp_path):
     buf = io.BytesIO()
     book.save(buf)
     assert_same(read(tmp_path, "t.xls", buf.getvalue()), df)
+
+
+def test_dates_as_excel_header_cells_do_not_break_the_profile(tmp_path):
+    """Canadian workbooks had dates as column headers: the model-facing profile crashed on them."""
+    import datetime
+    from qubo_auto.annealing.datakit import profile
+    df = pd.DataFrame({"region": ["A", "B", "C"], datetime.datetime(2024, 1, 1): [1, 2, 3], 2025.0: [4, 5, 6]})
+    buf = io.BytesIO()
+    df.to_excel(buf, index=False)
+    got = read(tmp_path, "t.xlsx", buf.getvalue())
+    assert list(got.columns) == ["region", "2024-01-01", "2025"]
+    assert "2024-01-01" in profile("t", got)
+
+
+def test_repeated_column_names_in_a_file_with_broken_rows(tmp_path):
+    """The tolerant parser (used when a row is broken) took a frame for a column when a name repeated."""
+    text = 'name,value,value\nA,1,2\nB,3,4\nC,5,6\nD,"7,8\n'
+    got = read(tmp_path, "t.csv", text.encode())
+    assert list(got.columns)[:3] == ["name", "value", "value.1"] and len(got) >= 3
+
+
+def test_geojson_declaring_web_mercator_is_converted(tmp_path):
+    from pyproj import Transformer
+    df = clean(NAMES_ASCII)
+    x, y = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True).transform(df["lon"].to_numpy(), df["lat"].to_numpy())
+    fc = {"type": "FeatureCollection", "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::3857"}},
+          "features": [{"type": "Feature", "properties": {"name": n}, "geometry": {"type": "Point", "coordinates": [a, b]}}
+                       for n, a, b in zip(df["name"], x, y)]}
+    got = read(tmp_path, "t.geojson", json.dumps(fc).encode())
+    assert np.allclose(got["lat"], df["lat"]) and np.allclose(got["lon"], df["lon"])
+    assert any("EPSG:3857" in w for w in got.attrs["load_warnings"])

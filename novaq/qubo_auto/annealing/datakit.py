@@ -43,7 +43,7 @@ def _delimited(raw, suffix=".csv"):
         rows = list(csv.reader(io.StringIO(text), delimiter=separator))[skip:]
         width = max(set(map(len, rows)), key=[len(r) for r in rows].count) if rows else 0
         good = [r for r in rows if len(r) == width]
-        df = pd.DataFrame(good[1:], columns=good[0]) if good else pd.DataFrame()
+        df = pd.DataFrame(good[1:], columns=_unique(good[0])) if good else pd.DataFrame()
         for c in df.columns:
             converted = pd.to_numeric(df[c], errors="coerce")
             if converted.notna().sum() == df[c].replace("", None).notna().sum():   # every value was a number
@@ -52,6 +52,19 @@ def _delimited(raw, suffix=".csv"):
         df.attrs["load_warnings"] = [f"{skipped} malformed row(s) skipped (expected {width} fields)" if skipped else
                                      "read with a tolerant parser (an unclosed quote at the end of the file)"]
         return df
+
+
+def _unique(names) -> list[str]:
+    """Column names as pandas' own reader makes them: a repeated name gets .1, .2 (a repeated name crashed the
+    tolerant parser, which then picked a frame instead of a column; Canadian file, 2026-10-30)."""
+    seen: dict[str, int] = {}
+    out = []
+    for n in names:
+        n = str(n)
+        k = seen.get(n, 0)
+        seen[n] = k + 1
+        out.append(n if k == 0 else f"{n}.{k}")
+    return out
 
 
 def _preamble_lines(text: str, separator: str, probe: int = 60) -> int:
@@ -110,6 +123,17 @@ def _windows_over_latin1(encoding: str) -> str:
     return "cp1252" if encoding.lower().replace("-", "_") in ("latin_1", "iso8859_1", "iso_8859_1") else encoding
 
 
+def _geojson_crs(obj: dict) -> str | None:
+    """The coordinate system an old-style GeoJSON declares ({"crs": {"properties": {"name": "EPSG:3857"}}}). RFC 7946
+    dropped the member and fixed WGS84, but portals still publish web-mercator files with it (UK, corpus 2026-10-30)."""
+    name = ((obj.get("crs") or {}).get("properties") or {}).get("name")
+    if not name:
+        return None
+    m = re.search(r"EPSG:+(\d+)", str(name), re.I)
+    code = m.group(1) if m else ("4326" if "CRS84" in str(name).upper() else None)
+    return None if code in (None, "4326") else f"EPSG:{code}"
+
+
 def _geojson_table(obj: dict) -> pd.DataFrame:
     rows = []
     for f in obj.get("features", []):
@@ -130,7 +154,14 @@ def _geojson_table(obj: dict) -> pd.DataFrame:
             props["lat"] = sum(p[1] for p in pts) / len(pts)
         props["geometry_type"] = geom.get("type")
         rows.append(props)
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    crs = _geojson_crs(obj)
+    if crs and {"lon", "lat"} <= set(df.columns):
+        from pyproj import Transformer
+        df["x"], df["y"] = df["lon"], df["lat"]           # keep the file's own numbers next to the converted ones
+        df["lon"], df["lat"] = Transformer.from_crs(crs, "EPSG:4326", always_xy=True).transform(df["x"].to_numpy(), df["y"].to_numpy())
+        df.attrs["load_warnings"] = [f"GeoJSON declares {crs}; coordinates converted to WGS84 (x/y keep the original)"]
+    return df
 
 
 def _shapefile_tables(raw: bytes, stem: str) -> dict[str, pd.DataFrame]:
@@ -313,14 +344,25 @@ def _excel_sheets(raw: bytes) -> dict[str, pd.DataFrame]:
     return out
 
 
+def _header_text(c) -> str:
+    if isinstance(c, str):
+        return c
+    if hasattr(c, "strftime"):
+        return c.strftime("%Y-%m-%d") if not getattr(c, "hour", 0) and not getattr(c, "minute", 0) else c.isoformat()
+    if isinstance(c, float) and c.is_integer():
+        return str(int(c))
+    return str(c)
+
+
 def _clean_cells(df: pd.DataFrame) -> pd.DataFrame:
     """Text cells without edge spaces (a district name with a trailing space missed an exact filter, 2026-10-25), and a column of numbers written
     with decimal commas, alone or mixed with points ('52,5368' and '52.4451'), as numbers."""
     import re as _re
     from .prep.text import decimal_comma
     df = df.copy()
-    # column names without edge spaces either ('\xa0 Name of School' in a UK workbook): a filter by name must match
-    names = [c.strip() if isinstance(c, str) else c for c in df.columns]
+    # column names are text without edge spaces: a date or number as an Excel header cell crashed the model-facing
+    # profile (Canadian workbooks, 2026-10-30), and '\xa0 Name of School' (a UK workbook) missed a filter by name
+    names = [_header_text(c).strip() for c in df.columns]
     if len(set(names)) == len(names):
         df.columns = names
     num = _re.compile(r"^[-+]?\d+([.,]\d+)?$")
