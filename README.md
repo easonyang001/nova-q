@@ -458,13 +458,13 @@ python -m pytest -q tests
 
 | Path (under `novaq/`) | Contents |
 |---|---|
-| `qubo_auto/annealing/` | agents, data tools (`prep/`, `dataplan.py`, `dataagent.py`), checkers (`reqcheck.py`, `datacheck.py`), QUBO encodings, solver back-ends, workflow and repair |
+| `qubo_auto/annealing/` | agents, data tools (`prep/`, `dataplan.py`, `dataagent.py`), checkers (`reqcheck.py`, `datacheck.py`), QUBO encodings, solver back-ends, workflow and repair, `sensitivity.py` (binding limits and what moving one buys; not yet wired into the delivery message) |
 | `qubo_auto/prompts/annealing/` | agent prompts |
 | `acceptance/` | acceptance judge, ground-truth builders, task definitions, pre-registration |
 | `scripts/` | web interface, batch runner, re-judging, `report_runs.py` (cost, repairs, provenance), `list_constants.py`; `experiments/` for the solver study (`solver_tuning.py`) and figures |
 | `knowledge/` | general modelling patterns available to the Modeler |
 | `poster/gtc2027/figures/` | figures and the scripts' outputs used on the poster |
-| `docs/` | agent guide, experiment notes, `constants_inventory.md`, `data_portal_coverage.md` |
+| `docs/` | agent guide, experiment notes, `evaluation_plan.md` (experiments still to run), `constants_inventory.md`, `data_portal_coverage.md` |
 | `results/` | run settings, reference answers, per-run judge records, solver-comparison data |
 | `tests/` | unit tests, including `test_data_robustness.py` (dirty-file mutations the data layer must undo) and `test_data_safety.py` |
 
