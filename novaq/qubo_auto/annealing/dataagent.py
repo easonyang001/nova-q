@@ -55,6 +55,11 @@ def _short(obj, n=1500) -> str:
 
 
 def explore(tables: dict[str, pd.DataFrame], call: dict) -> str:
+    """One read-only tool call; the result is table text, so it is neutralised before it reaches a prompt."""
+    return prep.safety.observation(_explore(tables, call))
+
+
+def _explore(tables: dict[str, pd.DataFrame], call: dict) -> str:
     """Run one read-only tool; any error is returned as text (it is an observation, not a failure)."""
     try:
         tool = call.get("tool")

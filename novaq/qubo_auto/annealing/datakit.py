@@ -253,7 +253,9 @@ def _flat_cells(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def profile(name: str, df: pd.DataFrame, max_chars: int = MAX_TABLE_CHARS) -> str:
+    from .prep.safety import neutralize, scan_table      # table text is untrusted: it goes into prompts
     lines = [f"TABLE {name!r}: {len(df)} rows x {df.shape[1]} columns"]
+    lines += [f"SECURITY: {f}" for f in scan_table(df, name)]
     lines += [f"LOAD WARNING: {w}" for w in df.attrs.get("load_warnings", [])]
     for col in df.columns:
         s = df[col]
@@ -264,16 +266,18 @@ def profile(name: str, df: pd.DataFrame, max_chars: int = MAX_TABLE_CHARS) -> st
             lines.append(f"- {col!r} ({s.dtype}{miss}): min {d['min']:.6g}, max {d['max']:.6g}, mean {d['mean']:.6g}")
         else:
             vals = s.dropna().astype(str)
-            top = ", ".join(f"{v!r}" for v in vals.value_counts().head(4).index)
+            top = ", ".join(f"{neutralize(v, 60)!r}" for v in vals.value_counts().head(4).index)
             lines.append(f"- {col!r} (text, {vals.nunique()} distinct{miss}): e.g. {top}")
-    sample = df.head(3).to_dict(orient="records")
+    sample = [{k: neutralize(v, 80) if isinstance(v, str) else v for k, v in row.items()}
+              for row in df.head(3).to_dict(orient="records")]
     lines.append("first rows: " + json.dumps(sample, ensure_ascii=False, default=str))
     text = "\n".join(lines)
     return text if len(text) <= max_chars else text[:max_chars] + " …(profile truncated)"
 
 
 def profiles(tables: dict[str, pd.DataFrame]) -> str:
-    out, used = [], 0
+    from .prep.safety import DATA_NOTICE
+    out, used = [DATA_NOTICE], len(DATA_NOTICE)
     for name, df in tables.items():
         p = profile(name, df, max_chars=min(MAX_TABLE_CHARS, max(800, (MAX_TOTAL_CHARS - used))))
         out.append(p)
