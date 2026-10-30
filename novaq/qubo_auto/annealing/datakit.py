@@ -73,15 +73,27 @@ def _gml(raw):
 
 
 def _decode(raw: bytes) -> str:
-    """Taiwanese open data is often Big5 / CP950, not UTF-8."""
-    for enc in ("utf-8-sig", "cp950", "big5"):
-        try:
-            return raw.decode(enc)
-        except UnicodeDecodeError:
-            pass
+    """UTF-8 first. Anything else goes to charset_normalizer, which told Big5, GBK, Shift-JIS and EUC-JP/KR apart in the
+    robustness tests; a fixed cp950 -> big5 order read EUC-JP files as Chinese-looking nonsense without an error
+    (cp950 happily decodes most two-byte encodings). cp950/big5 remain the fallback for Taiwanese files."""
+    try:
+        return raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        pass
     from charset_normalizer import from_bytes
     best = from_bytes(raw).best()
-    return str(best) if best else raw.decode("utf-8", errors="replace")
+    if best:
+        encoding = "cp950" if best.encoding == "big5" else best.encoding     # cp950 is Big5 plus the ETEN extensions
+        try:
+            return raw.decode(encoding)
+        except (UnicodeDecodeError, LookupError):
+            return str(best)
+    for encoding in ("cp950", "big5"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            pass
+    return raw.decode("utf-8", errors="replace")
 
 
 def _geojson_table(obj: dict) -> pd.DataFrame:

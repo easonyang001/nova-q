@@ -22,3 +22,16 @@ pypdf                     # reading PDF pages found by the web lookup
 pyshp                     # reading Shapefile (SHP) open data
 pyproj                    # coordinate systems (TWD97/TWD67/any EPSG) in data preprocessing
 xlrd>=2.0.1               # legacy .xls spreadsheets in open data (openpyxl reads only .xlsx)
+
+# Imported by the code but missing from the list above (found while building the data-layer robustness tests)
+pandas>=2.0
+scikit-learn              # weighted k-means in reduce_points
+matplotlib                # figures
+networkx                  # GML graph inputs
+charset-normalizer        # text encoding detection (Big5, GBK, Shift-JIS, EUC-JP/KR ...)
+openpyxl                  # .xlsx spreadsheets
+beautifulsoup4            # reading portal landing pages
+openjij                   # simulated quantum annealing (SQA)
+fastembed                 # modelling-pattern retrieval
+
+# GPU stacks (CUDA-Q, cuOpt, vLLM) live in their own environments and are not installed from this file.

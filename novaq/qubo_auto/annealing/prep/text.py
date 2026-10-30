@@ -10,7 +10,7 @@ import unicodedata
 import pandas as pd
 
 MISSING_MARKERS = {"", "-", "--", "—", "–", "－", "…", "...", "na", "n/a", "nan", "none", "null", "x", "*", "＊", "無", "不詳"}
-_NUM_JUNK = re.compile(r"[,\s，]|NT\$|US\$|\$|元|円|€|£")
+_NUM_JUNK = re.compile(r"[,\s，]|(?<=\d)['’ʼ](?=\d{3}(?!\d))|NT\$|US\$|\$|元|円|€|£|CHF|Fr\.")   # 1'234 is a Swiss thousands group
 
 
 def normalize_text(s) -> str:
