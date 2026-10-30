@@ -349,3 +349,39 @@ def test_large_file_column_gets_one_type_not_mixed_chunks(tmp_path):
     rows = ["code,value"] + [f"{i},{i}" for i in range(300_000)] + ["X12,1"]
     got = read(tmp_path, "big.csv", ("\n".join(rows) + "\n").encode())
     assert len({type(v) for v in got["code"]}) == 1
+
+
+def test_very_long_cells_such_as_wkt_geometry(tmp_path):
+    df = clean(NAMES_ASCII)
+    df["geom"] = ["MULTIPOLYGON (((" + ", ".join(f"{-73.9 + k * 1e-6} {40.7 + k * 1e-6}" for k in range(9000)) + ")))"] * len(df)
+    got = read(tmp_path, "t.csv", csv_text(df).encode())
+    assert len(got) == len(df) and got["geom"].str.len().min() > 131072
+
+
+def test_column_names_lose_edge_spaces_including_no_break_spaces(tmp_path):
+    df = clean(NAMES_ASCII)
+    shown = df.rename(columns={"name": "\xa0 name", "pop": "pop  "})
+    assert_same(read(tmp_path, "t.csv", csv_text(shown).encode()), df)
+
+
+@pytest.mark.parametrize("filename", ["t.geojson", "t.json", "t.zip"])
+def test_csv_under_a_wrong_name_is_read_by_content(tmp_path, filename):
+    """Toronto labelled 32 CSV downloads GeoJSON (corpus, 2026-10-30)."""
+    df = clean(NAMES_ASCII)
+    got = read(tmp_path, filename, csv_text(df).encode())
+    assert_same(got, df)
+    assert any("delimited text" in w for w in got.attrs.get("load_warnings", []))
+
+
+def test_json_under_a_csv_name_is_read_as_json(tmp_path):
+    df = clean(NAMES_ASCII)
+    got = read(tmp_path, "t.csv", json.dumps(df.to_dict("records")).encode())
+    assert_same(got[list(df.columns)], df)
+
+
+@pytest.mark.parametrize("filename", ["t.json", "t.geojson", "t.zip"])
+def test_web_page_under_any_data_name_is_refused(tmp_path, filename):
+    p = tmp_path / filename
+    p.write_bytes(b"<!DOCTYPE html><html><head><title>Not found</title></head></html>")
+    with pytest.raises(ValueError, match="web page"):
+        load_tables([p])

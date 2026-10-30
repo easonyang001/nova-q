@@ -7,12 +7,17 @@ full tables (see adapter.py).
 from __future__ import annotations
 import io
 import csv
+import sys
 import zipfile
 import json
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+
+# One cell can hold a whole geometry as WKT text: the csv module's default 128 KB field limit made such files unreadable
+# (7 New York files in the corpus, 2026-10-30). pandas' own parser has no such limit.
+csv.field_size_limit(min(sys.maxsize, 2**31 - 1))
 
 MAX_TABLE_CHARS = 3000        # profile size per table
 MAX_TOTAL_CHARS = 12000       # all profiles together
@@ -156,12 +161,39 @@ def _shapefile_tables(raw: bytes, stem: str) -> dict[str, pd.DataFrame]:
     return out
 
 
+def _content_kind(raw: bytes) -> str:
+    """What the bytes are, whatever the name says."""
+    if raw[:2] == b"PK":
+        return "zip"                                       # also .xlsx, which is a zip
+    if raw[:8] == b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1":
+        return "xls"
+    head = raw[:4096].lstrip(b"\xef\xbb\xbf \t\r\n")
+    low = head[:300].lower()
+    if low.startswith((b"<!doctype html", b"<html")) or b"<head>" in low:
+        return "html"
+    if head[:1] in (b"{", b"["):
+        return "json"
+    return "text"
+
+
+# what each content kind is read as, when the file name or the portal's format label says something else
+_AS = {"json": ".json", "text": ".csv", "xls": ".xls"}
+
+
 def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
-    """Every readable table in the files: CSV/TSV/TXT, XLSX (one table per sheet), JSON, GeoJSON."""
+    """Every readable table in the files: CSV/TSV/TXT, XLSX (one table per sheet), JSON, GeoJSON.
+    The content decides how a file is read: a portal labelled 32 CSV files GeoJSON (Toronto, corpus 2026-10-30)."""
     tables: dict[str, pd.DataFrame] = {}
     for p in map(Path, paths):
         stem, suf = p.stem, p.suffix.lower()
         raw = p.read_bytes()
+        kind, relabelled = _content_kind(raw), None
+        if kind == "html" and suf not in (".csv", ".tsv", ".txt"):
+            raise ValueError(f"{p.name}: this file is a web page, not data; look for the download link on the page")
+        if kind in _AS and (suf in (".json", ".geojson", ".zip") or suf in (".csv", ".tsv", ".txt") and kind == "json") \
+                and _AS[kind] != {".geojson": ".json"}.get(suf, suf):
+            what = {"json": "JSON", "text": "delimited text", "xls": "a legacy Excel workbook"}[kind]
+            relabelled, suf = f"named {p.suffix or 'without extension'} but the content is {what}; read as {what}", _AS[kind]
         if suf in (".zip", ".shp") or raw[:2] == b"PK" and suf not in (".xlsx", ".xlsm"):
             with zipfile.ZipFile(io.BytesIO(raw)) as archive:
                 if any(n.lower().endswith(".shp") for n in archive.namelist()):
@@ -190,6 +222,10 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
             tables.update(_json_tables(raw, stem))
         else:                                      # delimited text
             tables[stem] = _delimited(raw, suf)
+        if relabelled:
+            for k, v in tables.items():
+                if k == stem or k.startswith(stem + "#") or k.startswith(stem + "."):
+                    v.attrs["load_warnings"] = list(v.attrs.get("load_warnings", [])) + [relabelled]
     return {k: _clean_cells(_flat_cells(v)) for k, v in tables.items()}
 
 
@@ -243,6 +279,10 @@ def _clean_cells(df: pd.DataFrame) -> pd.DataFrame:
     import re as _re
     from .prep.text import decimal_comma
     df = df.copy()
+    # column names without edge spaces either ('\xa0 Name of School' in a UK workbook): a filter by name must match
+    names = [c.strip() if isinstance(c, str) else c for c in df.columns]
+    if len(set(names)) == len(names):
+        df.columns = names
     num = _re.compile(r"^[-+]?\d+([.,]\d+)?$")
     for c in df.columns:
         if not (df[c].dtype == object or pd.api.types.is_string_dtype(df[c])):
