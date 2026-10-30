@@ -44,21 +44,27 @@ Da'an District, Taipei, to cover the most residents"*, and lets local LLM agents
 prepare official open data, formulate a QUBO, and solve it on simulated, quantum and GPU annealers and on QAOA with
 NVIDIA CUDA-Q. Because LLM output can look right and still be wrong, every solve is surrounded by independent checks:
 three gates before the solver and one after, run by checker agents that never see the work they check. A frozen
-acceptance judge scores each delivery against ground truth built directly from the raw public files.
+acceptance judge scores each delivery against ground truth built directly from the raw public files. At the sizes that
+QAOA simulation allows, classical solvers find the optimum quickly; the contribution is the verified path from a
+sentence and raw open data to a correct model, which also yields real-data benchmark instances for QAOA.
 
 ## Highlights
 
-- **End to end on real cities.** 15 of 18 runs across Taipei, London, Melbourne and New York pass the independent
-  judge, using official open data and local models only (no cloud LLM). On a held-out test set built after freezing
-  the code (Singapore, Paris, Cambridge MA), 8 of 9 pass; on a second one run as independent samples (Basel, Dublin,
-  Somerville), 4 of 9 pass. Every failure is documented run by run and fixed afterwards.
+- **End to end on real cities, held out.** On two test sets built after freezing the code, 12 of 18 runs pass the
+  independent judge (Singapore, Paris, Cambridge MA: 8 of 9; Basel, Dublin, Somerville, run as independent samples:
+  4 of 9), 10 of them with the exact optimum, using official open data and local models only (no cloud LLM). On the
+  development cities (Taipei, London, Melbourne, New York) 15 of 18 pass, with repeats at temperature 0 that are not
+  independent samples. Every failure is documented run by run and fixed afterwards; no direct-LLM baseline has been
+  run yet (see Limitations).
 - **Verification that catches real faults.** Blind checker agents catch injected harmful faults 97/99 (data) and
   66/78 (model); no valid plan was wrongly rejected (300/300).
 - **Same budget, a different rule.** On New York's 2017 participatory budget (Council District 3), the plan that
   maximises total votes funds 7,103 votes for the $1 M budget; the city's own rule, which funds projects in vote
   order, funds 5,381. The two rules pursue different goals; the point is that the delivered plan is the exact optimum
   of the objective the user stated.
-- **Real requests solved end to end by QAOA on CUDA-Q.** New York's budget (25 qubits): 3 of 3 pass the judge, each
+- **A QAOA testbed built from real requests.** Within CUDA-Q's state-vector range (20–30 qubits on one L40S) the
+  pipeline yields verified real-data instances with known optima; QAOA is measured on them, not presented as the faster
+  solver. New York's budget (25 qubits): 3 of 3 pass the judge, each
   with QAOA's own optimal sample; Cambridge's (26 qubits): 3 of 3 pass, 2.7% below the optimum; Somerville's
   (28 qubits): 2 of 2 pass, 4.7% below.
 - **One verified model, six solvers.** On its QUBO: simulated annealing, simulated quantum annealing, the D-Wave
