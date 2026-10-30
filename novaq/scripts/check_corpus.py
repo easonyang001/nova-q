@@ -15,6 +15,8 @@ Writes <dir>/invariants.jsonl and <dir>/invariants_summary.md (failures grouped 
 """
 from __future__ import annotations
 import argparse
+import warnings
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import json
 import re
 import sys
@@ -26,6 +28,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
+warnings.filterwarnings("ignore", category=UserWarning)
 sys.path.insert(0, str(ROOT))
 from qubo_auto.annealing import prep                                  # noqa: E402
 from qubo_auto.annealing.datakit import load_tables, profile          # noqa: E402
@@ -94,12 +97,29 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=str(ROOT / "results" / "data_cache" / "corpus"))
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--timeout", type=float, default=300, help="seconds per file")
     a = ap.parse_args()
     base = Path(a.dir)
     files = sorted(p for p in base.rglob("*") if p.is_file() and p.suffix in (".csv", ".tsv", ".json", ".geojson", ".xlsx", ".zip"))
     files = files[:a.limit] if a.limit else files
-    recs = [check_file(f) for f in files]
-    (base / "invariants.jsonl").write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in recs) + "\n")
+    recs = []
+    out = (base / "invariants.jsonl").open("w")
+    with ProcessPoolExecutor(max_workers=a.workers) as pool:
+        jobs = {pool.submit(check_file, f): f for f in files}
+        for i, job in enumerate(as_completed(jobs), 1):
+            f = jobs[job]
+            try:
+                rec = job.result(timeout=a.timeout)
+            except Exception as e:                    # a file that hangs or kills the worker is a finding too
+                rec = {"file": str(f.relative_to(base)), "bytes": f.stat().st_size,
+                       "failures": [f"load: {type(e).__name__}: {str(e)[:80]}"]}
+            recs.append(rec)
+            out.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            out.flush()
+            if i % 50 == 0:
+                print(f"{i}/{len(files)} checked", flush=True)
+    out.close()
     groups = defaultdict(list)
     for r in recs:
         for sig in {signature(f) for f in r["failures"]}:      # a file counts once per signature
