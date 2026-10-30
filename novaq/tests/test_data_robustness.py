@@ -438,3 +438,28 @@ def test_taiwanese_shapefile_without_cpg_stays_chinese(tmp_path):
     w.close()
     got = read(tmp_path, "s.zip", zipped(**{"p.shp": shp.getvalue(), "p.shx": shx.getvalue(), "p.dbf": dbf.getvalue()}))
     assert sorted(got["name"]) == sorted(names)
+
+
+def test_double_encoded_utf8_in_the_source_is_repaired(tmp_path):
+    """Seattle and Canadian files hold UTF-8 that was once read as Windows-1252 and saved again."""
+    names = [f"Café {i} – King’s Road, unités" for i in range(24)]
+    df = clean(names)
+    mangled = df.copy()
+    mangled["name"] = [n.encode("utf-8").decode("cp1252") for n in names]
+    assert_same(read(tmp_path, "t.csv", csv_text(mangled).encode("utf-8")), df)
+
+
+@pytest.mark.parametrize("text", ["SÃO PAULO", "Ãrvore", "Â", "Âge du bronze"])
+def test_ordinary_text_with_a_tilde_a_is_left_alone(tmp_path, text):
+    from qubo_auto.annealing.datakit import _unmangle
+    assert _unmangle(text) == text
+
+
+def test_degree_named_columns_with_projected_values_are_flagged():
+    from qubo_auto.annealing.datakit import coordinate_name_warnings, profile
+    df = pd.DataFrame({"name": list("abcdefgh"), "latitude": [1.84e6, 1.85e6, 99999, 99999, 99999, 1.86e6, 1.87e6, 1.88e6],
+                       "longitude": [6.44e6, 6.45e6, 99999, 99999, 99999, 6.46e6, 6.47e6, 6.48e6]})
+    warnings_ = coordinate_name_warnings(df)
+    assert len(warnings_) == 2 and "99999" in warnings_[0]
+    assert "WARNING:" in profile("t", df)
+    assert coordinate_name_warnings(clean(NAMES_ASCII)) == []

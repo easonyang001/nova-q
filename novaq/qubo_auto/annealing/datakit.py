@@ -7,6 +7,7 @@ full tables (see adapter.py).
 from __future__ import annotations
 import io
 import csv
+import re
 import sys
 import zipfile
 import json
@@ -326,12 +327,28 @@ def _clean_cells(df: pd.DataFrame) -> pd.DataFrame:
     for c in df.columns:
         if not (df[c].dtype == object or pd.api.types.is_string_dtype(df[c])):
             continue                                    # pandas 3 reads text as the "str" dtype, not object
-        col = df[c].map(lambda v: v.strip() if isinstance(v, str) else v)
+        col = df[c].map(lambda v: _unmangle(v).strip() if isinstance(v, str) else v)
         df[c] = col
         texts = [v for v in col.dropna().tolist() if isinstance(v, str) and v != ""]
         if texts and all(num.match(v) for v in texts) and decimal_comma(texts):
             df[c] = pd.to_numeric(col.map(lambda v: v.replace(",", ".") if isinstance(v, str) else v), errors="coerce")
     return df
+
+
+_MANGLED = re.compile(r"Ã[\x80-\xbf]|â€[\x80-\xbf\u2018-\u201d\u2122\u0153\u0161\u017e\u02dc\u2020-\u2026\u2030]|Â[\xa0-\xbf]")
+
+
+def _unmangle(text: str) -> str:
+    """UTF-8 text that was decoded as Windows-1252 and saved again ('CafÃ©', 'Kingâ€™s'): the source file itself is
+    double-encoded (Seattle and Canadian files in the corpus, 2026-10-30). Undone only when the round trip decodes
+    cleanly and removes every such sequence, so ordinary text with an 'Ã' is left alone."""
+    if not _MANGLED.search(text):
+        return text
+    try:
+        fixed = text.encode("cp1252").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return text
+    return fixed if not _MANGLED.search(fixed) else text
 
 
 def _flat_cells(df: pd.DataFrame) -> pd.DataFrame:
@@ -350,6 +367,7 @@ def profile(name: str, df: pd.DataFrame, max_chars: int = MAX_TABLE_CHARS) -> st
     from .prep.safety import neutralize, scan_table      # table text is untrusted: it goes into prompts
     lines = [f"TABLE {name!r}: {len(df)} rows x {df.shape[1]} columns"]
     lines += [f"SECURITY: {f}" for f in scan_table(df, name)]
+    lines += [f"WARNING: {w}" for w in coordinate_name_warnings(df)]
     lines += [f"LOAD WARNING: {w}" for w in df.attrs.get("load_warnings", [])]
     for col in df.columns:
         s = df[col]
@@ -367,6 +385,32 @@ def profile(name: str, df: pd.DataFrame, max_chars: int = MAX_TABLE_CHARS) -> st
     lines.append("first rows: " + json.dumps(sample, ensure_ascii=False, default=str))
     text = "\n".join(lines)
     return text if len(text) <= max_chars else text[:max_chars] + " …(profile truncated)"
+
+
+_LAT_NAME = re.compile(r"^(lat|latitude|breitengrad|lat_?dd|y_?lat)$", re.I)
+_LON_NAME = re.compile(r"^(lon|lng|long|longitude|laengengrad|lon_?dd|x_?lon)$", re.I)
+
+
+def coordinate_name_warnings(df: pd.DataFrame) -> list[str]:
+    """A column named latitude/longitude whose numbers cannot be degrees: projected metres or feet under a degree
+    name, or placeholders such as 99999 (Los Angeles, corpus 2026-10-30). The name must not be trusted."""
+    out = []
+    for col in df.columns:
+        limit = 90 if _LAT_NAME.match(str(col)) else 180 if _LON_NAME.match(str(col)) else None
+        if limit is None:
+            continue
+        values = pd.to_numeric(df[col], errors="coerce").dropna()
+        if values.empty:
+            continue
+        outside = values.abs() > limit
+        if outside.mean() > 0.02:
+            common = values[outside].round(0).value_counts()
+            placeholder = [f"{v:g}" for v, n in common.head(2).items() if n >= max(3, 0.05 * len(values))]
+            out.append(f"column {str(col)!r} is named like a coordinate in degrees but {outside.mean():.0%} of its "
+                       f"values are beyond ±{limit} (median {values.median():.6g})"
+                       + (f"; repeated placeholder values {', '.join(placeholder)}" if placeholder else "")
+                       + ": projected coordinates or placeholders, not degrees")
+    return out
 
 
 def profiles(tables: dict[str, pd.DataFrame]) -> str:
