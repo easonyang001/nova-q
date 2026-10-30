@@ -64,20 +64,25 @@ are not versioned (raw downloads are excluded), so each real failure is covered 
 
 ## Real-file corpus (2026-10-30)
 
-`scripts/crawl_open_data.py` downloaded 963 files from 16 portals the evaluation does not use for testing (UK, Canada,
+`scripts/crawl_open_data.py` downloaded 1,852 files from 16 portals the evaluation does not use for testing (UK, Canada,
 Toronto, Berlin and 12 US city and state Socrata portals; held-out cities excluded, robots.txt respected: govdata.de,
 data.gov.au and data.overheid.nl disallow their APIs to crawlers and were skipped). `scripts/check_corpus.py` read every
 file with the data layer and checked label-free invariants.
 
 | | Files without a violated invariant |
 |---|--:|
-| before the fixes below | 790 / 963 (82%) |
-| after | 840 / 963 (87%) |
+| first 963 files, before the fixes below | 790 / 963 (82%) |
+| first 963 files, after | 840 / 963 (87%) |
+| 1,852 files (889 downloaded after the fixes, never used to develop them) | 1,611 / 1,852 (87%) |
+
+The rate holding on files downloaded after the fixes is the evidence that they are general rather than fitted to the
+first sample. No file in the 1,852 crashes the loader or the model-facing profile any more.
 
 Fixed from the corpus, each with a test: CSV labelled GeoJSON/JSON/XLSX by a portal (Toronto, 35 files); the csv
 module's 128 KB field limit (WKT geometry cells, 13 New York files); Excel inside a zip; Shapefile attributes in
 cp1252; double-encoded UTF-8 in the source; chunked type guessing that mixed numbers and text in one column; column
-names with no-break spaces; `$2.846M` amounts. Flagged rather than fixed: columns named latitude/longitude holding
+names with no-break spaces; `$2.846M` amounts; dates or numbers as Excel header cells (the profile crashed); a
+repeated column name in a file with broken rows; GeoJSON declaring EPSG:3857 (now converted). Flagged rather than fixed: columns named latitude/longitude holding
 projected feet or 99999 placeholders (Los Angeles).
 
 What remains is mostly correct behaviour: 23 archives hold only PDFs, images or an Esri file geodatabase, 3 downloads
