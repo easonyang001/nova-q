@@ -29,6 +29,11 @@ def is_missing(v) -> bool:
 _COMMA_NUM = re.compile(r"^[-+]?\d+,(\d+)$")
 
 
+_MAGNITUDE = re.compile(r"^([-+]?\d+(?:\.\d+)?)(k|m|bn|b|thousand|million|billion)$", re.I)
+_MULTIPLIER = {"k": 1e3, "thousand": 1e3, "m": 1e6, "million": 1e6, "b": 1e9, "bn": 1e9, "billion": 1e9}
+_CURRENCY = re.compile(r"\$|€|£|元|円")
+
+
 def decimal_comma(values) -> bool:
     """True when the comma in these numbers is a decimal comma: some value has a comma not followed by exactly three
     digits ('52,5368', '0,5'). Thousands groups ('1,234') alone keep the comma as a separator. Berlin's toilet file
@@ -56,11 +61,17 @@ def to_number(series: pd.Series, log=None, name: str | None = None) -> pd.Series
         if dec_comma and "," in t:
             t = t.replace(".", "").replace(",", ".") if "." in t and t.rfind(",") > t.rfind(".") else t.replace(",", ".")
         neg = t.startswith("(") and t.endswith(")")            # accounting negatives: (123)
-        t = _NUM_JUNK.sub("", t.strip("()"))
+        money = bool(_CURRENCY.search(t))
+        t = _NUM_JUNK.sub("", t.strip("()")).rstrip("?")
         try:
             x = float(t)
         except ValueError:
-            return float("nan")
+            # '$2.846M' / '$1.6 million': a magnitude word counts only next to a currency symbol or as a full word
+            # ('5m' in a length column is metres, not five million)
+            m = _MAGNITUDE.match(t)
+            if not m or not (money or len(m.group(2)) > 2):
+                return float("nan")
+            x = float(m.group(1)) * _MULTIPLIER[m.group(2).lower()]
         return -x if neg else x
     out = series.map(conv).astype(float)
     if log is not None:

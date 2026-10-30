@@ -291,3 +291,12 @@ def test_percent_and_currency_symbols():
     got = prep.to_number(pd.Series(["12.5%", "7%"]))
     assert got.tolist() == [12.5, 7.0]
     assert prep.to_number(pd.Series(["$1,250.50", "€ 300"])).tolist() == [1250.5, 300.0]
+
+
+def test_currency_magnitude_suffixes_and_trailing_question_marks():
+    got = prep.to_number(pd.Series(["$2.846M", "$10,000?", "€1.5 million", "£3K", "$2bn"])).tolist()
+    assert np.allclose(got, [2_846_000, 10_000, 1_500_000, 3_000, 2e9])
+
+
+def test_metres_are_not_millions():
+    assert np.isnan(prep.to_number(pd.Series(["5m", "12 m", "3k"]))).all()
