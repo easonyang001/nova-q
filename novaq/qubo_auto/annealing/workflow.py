@@ -281,6 +281,16 @@ def run_workflow(store: ArtifactStore, backend, policy_factory, cfg: dict, *, bu
             # yet (batch mode accepted one silently, Melbourne 2026-10-21) - flag it so reports can count it apart
             delivery["review_required"] = True
             delivery["message"] = (delivery.get("message", "") + "；自動修復改了模型公式，尚未經人工確認").lstrip("；")
+        if ir is not None and delivered is not None and settings.get("sensitivity", True) \
+                and ir.n_variables <= settings.get("sensitivity_max_vars", 400):
+            # what a planner asks next: which limits bind, and what moving one would buy. Information only: it never
+            # changes the status or the delivered plan
+            try:
+                from .sensitivity import sensitivity_report
+                delivery["sensitivity"] = sensitivity_report(ir, [int(v) for v in delivered],
+                                                             reads=settings.get("sensitivity_reads", 300))
+            except Exception as e:
+                delivery["sensitivity_error"] = f"{type(e).__name__}: {str(e)[:200]}"
         output = {"version": version, "delivery": delivery, "inspection": inspection,
                   "loop": result.model_dump() if result is not None else None,
                   "solution": fallback if fallback is not None else

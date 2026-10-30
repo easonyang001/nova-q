@@ -62,3 +62,18 @@ def test_cardinality_limit_moves_by_one():
     moves = {r["move"]: r for r in report["sensitivity"]}
     assert set(moves) == {"-1", "+1"}
     assert moves["+1"]["delta_objective"] == 10 + 2 and moves["-1"]["delta_objective"] == -(10 + 3)
+
+
+def test_one_hot_rows_of_an_assignment_are_not_moved():
+    """3 items x 2 slots, each item exactly once: local rows; only the global capacity is a planning limit."""
+    idx = {(i, k): 2 * i + k for i in range(3) for k in range(2)}
+    cons = [{"name": f"once_{i}", "kind": "linear", "sense": "eq", "rhs": 1.0, "coeffs": {idx[i, 0]: 1.0, idx[i, 1]: 1.0}}
+            for i in range(3)]
+    cons.append({"name": "slot0_cap", "kind": "linear", "sense": "le", "rhs": 1.0, "coeffs": {idx[i, 0]: 1.0 for i in range(3)}})
+    ir = to_ir({"name": "assign", "variable_names": [f"x{v}" for v in range(6)], "sense": "maximize",
+                "variable_keys": [{"i": str(v)} for v in range(6)],
+                "linear": {idx[i, 0]: 5.0 for i in range(3)} | {idx[i, 1]: 1.0 for i in range(3)},
+                "quadratic": [], "constraints": cons}, "assign")
+    x, _ = exact(ir)
+    moved = {r["constraint"] for r in sensitivity_report(ir, x)["sensitivity"]}
+    assert moved == {"slot0_cap"}

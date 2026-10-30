@@ -97,6 +97,8 @@ def test_outer_workflow_delivers_normal_case(tmp_path):
     store.commit(CODE, DATA, "test")
     output = workflow.run_workflow(store, get_backend("sa"), DefaultPolicy, CFG, log=lambda _: None)
     assert output["delivery"]["status"] in ("usable", "limited")
+    # information for the planner, never a reason to change the status
+    assert "sensitivity" in output["delivery"] and "binding" in output["delivery"]["sensitivity"]
     assert output["solution"] is not None and output["total_solver_calls"] <= 2
     assert (tmp_path / "workflow_state.json").exists()
     assert all(c.satisfied(output["solution"]) for c in ir().constraints)

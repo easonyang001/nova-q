@@ -65,22 +65,41 @@ def with_rhs(ir: ProblemIR, name: str, rhs: float) -> ProblemIR:
 
 
 def moves(c: LinearConstraint) -> list[tuple[str, float]]:
+    integral = float(c.rhs).is_integer() and all(float(v).is_integer() for v in c.coeffs.values())
     if c.sense == "eq":
-        return [(f"{d:+d}", c.rhs + d) for d in (-1, 1)] if float(c.rhs).is_integer() else []
-    return [(f"{f - 1:+.0%}", c.rhs * f) for f in FACTORS]
+        return [(f"{d:+d}", c.rhs + d) for d in (-1, 1)] if integral else []
+    if not integral:
+        return [(f"{f - 1:+.0%}", c.rhs * f) for f in FACTORS]
+    # the slack encodings need an integer limit: round, and fall back to one unit when rounding moves nothing
+    out = {}
+    for f in FACTORS:
+        rhs = float(round(c.rhs * f))
+        if rhs != c.rhs:
+            out.setdefault(rhs, f"{f - 1:+.0%}")
+    if not out:
+        out = {c.rhs - 1: "-1", c.rhs + 1: "+1"}
+    return [(label, rhs) for rhs, label in sorted(out.items())]
 
 
-def sensitivity_report(ir: ProblemIR, x: list[int], reads: int = 500, seed: int = 0, only_binding: bool = True) -> dict:
+def planning_limits(ir: ProblemIR, rows: list[dict], max_constraints: int) -> list[LinearConstraint]:
+    """The limits a planner would move: binding budgets and capacities (le/ge) first, then totals over most of the
+    variables ('exactly 3 chargers'). Local one-hot rows of a tour or an assignment ('each stop once') are skipped:
+    moving one of them makes the plan invalid, not cheaper."""
+    binding = {r["name"] for r in rows if r["binding"]}
+    linear = [c for c in ir.constraints if isinstance(c, LinearConstraint) and c.name in binding]
+    ranked = ([c for c in linear if c.sense != "eq"]
+              + [c for c in linear if c.sense == "eq" and len(c.coeffs) >= 0.5 * ir.n_variables])
+    return ranked[:max_constraints]
+
+
+def sensitivity_report(ir: ProblemIR, x: list[int], reads: int = 500, seed: int = 0, max_constraints: int = 3) -> dict:
     base = solve_best(ir, reads, seed)
     rows = binding_constraints(ir, x)
     out = {"delivered_objective": ir.objective(x), "resolved_objective": None if base is None else base[1],
            "binding": [r["name"] for r in rows if r["binding"]], "constraints": rows, "sensitivity": [],
            "note": "re-solved with the pipeline's sampler; compare each row with 'resolved_objective', not with the "
                    "delivered plan, so solver noise cancels"}
-    for c in ir.constraints:
-        row = next(r for r in rows if r["name"] == c.name)
-        if not isinstance(c, LinearConstraint) or (only_binding and not row["binding"]):
-            continue
+    for c in planning_limits(ir, rows, max_constraints):
         for label, rhs in moves(c):
             found = solve_best(with_rhs(ir, c.name, rhs), reads, seed)
             entry = {"constraint": c.name, "move": label, "rhs": rhs, "objective": None, "plan_changes": None}
