@@ -131,6 +131,10 @@ sample rows, key overlaps and which area code lies in which named area; then it 
 `latest_period`, `keep_category`, `keep_level`, `to_wgs84`, `in_area` (real boundaries), `within_radius`,
 `merge_same_place`, `reduce_points` and `join`. Each step runs on the full table and its result is shown before the
 next decision. Public values that are missing are reported as a data gap; they are never filled with defaults.
+Table text is treated as untrusted input to the agents: values shown to a model are length-capped and stripped of
+chat-template tokens and code fences, cells that read like instructions ("ignore the above", an agent's own answer
+format) are flagged in the profile, and the profile says that everything from a table is data
+(`prep/safety.py`).
 
 ### Why QUBO
 
@@ -161,7 +165,8 @@ QUBO is passed unchanged to every solver.
 | SA | dwave-samplers simulated annealing, followed by constraint-preserving exchange moves |
 | SQA | OpenJij simulated quantum annealing |
 | D-Wave QPU | D-Wave Advantage, 1,000 reads |
-| GPU annealer | a commercial GPU annealing service |
+| GPU annealer (CGA) | a commercial GPU annealing service behind a Socket.IO server |
+| Fujitsu Digital Annealer | v3c, REST, 300 DA-minutes per month; supported by the pipeline (`backends.py`), not part of the 57-instance study |
 | QAOA | CUDA-Q 0.14 on the `nvidia` state-vector target, p = 3, COBYLA, 3 restarts, 10,000 shots; `nvidia-mqpu` for parallel evaluations |
 
 ## Verification design
@@ -400,7 +405,12 @@ constraint-preserving QAOA mixers.
 
 ## Limitations
 
-- **Scale.** The solver comparison stops at 27 qubits so that optima are known; one L40S simulates at most 32 qubits.
+- **Scale.** QAOA runs as a CUDA-Q state-vector simulation, which fixes the range at about 20–30 qubits on one L40S (32 at most); the solver comparison stops at 27 qubits so that optima are known. At these sizes a CPU MILP solver finds the optimum in milliseconds: the QAOA instances are a benchmark testbed built from real requests, not a claim of solver advantage.
+- **No direct-LLM baseline.** The pre-registration defines R0 (a model that finds data, models and solves on its own, with the same solver access); the saved batches contain R1–R3 only, so the benefit of the whole pipeline over a plain agent is not measured.
+- **Solver tuning was not equal.** In the 57-instance comparison one fixed QUBO (default penalty weights) is given to every solver; SQA's `beta` was tuned on 3 instances, the others use fixed constants (CGA exposes only its time limit). Penalty weights were not tuned per solver. `scripts/experiments/solver_tuning.py` implements the equal-budget protocol (solver parameters and penalty multiplier, separate tuning and evaluation instances, scored on the original objective); its results are not in this README yet.
+- **Specification errors pass every gate.** The gates check the model against the confirmed specification, not the specification against what the user meant; the Dublin failure is of this kind. The Clarifier's answers are fixed in the evaluation, so ambiguous real requests are untested.
+- **Live data.** Several tasks use live APIs (bike stations); a re-run sees different data. Hashes of the data snapshots are not recorded, and most saved batches have no `manifest.json` or `backend` field (`scripts/report_runs.py` lists them).
+- **Thresholds.** Gate and data-layer constants (Spearman ≥ 0.9, 10% tolerance, 150 m merge radius, ...) are fixed without a sensitivity analysis; `docs/constants_inventory.md` lists them.
 - **Larger instances.** City-scale versions of the tasks pass far less often; the main failures are in data
   preparation.
 - **Repeats.** The development tasks and the first test set ran at temperature 0, so their three repeats often share
@@ -451,12 +461,12 @@ python -m pytest -q tests
 | `qubo_auto/annealing/` | agents, data tools (`prep/`, `dataplan.py`, `dataagent.py`), checkers (`reqcheck.py`, `datacheck.py`), QUBO encodings, solver back-ends, workflow and repair |
 | `qubo_auto/prompts/annealing/` | agent prompts |
 | `acceptance/` | acceptance judge, ground-truth builders, task definitions, pre-registration |
-| `scripts/` | web interface, batch runner, re-judging; `experiments/` for the solver study and figures |
+| `scripts/` | web interface, batch runner, re-judging, `report_runs.py` (cost, repairs, provenance), `list_constants.py`; `experiments/` for the solver study (`solver_tuning.py`) and figures |
 | `knowledge/` | general modelling patterns available to the Modeler |
 | `poster/gtc2027/figures/` | figures and the scripts' outputs used on the poster |
-| `docs/` | agent guide and experiment notes |
+| `docs/` | agent guide, experiment notes, `constants_inventory.md`, `data_portal_coverage.md` |
 | `results/` | run settings, reference answers, per-run judge records, solver-comparison data |
-| `tests/` | unit tests |
+| `tests/` | unit tests, including `test_data_robustness.py` (dirty-file mutations the data layer must undo) and `test_data_safety.py` |
 
 Raw downloads, LLM transcripts and caches are not versioned.
 
