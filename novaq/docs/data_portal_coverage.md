@@ -54,7 +54,9 @@ Roughly half of the catalogue's portals have no end-to-end task. A pass rate say
 | Shapefile attributes in cp1252 or cp950, with or without a `.cpg` file | yes |
 | Total rows, swapped latitude/longitude, TWD97 and British National Grid coordinates, duplicates, same name far apart | yes |
 | Legacy `.xls` with a title row | yes (test needs `xlwt`, skipped without it) |
-| WFS, XML, Esri file geodatabase (`.gdb`, needs GDAL) | **no** |
+| Esri file geodatabase in a zip, with or without its `.gdb` folder (needs `pyogrio`; `shapely` for centroids) | yes |
+| Two-level Excel headers (a name repeated under two groups) | yes |
+| WFS, XML | **no** |
 | Paginated or rate-limited APIs, authentication, redirects, partial downloads | **no** |
 | Very large files (the 64 MB member limit) | **no** |
 | Table text that addresses a model | yes, `tests/test_data_safety.py` |
@@ -69,14 +71,24 @@ Toronto, Berlin and 12 US city and state Socrata portals; held-out cities exclud
 data.gov.au and data.overheid.nl disallow their APIs to crawlers and were skipped). `scripts/check_corpus.py` read every
 file with the data layer and checked label-free invariants.
 
-| | Files without a violated invariant |
-|---|--:|
-| first 963 files, before the fixes below | 790 / 963 (82%) |
-| first 963 files, after | 840 / 963 (87%) |
-| 1,852 files (889 downloaded after the fixes, never used to develop them) | 1,611 / 1,852 (87%) |
+Two versions of the check. Version 1 counted correct behaviour as violations: code columns such as bus route `53A`
+or fund code `800C` as numbers that failed to parse, a column renamed `.1` because the source repeats a name as lost,
+an archive of PDFs as a load failure. Version 2 (`scripts/check_corpus.py` today) states each invariant as the promise
+it checks and reports files without a table (refused with a reason, or published with a header and no rows) as their
+own outcome. Most of the rise below is that correction, not better reading; the rows say which is which.
 
-The rate holding on files downloaded after the fixes is the evidence that they are general rather than fitted to the
-first sample. No file in the 1,852 crashes the loader or the model-facing profile any more.
+| Check | Code | Read without a violated invariant | Without a table | Violation or load failure |
+|---|---|--:|--:|--:|
+| v1 | before the corpus fixes (first 963 files) | 82% | (counted as failures) | 18% |
+| v1 | after the first corpus fixes (1,852 files) | 87% | (counted as failures) | 13% |
+| v2 | same code as the row above | 96.7% | 2.3% | 1.0% |
+| v2 | after two-level headers, geodatabases, damaged-text warnings, list hints | **97.9%** | 2.0% | **0.1%** (1 file) |
+
+So about 10 of the 11 points from 87% to 97.9% come from measuring correctly, and about 1 point from further fixes
+(7 Esri geodatabases now read instead of refused; empty sheets dropped). The rate stays the same on the 889 files
+downloaded after the first fixes, so the fixes are not fitted to the first sample. The one remaining file holds bus
+routes written `124,125,130,192`, which cannot be told apart from a thousands-grouped number; it stays text and the
+profile marks the column as lists of numbers.
 
 Fixed from the corpus, each with a test: CSV labelled GeoJSON/JSON/XLSX by a portal (Toronto, 35 files); the csv
 module's 128 KB field limit (WKT geometry cells, 13 New York files); Excel inside a zip; Shapefile attributes in
@@ -85,9 +97,9 @@ names with no-break spaces; `$2.846M` amounts; dates or numbers as Excel header 
 repeated column name in a file with broken rows; GeoJSON declaring EPSG:3857 (now converted). Flagged rather than fixed: columns named latitude/longitude holding
 projected feet or 99999 placeholders (Los Angeles).
 
-What remains is mostly correct behaviour: 23 archives hold only PDFs, images or an Esri file geodatabase, 3 downloads
-are web pages, and most "numbers" findings are code or category columns (`YES`, `D15`, phone numbers) that must stay
-text. Files are not versioned; the manifest records URL, licence, size and SHA-256 of each.
+Without a table: 28 archives hold only PDFs or images, 7 downloads are web pages, 2 files are a header without rows.
+Flagged rather than fixed: three files whose published bytes already contain U+FFFD (letters lost upstream; the
+load warning says so). Files are not versioned; the manifest records URL, licence, size and SHA-256 of each.
 
 ## Adding a case
 

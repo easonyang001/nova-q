@@ -425,11 +425,11 @@ constraint-preserving QAOA mixers.
 - **Real-data reading is the weak point.** Each new country brought a new data-reading problem (portal APIs, number
   formats, text variants); held-out pass rates fell from 8/9 to 4/9 as the tasks moved further from the
   development cities.
-- **Data reading on unseen portals.** On 1,852 real files from 16 portals outside the evaluation, the data layer reads
-  87% without violating a label-free invariant, also on the 889 files downloaded after the fixes found on the first
-  963 (82% before them); none crashes the loader any more. The rest are mostly
-  archives of PDFs or images and web pages, refused as they should be (`novaq/docs/data_portal_coverage.md`). This
-  measures reading, not whether the right table is chosen for a request.
+- **Data reading on unseen portals.** On 1,852 real files from 16 portals outside the evaluation, 97.9% are read
+  without violating a label-free invariant, 2.0% hold no table (refused with a reason, or a header without rows),
+  and one file is ambiguous (`novaq/docs/data_portal_coverage.md`). Most of the rise from the first measurement (82%) is a corrected
+  check that had counted code columns and correct refusals as failures; fixes found on the corpus account for about
+  6 points. This measures reading, not whether the right table is chosen for a request.
 - **Post-fix runs** are on the same tasks that exposed the bugs; only the next fresh test set can show that the fixes
   generalise.
 - **QAOA end to end** fits only the budget requests (25–28 qubits); the other task types need 57–756 qubits.
