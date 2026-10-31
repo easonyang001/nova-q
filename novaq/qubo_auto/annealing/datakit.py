@@ -202,6 +202,48 @@ def _shapefile_tables(raw: bytes, stem: str) -> dict[str, pd.DataFrame]:
     return out
 
 
+def _filegdb_tables(archive: zipfile.ZipFile, stem: str) -> dict[str, pd.DataFrame]:
+    """Layers of an Esri file geodatabase in a zip: attributes, a centroid per feature (x/y in the layer's own system)
+    and the system in crs_prj, as for Shapefiles. Seven UK downloads were geodatabases (corpus, 2026-10-30), zipped
+    with or without their .gdb folder; GDAL only opens a folder whose name ends in .gdb, so the members are unpacked
+    into one. Needs pyogrio (GDAL in its wheel); shapely adds the centroids. Without pyogrio nothing is read."""
+    try:
+        from pyogrio import list_layers
+        from pyogrio.raw import read
+    except ImportError:
+        return {}
+    import tempfile
+    out = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        folders: dict[str, Path] = {}
+        for name in archive.namelist():
+            if name.endswith("/") or not Path(name).name:
+                continue
+            parent = Path(name).parent
+            key = str(parent) if str(parent).lower().endswith(".gdb") else "data"
+            target = folders.setdefault(key, Path(tmp) / (Path(key).name if key.lower().endswith(".gdb") else "data.gdb"))
+            target.mkdir(parents=True, exist_ok=True)
+            (target / Path(name).name).write_bytes(archive.read(name))
+        for folder in folders.values():
+            try:
+                layers = list_layers(str(folder))
+            except Exception:
+                continue
+            for layer, _kind in layers:
+                meta, _fids, geometry, fields = read(str(folder), layer=str(layer))
+                df = pd.DataFrame({f: v for f, v in zip(meta["fields"], fields)})
+                if geometry is not None:
+                    try:
+                        import shapely
+                        centres = shapely.centroid(shapely.from_wkb(geometry))
+                        df["x"], df["y"] = shapely.get_x(centres), shapely.get_y(centres)
+                    except ImportError:
+                        df.attrs["load_warnings"] = ["geometry not read: install shapely for feature centroids"]
+                df["crs_prj"] = meta.get("crs") or ""
+                out[f"{stem}#{layer}"] = df
+    return out
+
+
 def _dbf_encodings(cpg, dbf) -> list[str]:
     """The .cpg file declares the attribute encoding; without one, UTF-8, then charset_normalizer's guess, then the
     Taiwanese default, then Latin-1 (which reads anything). A fixed utf-8 -> cp950 order read a UK layer's cp1252 text
@@ -278,6 +320,9 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
                             for sheet, df in sheets.items():
                                 key = f"{stem}#{Path(info.filename).stem}"
                                 tables[key if len(sheets) == 1 else f"{key}#{sheet}"] = df
+                    if not any(k.startswith(stem + "#") for k in tables) and \
+                            any(n.lower().endswith(".gdbtable") for n in archive.namelist()):
+                        tables.update(_filegdb_tables(archive, stem))
                     if not any(k.startswith(stem + "#") for k in tables):
                         held = sorted({Path(n).suffix.lower() or "(no extension)" for n in archive.namelist() if not n.endswith("/")})
                         raise ValueError(f"{p.name}: archive contains no readable table (CSV/TSV/text, JSON, Excel, "
@@ -293,6 +338,11 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
             tables.update(_json_tables(raw, stem))
         else:                                      # delimited text
             tables[stem] = _delimited(raw, suf)
+        mine = [k for k in tables if k == stem or k.startswith((stem + "#", stem + "."))]
+        if any(not tables[k].empty for k in mine):
+            for k in mine:
+                if tables[k].empty:          # an empty extra sheet only distracts the data agent
+                    del tables[k]
         if relabelled:
             for k, v in tables.items():
                 if k == stem or k.startswith(stem + "#") or k.startswith(stem + "."):
@@ -340,8 +390,31 @@ def _excel_sheets(raw: bytes) -> dict[str, pd.DataFrame]:
     for sheet, grid in pd.read_excel(io.BytesIO(raw), sheet_name=None, header=None).items():
         row = find_header_row(grid) if len(grid) > 2 and grid.iloc[0].notna().mean() < 0.5 else 0
         df = pd.read_excel(io.BytesIO(raw), sheet_name=sheet, header=row)
-        out[sheet] = df.dropna(how="all").dropna(axis=1, how="all").reset_index(drop=True) if row else df
+        if row:
+            df.columns = _group_header(grid, row, list(df.columns))
+            df = df.dropna(how="all").dropna(axis=1, how="all").reset_index(drop=True)
+        out[sheet] = df
     return out
+
+
+def _group_header(grid: pd.DataFrame, row: int, names: list) -> list:
+    """Two-level headers: 'Primary' under 'Schools block' and again under 'High needs block' became 'Primary' and
+    'Primary.1' (UK budget workbooks, corpus 2026-10-30). A repeated name takes its group from the row above (a merged
+    cell is filled only in its first column, so the group carries to the right). Unrepeated names stay as they are."""
+    head = [str(v).strip() for v in grid.iloc[row].tolist()]
+    counts = {h: head.count(h) for h in head if h and h != "nan"}
+    if row < 1 or not any(n > 1 for n in counts.values()):
+        return names
+    groups = grid.iloc[row - 1].ffill().tolist()
+    out = []
+    for i, name in enumerate(names):
+        base = head[i] if i < len(head) else str(name)
+        group = groups[i] if i < len(groups) else None
+        if counts.get(base, 0) > 1 and isinstance(group, str) and group.strip():
+            out.append(f"{base} ({group.strip()})")
+        else:
+            out.append(name)
+    return out if len(set(out)) == len(out) else names
 
 
 def _header_text(c) -> str:

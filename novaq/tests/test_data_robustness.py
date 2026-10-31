@@ -510,3 +510,47 @@ def test_geojson_declaring_web_mercator_is_converted(tmp_path):
     got = read(tmp_path, "t.geojson", json.dumps(fc).encode())
     assert np.allclose(got["lat"], df["lat"]) and np.allclose(got["lon"], df["lon"])
     assert any("EPSG:3857" in w for w in got.attrs["load_warnings"])
+
+
+def test_two_level_excel_header_names_repeated_columns_by_their_group(tmp_path):
+    """'Primary' under two budget blocks became 'Primary' and 'Primary.1' (UK workbooks)."""
+    rows = [["Council budget statement 2025/26", None, None, None, None],
+            [None, "Schools block", None, "High needs block", None],
+            ["Area", "Primary", "Secondary", "Primary", "Secondary"],
+            ["North", 1, 2, 3, 4], ["South", 5, 6, 7, 8], ["East", 9, 10, 11, 12]]
+    buf = io.BytesIO()
+    pd.DataFrame(rows).to_excel(buf, index=False, header=False)
+    got = read(tmp_path, "t.xlsx", buf.getvalue())
+    assert list(got.columns) == ["Area", "Primary (Schools block)", "Secondary (Schools block)",
+                                 "Primary (High needs block)", "Secondary (High needs block)"]
+    assert got["Primary (High needs block)"].tolist() == [3, 7, 11]
+
+
+def test_empty_extra_sheets_are_dropped_but_an_all_empty_workbook_is_kept(tmp_path):
+    df = clean(NAMES_ASCII)
+    buf = io.BytesIO()
+    with pd.ExcelWriter(buf) as w:
+        df.to_excel(w, sheet_name="data", index=False)
+        pd.DataFrame().to_excel(w, sheet_name="Sheet2", index=False)
+    p = tmp_path / "m.xlsx"
+    p.write_bytes(buf.getvalue())
+    assert list(load_tables([p])) == ["m#data"]
+
+
+@pytest.mark.parametrize("flat", [True, False])
+def test_esri_file_geodatabase_in_a_zip(tmp_path, flat):
+    """Seven UK downloads were zipped file geodatabases, some without their .gdb folder (flat)."""
+    pytest.importorskip("pyogrio")
+    shapely = pytest.importorskip("shapely")
+    from pyogrio.raw import write
+    df = clean(NAMES_ASCII)
+    gdb = tmp_path / "src" / "places.gdb"
+    gdb.parent.mkdir()
+    points = shapely.to_wkb(shapely.points(df["lon"].to_numpy(), df["lat"].to_numpy()))
+    write(str(gdb), points, [df["name"].to_numpy(dtype=object), df["pop"].to_numpy()], ["name", "pop"],
+          layer="places", driver="OpenFileGDB", geometry_type="Point", crs="EPSG:4326")
+    members = {(f.name if flat else f"places.gdb/{f.name}"): f.read_bytes() for f in gdb.iterdir()}
+    got = read(tmp_path, "g.zip", zipped(**members)).sort_values("name").reset_index(drop=True)
+    want = df.sort_values("name").reset_index(drop=True)
+    assert got["name"].tolist() == want["name"].tolist()
+    assert np.allclose(got["y"], want["lat"]) and np.allclose(got["x"], want["lon"])

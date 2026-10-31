@@ -33,5 +33,7 @@ openpyxl                  # .xlsx spreadsheets
 beautifulsoup4            # reading portal landing pages
 openjij                   # simulated quantum annealing (SQA)
 fastembed                 # modelling-pattern retrieval
+pyogrio                   # Esri file geodatabases in zips (GDAL is in the wheel); optional
+shapely                   # centroids of geodatabase features; optional
 
 # GPU stacks (CUDA-Q, cuOpt, vLLM) live in their own environments and are not installed from this file.
