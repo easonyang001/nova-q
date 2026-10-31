@@ -41,7 +41,8 @@ MOJIBAKE = re.compile(r"�|Ã[\x80-\xbf¡-¿]|â€|ï»¿|Ð[\x80-\xbf]")
 LAT = re.compile(r"^(lat|latitude|breitengrad|lat_?dd)$", re.I)        # degree names only: x_coord may be metres
 LON = re.compile(r"^(lon|lng|long|longitude|laengengrad|lon_?dd)$", re.I)
 # a value that is nothing but a number: no letters, so codes like '53A', '800C' or 'V58.43' never count
-PURE_NUMBER = re.compile(r"^[\s(+\-−$€£¥]*\d[\d\s.,'’\u00a0\u202f]*\)?\s*(%|[*†‡§]+)?\s*$")
+# commas only as thousands groups (1,234,567) or one decimal comma (12,5): '1,3,4' is a list of three numbers
+PURE_NUMBER = re.compile(r"^[\s(+\-−$€£¥]*(\d{1,3}([,'’\s\u00a0\u202f]\d{3})+|\d+)([.,]\d+)?\)?\s*(%|[*†‡§]+)?\s*$")
 
 
 def check_table(name: str, df: pd.DataFrame) -> list[str]:
@@ -50,7 +51,8 @@ def check_table(name: str, df: pd.DataFrame) -> list[str]:
         return ["non_empty: no rows or no columns"]
     text = df.select_dtypes(include=["object", "string"])
     sample = [v for v in text.head(500).to_numpy().ravel() if isinstance(v, str)] if not text.empty else []
-    if sample and sum(bool(MOJIBAKE.search(v)) for v in sample) / len(sample) > 0.01:
+    damaged_at_source = any("replacement characters" in w for w in df.attrs.get("load_warnings", []))
+    if sample and sum(bool(MOJIBAKE.search(v)) for v in sample) / len(sample) > 0.01 and not damaged_at_source:
         bad.append("text_ok: replacement characters or mojibake in text cells")
     for col in text.columns:
         vals = text[col].dropna().astype(str).head(500)
@@ -97,6 +99,9 @@ def check_file(path: Path) -> dict:
     rec["tables"] = {k: list(v.shape) for k, v in tables.items()}
     filled = {k: v for k, v in tables.items() if not (v.empty or v.shape[1] == 0)}
     if not filled:
+        if any(v.shape[1] > 0 for v in tables.values()) and path.stat().st_size < 4096:
+            rec["outcome"], rec["info"] = "empty_source", ["the published file has a header and no rows"]
+            return {**rec, "seconds": round(time.time() - t0, 2)}
         rec["failures"].append("non_empty: no table with rows and columns")
     for name, df in filled.items():
         rec["failures"] += check_table(name, df)
@@ -145,17 +150,18 @@ def main():
             groups[sig].append(r["file"])
     n = max(1, len(recs))
     outcome = Counter(r.get("outcome", "violation") for r in recs)
-    clean, refused = outcome["clean"], outcome["refused"]
+    clean, refused = outcome["clean"], outcome["refused"] + outcome["empty_source"]
     lines = ["# Corpus invariants (check version 2)", "",
-             f"{len(recs)} files: {clean} read without a violated invariant ({clean / n:.1%}), {refused} refused because "
-             f"they hold no table ({refused / n:.1%}), {len(recs) - clean - refused} with a violation or a load failure "
+             f"{len(recs)} files: {clean} read without a violated invariant ({clean / n:.1%}), {refused} without a table "
+             f"({refused / n:.1%}: refused with a reason, or published with a header and no rows), {len(recs) - clean - refused} with a violation or a load failure "
              f"({(len(recs) - clean - refused) / n:.1%}). Handled correctly (read cleanly or refused with a reason): "
              f"{(clean + refused) / n:.1%}. Of the files that hold a table: {clean / max(1, len(recs) - refused):.1%} read cleanly.",
              "", "| Signature | Files | Example |", "|---|--:|---|"]
     for sig, fs in sorted(groups.items(), key=lambda kv: -len(kv[1])):
         lines.append(f"| {sig} | {len(fs)} | `{fs[0]}` |")
     info = Counter(i.split(":")[0] for r in recs for i in r.get("info", []) if r.get("outcome") != "refused")
-    reasons = Counter("only documents or images" if "archive" in i else "web page" for r in recs if r.get("outcome") == "refused"
+    reasons = Counter(("only documents or images" if "archive" in i else "web page") if r["outcome"] == "refused"
+                      else "header without rows" for r in recs if r.get("outcome") in ("refused", "empty_source")
                       for i in r["info"])
     by_ext = Counter(Path(r["file"]).suffix for r in recs)
     lines += ["", "Refusals: " + (", ".join(f"{k} {v}" for k, v in reasons.most_common()) or "none"),

@@ -338,6 +338,14 @@ def load_tables(paths: list[str | Path]) -> dict[str, pd.DataFrame]:
             tables.update(_json_tables(raw, stem))
         else:                                      # delimited text
             tables[stem] = _delimited(raw, suf)
+        if b"\xef\xbf\xbd" in raw:
+            # the replacement character is in the file itself: the text was damaged before publication and the original
+            # letters are lost (Los Angeles and San Francisco files, corpus 2026-10-31); say so rather than pass it on
+            lost = raw.count(b"\xef\xbf\xbd")
+            for k in [k for k in tables if k == stem or k.startswith((stem + "#", stem + "."))]:
+                tables[k].attrs["load_warnings"] = list(tables[k].attrs.get("load_warnings", [])) + [
+                    f"the source file contains {lost} replacement characters (\ufffd): some letters were lost before "
+                    f"publication and cannot be recovered; do not match names that contain them exactly"]
         mine = [k for k in tables if k == stem or k.startswith((stem + "#", stem + "."))]
         if any(not tables[k].empty for k in mine):
             for k in mine:
@@ -494,7 +502,9 @@ def profile(name: str, df: pd.DataFrame, max_chars: int = MAX_TABLE_CHARS) -> st
         else:
             vals = s.dropna().astype(str)
             top = ", ".join(f"{neutralize(v, 60)!r}" for v in vals.value_counts().head(4).index)
-            lines.append(f"- {col!r} (text, {vals.nunique()} distinct{miss}): e.g. {top}")
+            listed = vals.head(500).str.fullmatch(r"\s*-?\d+(\.\d+)?(\s*[,;]\s*-?\d+(\.\d+)?)+\s*").mean() if len(vals) else 0
+            hint = "; most cells are LISTS of numbers (e.g. several routes or codes in one cell), not one number" if listed > 0.5 else ""
+            lines.append(f"- {col!r} (text, {vals.nunique()} distinct{miss}{hint}): e.g. {top}")
     sample = [{k: neutralize(v, 80) if isinstance(v, str) else v for k, v in row.items()}
               for row in df.head(3).to_dict(orient="records")]
     lines.append("first rows: " + json.dumps(sample, ensure_ascii=False, default=str))

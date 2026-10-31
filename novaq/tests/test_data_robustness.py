@@ -554,3 +554,17 @@ def test_esri_file_geodatabase_in_a_zip(tmp_path, flat):
     want = df.sort_values("name").reset_index(drop=True)
     assert got["name"].tolist() == want["name"].tolist()
     assert np.allclose(got["y"], want["lat"]) and np.allclose(got["x"], want["lon"])
+
+
+def test_replacement_characters_in_the_source_are_reported(tmp_path):
+    """Los Angeles and San Francisco files carried U+FFFD in the published bytes: the letters are gone upstream."""
+    df = clean([f"Library�s branch {i}" for i in range(24)])
+    got = read(tmp_path, "t.csv", csv_text(df).encode("utf-8"))
+    assert any("replacement characters" in w for w in got.attrs.get("load_warnings", []))
+
+
+def test_profile_says_when_cells_are_lists_of_numbers():
+    from qubo_auto.annealing.datakit import profile
+    df = pd.DataFrame({"stop": list("abcdef"), "routes": ["1,3,4", "12", "2, 6, 28", "1,3", "8,9", "36,62"]})
+    assert "LISTS of numbers" in profile("t", df)
+    assert "LISTS" not in profile("t", clean(NAMES_ASCII))
